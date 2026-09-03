@@ -1,7 +1,7 @@
 /* =========================================================
-   SNIPPETS CONTAINER & ANIMATIONS
+   FAVORITES CONTAINER & ANIMATIONS
 ========================================================= */
-.snippets-container {
+.favorites-container {
   display: flex;
   flex-direction: column;
   gap: 24px;
@@ -25,7 +25,7 @@
 /* =========================================================
    1. HEADER & SEARCH CONTROLS
 ========================================================= */
-.snippets-header {
+.favorites-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -46,7 +46,7 @@
   flex-wrap: wrap;
 }
 
-.snippets-title {
+.favorites-title {
   font-size: 1.6rem;
   font-weight: 800;
   color: var(--text-title);
@@ -65,7 +65,7 @@
   color: var(--text-muted);
 }
 
-.snippets-subtitle {
+.favorites-subtitle {
   font-size: 0.88rem;
   color: var(--text-muted);
   margin: 0;
@@ -189,20 +189,20 @@
 .metric-icon { width: 16px; height: 16px; }
 
 /* ☀️ Light Mode */
-.box-purple  { background: #f5f3ff; color: #6d28d9; border: 1px solid #ede9fe; }
+.box-rose    { background: #fff1f2; color: #e11d48; border: 1px solid #fecdd3; }
 .box-emerald { background: #ecfdf5; color: #047857; border: 1px solid #d1fae5; }
 .box-cyan    { background: #ecfeff; color: #0284c7; border: 1px solid #e0f2fe; }
 
-.pill-purple  { background: #f5f3ff; color: #6d28d9; border: 1px solid #ddd6fe; font-weight: 700; }
+.pill-rose    { background: #fff1f2; color: #e11d48; border: 1px solid #fecdd3; font-weight: 700; }
 .pill-emerald { background: #ecfdf5; color: #047857; border: 1px solid #a7f3d0; font-weight: 700; }
 .pill-cyan    { background: #ecfeff; color: #0369a1; border: 1px solid #bae6fd; font-weight: 700; }
 
 /* 🌙 Dark Mode */
-:host-context(.dark-theme) .box-purple  { background: rgba(124, 58, 237, 0.15); color: #a78bfa; border-color: rgba(124, 58, 237, 0.3); }
+:host-context(.dark-theme) .box-rose    { background: rgba(244, 63, 94, 0.15); color: #fb7185; border-color: rgba(244, 63, 94, 0.3); }
 :host-context(.dark-theme) .box-emerald { background: rgba(5, 150, 105, 0.15); color: #34d399; border-color: rgba(5, 150, 105, 0.3); }
 :host-context(.dark-theme) .box-cyan    { background: rgba(8, 145, 178, 0.15); color: #38bdf8; border-color: rgba(8, 145, 178, 0.3); }
 
-:host-context(.dark-theme) .pill-purple  { background: rgba(124, 58, 237, 0.18); color: #c4b5fd; border-color: rgba(124, 58, 237, 0.35); }
+:host-context(.dark-theme) .pill-rose    { background: rgba(244, 63, 94, 0.18); color: #fda4af; border-color: rgba(244, 63, 94, 0.35); }
 :host-context(.dark-theme) .pill-emerald { background: rgba(5, 150, 105, 0.18); color: #6ee7b7; border-color: rgba(5, 150, 105, 0.35); }
 :host-context(.dark-theme) .pill-cyan    { background: rgba(8, 145, 178, 0.18); color: #7dd3fc; border-color: rgba(8, 145, 178, 0.35); }
 
@@ -238,79 +238,24 @@
 
 .metric-trend { font-weight: 700; }
 .metric-sub { color: var(--text-subtle); }
-.text-purple { color: #6d28d9; }
+.text-rose { color: #e11d48; }
 .text-emerald { color: #047857; }
 .text-blue { color: #0284c7; }
 
-:host-context(.dark-theme) .text-purple { color: #a78bfa; }
+:host-context(.dark-theme) .text-rose { color: #fb7185; }
 :host-context(.dark-theme) .text-emerald { color: #34d399; }
 :host-context(.dark-theme) .text-blue { color: #38bdf8; }
 
 /* =========================================================
-   3. LANGUAGE FILTER TABS
+   3. FAVORITES CARDS GRID (WITH CODE HIGHLIGHTING)
 ========================================================= */
-.language-filter-row {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  overflow-x: auto;
-  padding-bottom: 2px;
-}
-
-.lang-pill {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  background: var(--card-bg);
-  border: 1px solid var(--card-border);
-  color: var(--text-muted);
-  font-size: 0.78rem;
-  font-weight: 600;
-  padding: 6px 14px;
-  border-radius: 999px;
-  cursor: pointer;
-  white-space: nowrap;
-  transition: all 0.15s ease;
-}
-
-.lang-pill:hover {
-  background: var(--item-hover-bg);
-  color: var(--text-title);
-}
-
-.lang-pill.active {
-  background: #6366f1;
-  color: #ffffff;
-  border-color: #6366f1;
-  box-shadow: 0 2px 8px rgba(99, 102, 241, 0.3);
-}
-
-.pill-badge {
-  font-size: 0.68rem;
-  padding: 1px 6px;
-  border-radius: 999px;
-  background: rgba(0, 0, 0, 0.08);
-}
-
-:host-context(.dark-theme) .pill-badge {
-  background: rgba(255, 255, 255, 0.12);
-}
-
-.lang-pill.active .pill-badge {
-  background: rgba(255, 255, 255, 0.25);
-  color: #ffffff;
-}
-
-/* =========================================================
-   4. SNIPPET CARDS GRID (WITH CODE HIGHLIGHTING)
-========================================================= */
-.snippets-grid {
+.favorites-grid {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
   gap: 20px;
 }
 
-.snippet-card {
+.favorite-card {
   background: var(--card-bg);
   border: 1px solid var(--card-border);
   border-radius: 16px;
@@ -322,20 +267,20 @@
   transition: all 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
-.snippet-card:hover {
+.favorite-card:hover {
   transform: translateY(-2px);
-  border-color: rgba(99, 102, 241, 0.4);
+  border-color: rgba(244, 63, 94, 0.4);
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
 }
 
-.snippet-header-row {
+.card-header-row {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 10px;
 }
 
-.snippet-title-group {
+.title-group {
   display: flex;
   align-items: center;
   gap: 8px;
@@ -369,6 +314,39 @@
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+
+.actions-group {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* Nút Heart */
+.heart-btn {
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  background: var(--item-bg);
+  border: 1px solid var(--item-border);
+  color: var(--text-muted);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.heart-btn.active {
+  color: #e11d48;
+  background: #fff1f2;
+  border-color: #fecdd3;
+}
+
+:host-context(.dark-theme) .heart-btn.active {
+  color: #fb7185;
+  background: rgba(244, 63, 94, 0.15);
+  border-color: rgba(244, 63, 94, 0.3);
 }
 
 /* Nút Copy Code 1-Click */
@@ -459,7 +437,7 @@
   line-height: 1.55;
   color: #cbd5e1;
   overflow-x: auto;
-  max-height: 220px;
+  max-height: 200px;
 }
 
 /* Syntax Color Tokens */
@@ -470,7 +448,7 @@
 .c-bool { color: #f59e0b; }
 .c-str { color: #34d399; }
 
-.snippet-footer-row {
+.card-footer-row {
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -505,7 +483,7 @@
    RESPONSIVE DESIGN
 ========================================================= */
 @media (max-width: 1200px) {
-  .snippets-grid {
+  .favorites-grid {
     grid-template-columns: 1fr;
   }
 }
@@ -515,7 +493,7 @@
     grid-template-columns: 1fr;
   }
 
-  .snippets-header {
+  .favorites-header {
     flex-direction: column;
     align-items: flex-start;
   }

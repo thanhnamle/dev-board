@@ -1,34 +1,33 @@
-<div class="snippets-container">
+<div class="favorites-container">
   
   <!-- =========================================================
        1. HEADER BAR & CONTROLS
   ========================================================= -->
-  <header class="snippets-header">
+  <header class="favorites-header">
     <div class="header-left">
       <div class="title-row">
-        <h1 class="snippets-title">Code Snippets & Gists</h1>
-        <span class="count-pill">{{ filteredSnippets().length }} Snippets</span>
+        <h1 class="favorites-title">Favorite Snippets</h1>
+        <span class="count-pill">{{ filteredFavorites().length }} Pinned</span>
       </div>
-      <p class="snippets-subtitle">
-        Curated reusable algorithms, security helpers, and architectural code templates
+      <p class="favorites-subtitle">
+        Your hand-picked core algorithms, utility helpers, and production-tested code templates
       </p>
     </div>
 
     <div class="header-actions">
-      <!-- Ô tìm kiếm Snippet -->
+      <!-- Ô tìm kiếm Favorite Snippet -->
       <div class="search-box">
         <lucide-icon [img]="Search" size="14" class="search-icon"></lucide-icon>
         <input 
           type="text" 
-          placeholder="Search snippets, code or tags..." 
+          placeholder="Filter favorite snippets..." 
           [value]="searchQuery()"
           (input)="searchQuery.set($any($event.target).value)"
           class="search-input"
         />
       </div>
 
-      <!-- Nút tạo Snippet mới -->
-      <button type="button" class="action-btn btn-primary" title="Create new snippet">
+      <button type="button" class="action-btn btn-primary" title="Add new favorite">
         <lucide-icon [img]="Plus" size="15"></lucide-icon>
         <span>+ New Snippet</span>
       </button>
@@ -41,82 +40,66 @@
   <section class="metrics-grid">
     <div class="metric-card">
       <div class="metric-top">
-        <span class="metric-label">Saved Snippets</span>
-        <div class="metric-icon-box box-purple">
-          <lucide-icon [img]="Code2" class="metric-icon"></lucide-icon>
+        <span class="metric-label">Favorite Code</span>
+        <div class="metric-icon-box box-rose">
+          <lucide-icon [img]="Heart" class="metric-icon"></lucide-icon>
         </div>
       </div>
       <div class="metric-value-row">
-        <span class="metric-value">{{ snippets().length }}</span>
-        <span class="metric-pill pill-purple">6 Languages</span>
+        <span class="metric-value">{{ filteredFavorites().length }}</span>
+        <span class="metric-pill pill-rose">Pinned Utils</span>
       </div>
       <div class="metric-footer">
-        <span class="metric-trend text-purple">18 TypeScript</span>
-        <span class="metric-sub">• 14 Go • 12 SQL</span>
+        <span class="metric-trend text-rose">Core Arsenal</span>
+        <span class="metric-sub">for instant dev setup</span>
       </div>
     </div>
 
     <div class="metric-card">
       <div class="metric-top">
-        <span class="metric-label">1-Click Velocity</span>
+        <span class="metric-label">Copy Frequency</span>
         <div class="metric-icon-box box-emerald">
           <lucide-icon [img]="Copy" class="metric-icon"></lucide-icon>
         </div>
       </div>
       <div class="metric-value-row">
-        <span class="metric-value">128</span>
-        <span class="metric-pill pill-emerald">4 Copied Today</span>
+        <span class="metric-value">Daily</span>
+        <span class="metric-pill pill-emerald">1-Click Ready</span>
       </div>
       <div class="metric-footer">
-        <span class="metric-trend text-emerald">Clipboard Ready</span>
-        <span class="metric-sub">instant dev insertion</span>
+        <span class="metric-trend text-emerald">Zero Retyping</span>
+        <span class="metric-sub">verified clean syntax</span>
       </div>
     </div>
 
     <div class="metric-card">
       <div class="metric-top">
-        <span class="metric-label">Syntax Engine</span>
+        <span class="metric-label">Multi-Language</span>
         <div class="metric-icon-box box-cyan">
           <lucide-icon [img]="Sparkles" class="metric-icon"></lucide-icon>
         </div>
       </div>
       <div class="metric-value-row">
-        <span class="metric-value">JetBrains</span>
-        <span class="metric-pill pill-cyan">Mono Spaced</span>
+        <span class="metric-value">4 Stacks</span>
+        <span class="metric-pill pill-cyan">TS • Go • SQL • Docker</span>
       </div>
       <div class="metric-footer">
-        <span class="metric-trend text-blue">High Contrast</span>
-        <span class="metric-sub">light/dark harmony</span>
+        <span class="metric-trend text-blue">Full Stack</span>
+        <span class="metric-sub">snippets coverage</span>
       </div>
     </div>
   </section>
 
   <!-- =========================================================
-       3. LANGUAGE FILTER TABS
+       3. FAVORITES CARDS GRID (WITH CODE HIGHLIGHTING)
   ========================================================= -->
-  <div class="language-filter-row">
-    @for (item of languagesList; track item.name) {
-      <button 
-        type="button" 
-        class="lang-pill" 
-        [class.active]="selectedLang() === item.name"
-        (click)="selectLanguage(item.name)">
-        <span>{{ item.name }}</span>
-        <span class="pill-badge">{{ item.count }}</span>
-      </button>
-    }
-  </div>
-
-  <!-- =========================================================
-       4. SNIPPET CARDS GRID (WITH CODE BLOCKS)
-  ========================================================= -->
-  <div class="snippets-grid">
-    @for (snippet of filteredSnippets(); track snippet.id) {
-      <div class="snippet-card">
+  <div class="favorites-grid">
+    @for (snippet of filteredFavorites(); track snippet.id) {
+      <div class="favorite-card">
         
-        <!-- Header Card: Title + Lang Badge + 1-Click Copy Button -->
-        <div class="snippet-header-row">
-          <div class="snippet-title-group">
+        <!-- Header Card: Title + Heart Button + Copy Button -->
+        <div class="card-header-row">
+          <div class="title-group">
             <span class="lang-tag-badge" [ngClass]="{
               'badge-cyan': snippet.language === 'typescript',
               'badge-purple': snippet.language === 'go',
@@ -128,19 +111,30 @@
             <h3 class="snippet-title">{{ snippet.title }}</h3>
           </div>
 
-          <!-- Nút Copy Code 1-Click Thông minh -->
-          <button 
-            type="button" 
-            class="copy-code-btn" 
-            [class.copied]="copiedSnippetId() === snippet.id"
-            (click)="copyCode(snippet)"
-            title="Copy Code to Clipboard">
-            <lucide-icon 
-              [img]="copiedSnippetId() === snippet.id ? Check : Copy" 
-              size="13">
-            </lucide-icon>
-            <span>{{ copiedSnippetId() === snippet.id ? 'Copied!' : 'Copy Code' }}</span>
-          </button>
+          <div class="actions-group">
+            <!-- Nút Heart Favorite -->
+            <button 
+              type="button" 
+              class="heart-btn active"
+              (click)="toggleFavorite(snippet.id)"
+              title="Remove from favorites">
+              <lucide-icon [img]="Heart" size="14" class="heart-icon"></lucide-icon>
+            </button>
+
+            <!-- Nút 1-Click Copy Code -->
+            <button 
+              type="button" 
+              class="copy-code-btn" 
+              [class.copied]="copiedSnippetId() === snippet.id"
+              (click)="copyCode(snippet)"
+              title="Copy Code to Clipboard">
+              <lucide-icon 
+                [img]="copiedSnippetId() === snippet.id ? Check : Copy" 
+                size="13">
+              </lucide-icon>
+              <span>{{ copiedSnippetId() === snippet.id ? 'Copied!' : 'Copy' }}</span>
+            </button>
+          </div>
         </div>
 
         <!-- Description -->
@@ -160,7 +154,7 @@
         </div>
 
         <!-- Card Footer: Tags + Last Used -->
-        <div class="snippet-footer-row">
+        <div class="card-footer-row">
           <div class="tags-row">
             @for (tag of snippet.tags; track tag) {
               <span class="tech-tag">#{{ tag }}</span>

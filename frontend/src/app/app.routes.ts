@@ -48,6 +48,22 @@ export const routes: Routes = [
             { 
                 path: 'snippets/all-snippets', 
                 loadComponent: () => import('./pages/snippets/all-snippets/all-snippets.component').then(m => m.AllSnippetsComponent) 
+            },
+            {
+                path: 'snippets/favorites',
+                loadComponent: () => import('./pages/snippets/favorites/favorites.component').then(m => m.FavoritesComponent)
+            },
+            {
+                path: 'github/profile',
+                loadComponent: () => import('./pages/github/profile/profile.component').then(m => m.ProfileComponent)
+            },
+            {
+                path: 'github/repositories',
+                loadComponent: () => import('./pages/github/repositories/repositories.component').then(m => m.RepositoriesComponent)
+            },
+            {
+                path: 'github/activities',
+                loadComponent: () => import('./pages/github/activities/activities.component').then(m => m.ActivitiesComponent)
             }
         ]
     },

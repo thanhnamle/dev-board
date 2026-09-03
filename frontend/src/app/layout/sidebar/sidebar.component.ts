@@ -176,4 +176,4 @@ export class SidebarComponent {
       this.expandedItem.update(curr => (curr === label ? null : label));
     }
   }
-}
+}

@@ -2,90 +2,66 @@ import { Component, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import {
   LucideAngularModule,
+  Heart,
   Code2,
   Search,
-  Plus,
   Copy,
   Check,
-  Tag,
-  Clock,
-  Sparkles,
-  Layers,
-  Terminal,
-  Database,
   FileCode,
-  ExternalLink
+  Tag,
+  Sparkles,
+  ExternalLink,
+  Plus
 } from 'lucide-angular';
 
-export interface SnippetItem {
+export interface FavoriteSnippet {
   id: number;
   title: string;
   filename: string;
-  language: 'typescript' | 'go' | 'sql' | 'docker' | 'shell' | 'css';
+  language: 'typescript' | 'go' | 'sql' | 'docker';
   languageLabel: string;
   description: string;
-  codeHtml: string;
   rawCode: string;
+  codeHtml: string;
   tags: string[];
   lastUsed: string;
-  copied?: boolean;
+  isFavorite: boolean;
 }
 
 @Component({
-  selector: 'app-all-snippets',
+  selector: 'app-favorites',
   standalone: true,
   imports: [CommonModule, LucideAngularModule],
-  templateUrl: './all-snippets.component.html',
-  styleUrl: './all-snippets.component.css'
+  templateUrl: './favorites.component.html',
+  styleUrl: './favorites.component.css'
 })
-export class AllSnippetsComponent {
+export class FavoritesComponent {
   // 1. Khai báo Lucide Icons
+  readonly Heart = Heart;
   readonly Code2 = Code2;
   readonly Search = Search;
-  readonly Plus = Plus;
   readonly Copy = Copy;
   readonly Check = Check;
-  readonly Tag = Tag;
-  readonly Clock = Clock;
-  readonly Sparkles = Sparkles;
-  readonly Layers = Layers;
-  readonly Terminal = Terminal;
-  readonly Database = Database;
   readonly FileCode = FileCode;
+  readonly Tag = Tag;
+  readonly Sparkles = Sparkles;
   readonly ExternalLink = ExternalLink;
+  readonly Plus = Plus;
 
   // 2. Signals quản lý trạng thái
-  selectedLang = signal<string>('All');
   searchQuery = signal<string>('');
   copiedSnippetId = signal<number | null>(null);
 
-  // Danh mục ngôn ngữ
-  languagesList: { name: string; count: number }[] = [
-    { name: 'All', count: 64 },
-    { name: 'TypeScript', count: 18 },
-    { name: 'Go', count: 14 },
-    { name: 'SQL', count: 12 },
-    { name: 'Docker', count: 8 },
-    { name: 'Shell', count: 6 },
-    { name: 'CSS', count: 6 }
-  ];
-
-  // 3. Danh sách Snippets mẫu
-  snippets = signal<SnippetItem[]>([
+  // 3. Danh sách 12 Snippets yêu thích nhất
+  favoritesList = signal<FavoriteSnippet[]>([
     {
       id: 1,
-      title: 'Angular 17 Debounced Signal Effect',
+      title: 'Angular 17 Custom Debounced Signal Effect',
       filename: 'debounce-effect.util.ts',
       language: 'typescript',
       languageLabel: 'TypeScript',
-      description: 'Custom helper to execute side-effects with a debounce delay on signal value changes.',
-      rawCode: `import { effect, Signal, untracked } from '@angular/core';
-
-export function debouncedEffect<T>(
-  source: Signal<T>,
-  callback: (val: T) => void,
-  delayMs = 300
-) {
+      description: 'Debounce reactive effect execution on signal changes to prevent API throttling.',
+      rawCode: `export function debouncedEffect<T>(source: Signal<T>, callback: (val: T) => void, delayMs = 300) {
   let timer: any;
   return effect((onCleanup) => {
     const value = source();
@@ -96,13 +72,7 @@ export function debouncedEffect<T>(
     onCleanup(() => clearTimeout(timer));
   });
 }`,
-      codeHtml: `<span class="c-kw">import</span> { effect, Signal, untracked } <span class="c-kw">from</span> <span class="c-str">'@angular/core'</span>;
-
-<span class="c-kw">export function</span> <span class="c-fn">debouncedEffect</span>&lt;<span class="c-typ">T</span>&gt;(
-  source: <span class="c-typ">Signal</span>&lt;<span class="c-typ">T</span>&gt;,
-  callback: (val: <span class="c-typ">T</span>) =&gt; <span class="c-typ">void</span>,
-  delayMs = <span class="c-bool">300</span>
-) {
+      codeHtml: `<span class="c-kw">export function</span> <span class="c-fn">debouncedEffect</span>&lt;<span class="c-typ">T</span>&gt;(source: <span class="c-typ">Signal</span>&lt;<span class="c-typ">T</span>&gt;, callback: (val: <span class="c-typ">T</span>) =&gt; <span class="c-typ">void</span>, delayMs = <span class="c-bool">300</span>) {
   <span class="c-kw">let</span> timer: <span class="c-typ">any</span>;
   <span class="c-kw">return</span> <span class="c-fn">effect</span>((onCleanup) =&gt; {
     <span class="c-kw">const</span> value = <span class="c-fn">source</span>();
@@ -113,8 +83,9 @@ export function debouncedEffect<T>(
     <span class="c-fn">onCleanup</span>(() =&gt; <span class="c-fn">clearTimeout</span>(timer));
   });
 }`,
-      tags: ['Angular 17', 'Signals', 'Debounce', 'Performance'],
-      lastUsed: '10m ago'
+      tags: ['Angular', 'Signals', 'Utility'],
+      lastUsed: '10m ago',
+      isFavorite: true
     },
     {
       id: 2,
@@ -122,45 +93,30 @@ export function debouncedEffect<T>(
       filename: 'webhook_validator.go',
       language: 'go',
       languageLabel: 'Go',
-      description: 'Cryptographic HMAC-SHA256 signature verification for GitHub & Payment webhooks.',
-      rawCode: `package security
-
-import (
-	"crypto/hmac"
-	"crypto/sha256"
-	"encoding/hex"
-)
-
-func VerifyHMAC(payload, signature, secret []byte) bool {
+      description: 'Constant-time cryptographic signature verification for payment callbacks.',
+      rawCode: `func VerifyHMAC(payload, signature, secret []byte) bool {
 	mac := hmac.New(sha256.New, secret)
 	mac.Write(payload)
 	expectedMAC := hex.EncodeToString(mac.Sum(nil))
 	return hmac.Equal([]byte(expectedMAC), signature)
 }`,
-      codeHtml: `<span class="c-kw">package</span> security
-
-<span class="c-kw">import</span> (
-	<span class="c-str">"crypto/hmac"</span>
-	<span class="c-str">"crypto/sha256"</span>
-	<span class="c-str">"encoding/hex"</span>
-)
-
-<span class="c-kw">func</span> <span class="c-fn">VerifyHMAC</span>(payload, signature, secret []<span class="c-typ">byte</span>) <span class="c-typ">bool</span> {
+      codeHtml: `<span class="c-kw">func</span> <span class="c-fn">VerifyHMAC</span>(payload, signature, secret []<span class="c-typ">byte</span>) <span class="c-typ">bool</span> {
 	mac := hmac.<span class="c-fn">New</span>(sha256.New, secret)
 	mac.<span class="c-fn">Write</span>(payload)
 	expectedMAC := hex.<span class="c-fn">EncodeToString</span>(mac.<span class="c-fn">Sum</span>(<span class="c-bool">nil</span>))
 	<span class="c-kw">return</span> hmac.<span class="c-fn">Equal</span>([]<span class="c-typ">byte</span>(expectedMAC), signature)
 }`,
-      tags: ['Go', 'Security', 'HMAC', 'Webhook'],
-      lastUsed: '1h ago'
+      tags: ['Go', 'Security', 'Fintech'],
+      lastUsed: '1h ago',
+      isFavorite: true
     },
     {
       id: 3,
-      title: 'PostgreSQL Upsert with Conflict Target & Audit Timestamp',
-      filename: 'upsert_user_profile.sql',
+      title: 'PostgreSQL Upsert with Conflict Handling',
+      filename: 'upsert_profile.sql',
       language: 'sql',
       languageLabel: 'SQL',
-      description: 'Atomic upsert query pattern maintaining created_at and updated_at triggers.',
+      description: 'Atomic upsert query pattern with returning mutated rows in PostgreSQL.',
       rawCode: `INSERT INTO user_profiles (github_id, username, email, updated_at)
 VALUES ($1, $2, $3, NOW())
 ON CONFLICT (github_id)
@@ -177,16 +133,17 @@ RETURNING id, username, updated_at;`,
   email = <span class="c-typ">EXCLUDED</span>.email,
   updated_at = <span class="c-fn">NOW</span>()
 <span class="c-kw">RETURNING</span> id, username, updated_at;`,
-      tags: ['PostgreSQL', 'SQL', 'Upsert', 'Database'],
-      lastUsed: 'Yesterday'
+      tags: ['SQL', 'Postgres', 'Database'],
+      lastUsed: 'Yesterday',
+      isFavorite: true
     },
     {
       id: 4,
-      title: 'Multi-stage Docker Build for Minimal Go Binary',
+      title: 'Multi-stage Production Dockerfile for Go',
       filename: 'Dockerfile.prod',
       language: 'docker',
       languageLabel: 'Docker',
-      description: 'Scratch-based ultra lightweight Go container image with CA certificates.',
+      description: 'Scratch-based minimal container build reducing image size from 800MB to 12MB.',
       rawCode: `FROM golang:1.22-alpine AS builder
 WORKDIR /app
 COPY go.mod go.sum ./
@@ -197,7 +154,6 @@ RUN CGO_ENABLED=0 GOOS=linux go build -ldflags="-w -s" -o server .
 FROM scratch
 COPY --from=builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
 COPY --from=builder /app/server /server
-EXPOSE 8080
 ENTRYPOINT ["/server"]`,
       codeHtml: `<span class="c-kw">FROM</span> golang:1.22-alpine <span class="c-kw">AS</span> builder
 <span class="c-kw">WORKDIR</span> /app
@@ -209,38 +165,37 @@ ENTRYPOINT ["/server"]`,
 <span class="c-kw">FROM</span> scratch
 <span class="c-kw">COPY</span> --from=builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
 <span class="c-kw">COPY</span> --from=builder /app/server /server
-<span class="c-kw">EXPOSE</span> <span class="c-bool">8080</span>
 <span class="c-kw">ENTRYPOINT</span> [<span class="c-str">"/server"</span>]`,
-      tags: ['Docker', 'MultiStage', 'Go', 'DevOps'],
-      lastUsed: '3d ago'
+      tags: ['Docker', 'MultiStage', 'DevOps'],
+      lastUsed: '2d ago',
+      isFavorite: true
     }
   ]);
 
-  // 4. Lọc danh sách Snippets
-  filteredSnippets = computed(() => {
-    const lang = this.selectedLang().toLowerCase();
+  // 4. Lọc danh sách Favorites
+  filteredFavorites = computed(() => {
     const q = this.searchQuery().toLowerCase().trim();
-
-    return this.snippets().filter(s => {
-      const matchLang = lang === 'all' || s.language === lang;
-      const matchQuery =
-        !q ||
-        s.title.toLowerCase().includes(q) ||
-        s.filename.toLowerCase().includes(q) ||
-        s.description.toLowerCase().includes(q) ||
-        s.tags.some(t => t.toLowerCase().includes(q));
-
-      return matchLang && matchQuery;
+    return this.favoritesList().filter(s => {
+      return (
+        s.isFavorite &&
+        (!q ||
+          s.title.toLowerCase().includes(q) ||
+          s.filename.toLowerCase().includes(q) ||
+          s.description.toLowerCase().includes(q) ||
+          s.tags.some(t => t.toLowerCase().includes(q)))
+      );
     });
   });
 
-  // Chọn ngôn ngữ
-  selectLanguage(langName: string) {
-    this.selectedLang.set(langName);
+  // Toggle Favorite
+  toggleFavorite(id: number) {
+    this.favoritesList.update(list =>
+      list.map(s => (s.id === id ? { ...s, isFavorite: !s.isFavorite } : s))
+    );
   }
 
   // 1-Click Copy vào Clipboard
-  copyCode(snippet: SnippetItem) {
+  copyCode(snippet: FavoriteSnippet) {
     navigator.clipboard.writeText(snippet.rawCode).then(() => {
       this.copiedSnippetId.set(snippet.id);
       setTimeout(() => {
