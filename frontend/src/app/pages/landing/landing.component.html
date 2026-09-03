@@ -1,0 +1,719 @@
+<div class="landing-container" [class.light-theme]="!isDarkMode()">
+  
+  <!-- Cyber Grid Texture & Gradient Overlay -->
+  <div class="grid-texture"></div>
+  <div class="bg-overlay"></div>
+
+  <!-- 1. Thanh Sidebar bên trái phong cách Linear Minimal -->
+  <aside class="sidebar">
+    <!-- Top: Logo & Brand -->
+    <div class="brand-group">
+      <div class="logo-badge">
+        <img
+          src="assets/devboard_logo.jpg"
+          alt="DevBoard Logo"
+          class="logo-img"
+        />
+      </div>
+      <div class="brand-text">
+        <span class="brand-dev">DEV</span>
+        <span class="brand-board">BOARD</span>
+      </div>
+    </div>
+
+    <!-- Middle: Navigation Menu tương tác 4 mục -->
+    <nav class="nav-menu">
+      <button 
+        type="button" 
+        class="nav-item" 
+        [class.active]="currentSection() === 'home'"
+        (click)="setSection('home')">
+        @if (currentSection() === 'home') { <span class="nav-active-dot"></span> }
+        Home
+      </button>
+
+      <button 
+        type="button" 
+        class="nav-item" 
+        [class.active]="currentSection() === 'features'"
+        (click)="setSection('features')">
+        @if (currentSection() === 'features') { <span class="nav-active-dot"></span> }
+        Features
+      </button>
+
+      <button 
+        type="button" 
+        class="nav-item" 
+        [class.active]="currentSection() === 'about'"
+        (click)="setSection('about')">
+        @if (currentSection() === 'about') { <span class="nav-active-dot"></span> }
+        About Us
+      </button>
+
+      <button 
+        type="button" 
+        class="nav-item" 
+        [class.active]="currentSection() === 'docs'"
+        (click)="setSection('docs')">
+        @if (currentSection() === 'docs') { <span class="nav-active-dot"></span> }
+        Docs
+      </button>
+    </nav>
+
+    <!-- Bottom: Theme Switcher & GitHub Link -->
+    <div class="sidebar-footer">
+      <button 
+        type="button" 
+        class="theme-icon-btn" 
+        (click)="toggleTheme()" 
+        [title]="isDarkMode() ? 'Switch to Light Mode' : 'Switch to Dark Mode'">
+        @if (isDarkMode()) {
+          <i-lucide [img]="Sun" class="theme-icon text-amber"></i-lucide>
+        } @else {
+          <i-lucide [img]="Moon" class="theme-icon text-indigo"></i-lucide>
+        }
+      </button>
+
+      <a 
+        href="https://github.com" 
+        target="_blank" 
+        rel="noopener noreferrer" 
+        class="sidebar-github-link"
+        title="Open GitHub in new tab">
+        <div class="github-circle">
+          <i-lucide [img]="Github" class="github-icon-sm"></i-lucide>
+        </div>
+        <span class="footer-label">GitHub</span>
+      </a>
+    </div>
+  </aside>
+
+  <!-- 2. Khu vực chính bên phải (Main Canvas) -->
+  <main class="main-content">
+
+    <div class="main-content-inner">
+      
+      <!-- =========================================================
+           MỤC 1: HOME (BENTO GRID + AUTH CARD)
+      ========================================================= -->
+      @if (currentSection() === 'home') {
+      <header class="page-header">
+        <div class="header-top-row">
+          <div class="platform-badge">
+            <span class="pulse-dot"></span>
+            <span>DEVBOARD PLATFORM 2.0</span>
+            <span class="badge-separator">/</span>
+            <span class="badge-sub">ENGINEERING HUB</span>
+          </div>
+
+          <!-- Nút chuyển đổi Theme dạng Pill -->
+          <button 
+            type="button" 
+            class="theme-pill-switch" 
+            (click)="toggleTheme()" 
+            [title]="isDarkMode() ? 'Switch to Light Theme' : 'Switch to Dark Theme'">
+            <span class="switch-icon-box">
+              @if (isDarkMode()) {
+                <i-lucide [img]="Sun" class="switch-icon text-amber"></i-lucide>
+              } @else {
+                <i-lucide [img]="Moon" class="switch-icon text-indigo"></i-lucide>
+              }
+            </span>
+            <span class="switch-label">{{ isDarkMode() ? 'Light Mode' : 'Dark Mode' }}</span>
+          </button>
+        </div>
+
+        <h1 class="main-title">GitHub Integration</h1>
+      </header>
+
+        <!-- Grid 2 cột: Left Bento + Right Auth Card -->
+      <div class="content-grid">
+        
+          <!-- Cột bên trái: Bento Grid 3 thẻ -->
+        <section class="bento-grid">
+          
+            <!-- Bento 1: Thẻ Lớn - Smart Code Snippets & IDE Preview -->
+          <div class="bento-card bento-hero">
+            <div class="bento-header">
+              <div class="bento-title-group">
+                <div class="bento-icon-badge badge-cyan">
+                  <i-lucide [img]="Code" class="bento-icon"></i-lucide>
+                </div>
+                <div>
+                  <h3 class="bento-title">Smart Code Engine & Snippets</h3>
+                  <p class="bento-desc">Store reusable code blocks with live Markdown syncing.</p>
+                </div>
+              </div>
+
+              <!-- Tabs mini chọn file code -->
+              <div class="code-tabs">
+                <button 
+                  type="button" 
+                  class="code-tab" 
+                  [class.active]="activeTab() === 'snippet'"
+                  (click)="setTab('snippet')">
+                  auth.service.ts
+                </button>
+                <button 
+                  type="button" 
+                  class="code-tab" 
+                  [class.active]="activeTab() === 'config'"
+                  (click)="setTab('config')">
+                  devboard.json
+                </button>
+              </div>
+            </div>
+
+            <!-- Khung Code Editor thu nhỏ phong cách Linear / macOS -->
+            <div class="mini-editor">
+              <div class="editor-titlebar">
+                <div class="window-dots">
+                  <span class="dot dot-red"></span>
+                  <span class="dot dot-yellow"></span>
+                  <span class="dot dot-green"></span>
+                </div>
+                <span class="editor-file">
+                  @if (activeTab() === 'snippet') {
+                    src/app/core/auth.service.ts
+                  } @else {
+                    config/devboard.json
+                  }
+                </span>
+                <span class="copy-badge">
+                  <i-lucide [img]="Sparkles" class="copy-icon"></i-lucide>
+                  Synced
+                </span>
+              </div>
+
+              <!-- Nội dung code syntax highlight -->
+              <div class="editor-content">
+                @if (activeTab() === 'snippet') {
+                  <pre class="code-block"><code><span class="c-line"><span class="c-num">1</span><span class="c-kw">import</span> &#123; Injectable, signal &#125; <span class="c-kw">from</span> <span class="c-str">'&#64;angular/core'</span>;</span>
+<span class="c-line"><span class="c-num">2</span><span class="c-dec">&#64;Injectable</span>(&#123; providedIn: <span class="c-str">'root'</span> &#125;)</span>
+<span class="c-line"><span class="c-num">3</span><span class="c-kw">export class</span> <span class="c-fn">DevBoardAuth</span> &#123;</span>
+<span class="c-line"><span class="c-num">4</span>  <span class="c-kw">readonly</span> user = <span class="c-fn">signal</span>&#60;<span class="c-typ">Developer</span>&#62;(&#123; id: <span class="c-num-val">1024</span>, role: <span class="c-str">'Core Engineer'</span> &#125;);</span>
+<span class="c-line"><span class="c-num">5</span>&#125;</span></code></pre>
+                } @else {
+                  <pre class="code-block"><code><span class="c-line"><span class="c-num">1</span>&#123;</span>
+<span class="c-line"><span class="c-num">2</span>  <span class="c-prop">"platform"</span>: <span class="c-str">"DevBoard Internal Workspace"</span>,</span>
+<span class="c-line"><span class="c-num">3</span>  <span class="c-prop">"version"</span>: <span class="c-str">"2.4.0-enterprise"</span>,</span>
+<span class="c-line"><span class="c-num">4</span>  <span class="c-prop">"sync"</span>: &#123; <span class="c-prop">"github_sso"</span>: <span class="c-bool">true</span>, <span class="c-prop">"realtime_pr"</span>: <span class="c-bool">true</span> &#125;</span>
+<span class="c-line"><span class="c-num">5</span>&#125;</span></code></pre>
+                }
+              </div>
+            </div>
+          </div>
+
+            <!-- Bento 2: Thẻ Nhỏ Trái - Repository Hub -->
+          <div class="bento-card bento-small">
+            <div class="bento-icon-badge badge-purple">
+              <i-lucide [img]="GitBranch" class="bento-icon"></i-lucide>
+            </div>
+            <div class="bento-small-content">
+              <h4 class="bento-small-title">Repository Hub</h4>
+              <p class="bento-small-desc">Direct 2-way sync with commits, PRs & CI/CD workflows.</p>
+              
+              <div class="branch-pill">
+                <span class="branch-dot"></span>
+                <span class="branch-name">main</span>
+                <span class="commit-badge">+148 -12</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Bento 3: Thẻ Nhỏ Phải - Internal SSO & Security -->
+          <div class="bento-card bento-small">
+            <div class="bento-icon-badge badge-emerald">
+              <i-lucide [img]="ShieldCheck" class="bento-icon"></i-lucide>
+            </div>
+            <div class="bento-small-content">
+              <h4 class="bento-small-title">Internal SSO</h4>
+              <p class="bento-small-desc">One-click organization authentication with 256-bit encryption.</p>
+              
+              <div class="security-pill">
+                <i-lucide [img]="CheckCircle2" class="verified-icon"></i-lucide>
+                <span>Enterprise Verified</span>
+              </div>
+            </div>
+          </div>
+
+        </section>
+
+          <!-- Cột bên phải: Auth Card -->
+        <section class="auth-section">
+          <div class="auth-card">
+            <div class="card-ambient-glow"></div>
+            
+            <div class="auth-badge-top">
+              <span class="auth-lock-dot"></span>
+              SECURE WORKSPACE
+            </div>
+
+            <h2 class="auth-title">Get Started</h2>
+            <p class="auth-subtitle">Sign in to access your developer dashboard</p>
+
+              <!-- Mascot Octocat Avatar với Cyber Halo -->
+              <div class="mascot-circle">
+                <svg class="octocat-svg" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <!-- Thân mèo -->
+                  <path class="octo-stroke" d="M34 86C34 74 41 66 50 66C59 66 66 74 66 86" stroke-width="2.5" stroke-linecap="round"/>
+                  <!-- Đầu và 2 tai mèo -->
+                  <path class="octo-stroke" d="M31 46C28 40 27 33 32 29C36 26 41 32 44 34C48 33 52 33 56 34C59 32 64 26 68 29C73 33 72 40 69 46C73 52 73 58 70 62C65 68 35 68 30 62C27 58 27 52 31 46Z" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+                  <!-- Mắt -->
+                  <circle class="octo-fill" cx="42" cy="47" r="2.2"/>
+                  <circle class="octo-fill" cx="58" cy="47" r="2.2"/>
+                  <!-- Miệng -->
+                  <path class="octo-stroke" d="M48 52L50 54L52 52" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+                  <!-- Râu mèo -->
+                  <line class="octo-stroke" x1="33" y1="50" x2="27" y2="48" stroke-width="1.5" stroke-linecap="round"/>
+                  <line class="octo-stroke" x1="33" y1="53" x2="26" y2="54" stroke-width="1.5" stroke-linecap="round"/>
+                  <line class="octo-stroke" x1="67" y1="50" x2="73" y2="48" stroke-width="1.5" stroke-linecap="round"/>
+                  <line class="octo-stroke" x1="67" y1="53" x2="74" y2="54" stroke-width="1.5" stroke-linecap="round"/>
+                  <!-- Tay vẫy chào bên trái -->
+                  <path class="octo-stroke" d="M28 64C23 58 20 46 23 42C25 39 29 43 30 50" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+                  <!-- Tay phải -->
+                  <path class="octo-stroke" d="M72 64C76 61 78 55 76 52" stroke-width="2.5" stroke-linecap="round"/>
+                </svg>
+              </div>
+
+              <!-- Nút Continue with GitHub phong cách Linear Shimmer -->
+              <button type="button" class="btn-continue-github" routerLink="/app">
+                <i-lucide [img]="Github" class="btn-github-icon"></i-lucide>
+                <span>Continue with GitHub</span>
+                <span class="btn-kbd">↵</span>
+              </button>
+
+              <p class="auth-security-note">
+                🔒 End-to-end encrypted • Internal Org OAuth
+              </p>
+            </div>
+          </section>
+
+        </div>
+      }
+
+      <!-- =========================================================
+           MỤC 2: FEATURES (6 BENTO CARDS CHI TIẾT)
+      ========================================================= -->
+      @if (currentSection() === 'features') {
+        <header class="page-header">
+          <div class="header-top-row">
+            <div class="platform-badge">
+              <span class="pulse-dot"></span>
+              <span>ENGINEERING SUITE</span>
+              <span class="badge-separator">/</span>
+              <span class="badge-sub">FULL CAPABILITIES</span>
+            </div>
+
+            <button type="button" class="theme-pill-switch" (click)="toggleTheme()">
+              <span class="switch-icon-box">
+                @if (isDarkMode()) {
+                  <i-lucide [img]="Sun" class="switch-icon text-amber"></i-lucide>
+                } @else {
+                  <i-lucide [img]="Moon" class="switch-icon text-indigo"></i-lucide>
+                }
+              </span>
+              <span class="switch-label">{{ isDarkMode() ? 'Light Mode' : 'Dark Mode' }}</span>
+            </button>
+          </div>
+
+          <h1 class="main-title">Developer Workspace Features</h1>
+        </header>
+
+        <!-- Lưới 6 ô Bento Features -->
+        <div class="features-grid">
+          
+          <div class="feature-card">
+            <div class="feature-icon-box icon-cyan">
+              <i-lucide [img]="FolderGit2" class="feature-icon"></i-lucide>
+            </div>
+            <h3 class="feature-title">Repository Hub</h3>
+            <p class="feature-desc">Synchronize with GitHub repositories, track pull requests, daily commits, and open issues in a single view.</p>
+            <div class="feature-tags">
+              <span class="tag">Webhooks</span>
+              <span class="tag">CI / CD</span>
+              <span class="tag">Git Sync</span>
+            </div>
+          </div>
+
+          <div class="feature-card">
+            <div class="feature-icon-box icon-purple">
+              <i-lucide [img]="Code" class="feature-icon"></i-lucide>
+            </div>
+            <h3 class="feature-title">Smart Code Snippets</h3>
+            <p class="feature-desc">Save, tag, and copy reusable code snippets with multi-language syntax highlighting across TypeScript, Go, Python & SQL.</p>
+            <div class="feature-tags">
+              <span class="tag">Multi-Language</span>
+              <span class="tag">Instant Copy</span>
+              <span class="tag">Tags</span>
+            </div>
+          </div>
+
+          <div class="feature-card">
+            <div class="feature-icon-box icon-emerald">
+              <i-lucide [img]="FileText" class="feature-icon"></i-lucide>
+            </div>
+            <h3 class="feature-title">Engineering Notes</h3>
+            <p class="feature-desc">Write rich Markdown documentation, attach notes to specific repositories, and render architecture diagrams on the fly.</p>
+            <div class="feature-tags">
+              <span class="tag">Markdown</span>
+              <span class="tag">Repo Linking</span>
+              <span class="tag">Specs</span>
+            </div>
+          </div>
+
+          <div class="feature-card">
+            <div class="feature-icon-box icon-amber">
+              <i-lucide [img]="BarChart2" class="feature-icon"></i-lucide>
+            </div>
+            <h3 class="feature-title">Velocity & Analytics</h3>
+            <p class="feature-desc">Monitor commit activity trends, PR turnaround time, and developer streaks to maintain engineering momentum.</p>
+            <div class="feature-tags">
+              <span class="tag">Commit Volume</span>
+              <span class="tag">PR Speed</span>
+              <span class="tag">Metrics</span>
+            </div>
+          </div>
+
+          <div class="feature-card">
+            <div class="feature-icon-box icon-rose">
+              <i-lucide [img]="ShieldCheck" class="feature-icon"></i-lucide>
+            </div>
+            <h3 class="feature-title">Internal SSO & Security</h3>
+            <p class="feature-desc">One-click enterprise authentication, granular role-based access control (RBAC), and 256-bit AES encrypted secret storage.</p>
+            <div class="feature-tags">
+              <span class="tag">GitHub OAuth</span>
+              <span class="tag">RBAC</span>
+              <span class="tag">Encrypted</span>
+            </div>
+          </div>
+
+          <div class="feature-card">
+            <div class="feature-icon-box icon-sky">
+              <i-lucide [img]="Bookmark" class="feature-icon"></i-lucide>
+            </div>
+            <h3 class="feature-title">Instant Search & Starred</h3>
+            <p class="feature-desc">Global <code>⌘K</code> command palette for lightning-fast navigation across repositories, notes, and favorite snippets.</p>
+            <div class="feature-tags">
+              <span class="tag">⌘K Command</span>
+              <span class="tag">Bookmarks</span>
+              <span class="tag">Quick Jump</span>
+            </div>
+          </div>
+
+        </div>
+      }
+
+      <!-- =========================================================
+           MỤC 3: ABOUT US (PROFILE VỚI AVATAR CHÍNH CHỦ + VISION)
+      ========================================================= -->
+      @if (currentSection() === 'about') {
+        <header class="page-header">
+          <div class="header-top-row">
+            <div class="platform-badge">
+              <span class="pulse-dot"></span>
+              <span>CREATOR & PLATFORM</span>
+              <span class="badge-separator">/</span>
+              <span class="badge-sub">ABOUT US</span>
+            </div>
+
+            <button type="button" class="theme-pill-switch" (click)="toggleTheme()">
+              <span class="switch-icon-box">
+                @if (isDarkMode()) {
+                  <i-lucide [img]="Sun" class="switch-icon text-amber"></i-lucide>
+                } @else {
+                  <i-lucide [img]="Moon" class="switch-icon text-indigo"></i-lucide>
+                }
+              </span>
+              <span class="switch-label">{{ isDarkMode() ? 'Light Mode' : 'Dark Mode' }}</span>
+            </button>
+          </div>
+
+          <h1 class="main-title">About DevBoard & The Creator</h1>
+        </header>
+
+        <!-- Layout 2 cột: Cột trái (Profile Avatar Card) + Cột phải (Vision & Stack) -->
+        <div class="about-grid">
+          
+          <!-- Cột trái: Card Hồ sơ Kỹ sư với Avatar chính chủ -->
+          <div class="profile-card">
+            <div class="profile-ambient-glow"></div>
+
+            <!-- Avatar của User với viền phát sáng -->
+            <div class="avatar-wrapper">
+              <img 
+                src="assets/Avatar.jpg" 
+                alt="Developer Avatar" 
+                class="user-avatar-img"
+              />
+              <span class="avatar-status-badge" title="Active Core Engineer"></span>
+            </div>
+
+            <h2 class="profile-name">Thành Nam Lê</h2>
+            <p class="profile-title">Software Engineer & Platform Architect</p>
+
+            <div class="profile-bio">
+              Software engineer passionate about crafting high-performance developer tools, clean reactive web architectures, and seamless internal platforms.
+            </div>
+
+            <!-- Tech Stack Badges -->
+            <div class="stack-pills">
+              <span class="stack-pill">Angular 17</span>
+              <span class="stack-pill">TypeScript</span>
+              <span class="stack-pill">Node.js SSR</span>
+              <span class="stack-pill">GitHub API</span>
+              <span class="stack-pill">PostgreSQL</span>
+            </div>
+
+            <!-- Contact / GitHub Buttons -->
+            <div class="profile-links">
+              <a href="https://github.com/thanhnamle" target="_blank" class="profile-link-btn">
+                <i-lucide [img]="Github" class="profile-link-icon"></i-lucide>
+                <span>My Profile</span>
+              </a>
+            </div>
+          </div>
+
+          <!-- Cột phải: Vision, Mission & Architecture Highlights -->
+          <div class="about-details">
+            
+            <div class="about-detail-card">
+              <div class="about-icon-header">
+                <div class="bento-icon-badge badge-cyan">
+                  <i-lucide [img]="Zap" class="bento-icon"></i-lucide>
+                </div>
+                <h3>The Mission</h3>
+              </div>
+              <p>DevBoard was built to eliminate developer cognitive overhead by creating a unified, distraction-free environment that bridges code repositories, technical Markdown notes, and reusable engineering snippets.</p>
+            </div>
+
+            <div class="about-detail-card">
+              <div class="about-icon-header">
+                <div class="bento-icon-badge badge-purple">
+                  <i-lucide [img]="Layers" class="bento-icon"></i-lucide>
+                </div>
+                <h3>Architecture & Principles</h3>
+              </div>
+              <p>Designed with modern <strong>Angular 17 Standalone Components</strong> and reactive <strong>Signals</strong>. Powered by Server-Side Rendering (SSR) for blazing performance, instant hydration, and local-first developer ergonomics.</p>
+            </div>
+
+            <div class="about-detail-card">
+              <div class="about-icon-header">
+                <div class="bento-icon-badge badge-emerald">
+                  <i-lucide [img]="ShieldCheck" class="bento-icon"></i-lucide>
+                </div>
+                <h3>Enterprise Grade & Security</h3>
+              </div>
+              <p>Zero third-party tracking, strict OAuth authorization scopes, encrypted workspace settings, and role-based access control tailored for software teams.</p>
+            </div>
+
+          </div>
+
+        </div>
+      }
+
+      <!-- =========================================================
+           MỤC 4: DOCS (TÀI LIỆU HƯỚNG DẪN KỸ THUẬT & API)
+      ========================================================= -->
+      @if (currentSection() === 'docs') {
+        <header class="page-header">
+          <div class="header-top-row">
+            <div class="platform-badge">
+              <span class="pulse-dot"></span>
+              <span>TECHNICAL MANUAL</span>
+              <span class="badge-separator">/</span>
+              <span class="badge-sub">DOCUMENTATION</span>
+            </div>
+
+            <button type="button" class="theme-pill-switch" (click)="toggleTheme()">
+              <span class="switch-icon-box">
+                @if (isDarkMode()) {
+                  <i-lucide [img]="Sun" class="switch-icon text-amber"></i-lucide>
+                } @else {
+                  <i-lucide [img]="Moon" class="switch-icon text-indigo"></i-lucide>
+                }
+              </span>
+              <span class="switch-label">{{ isDarkMode() ? 'Light Mode' : 'Dark Mode' }}</span>
+            </button>
+          </div>
+
+          <h1 class="main-title">Developer Documentation</h1>
+        </header>
+
+        <!-- Layout Docs: Tabs + Content Box -->
+        <div class="docs-container">
+          
+          <!-- Docs Tabs Bar -->
+          <div class="docs-nav-bar">
+            <button 
+              type="button" 
+              class="docs-tab-btn" 
+              [class.active]="activeDocsTab() === 'quickstart'"
+              (click)="setDocsTab('quickstart')">
+              <i-lucide [img]="Zap" class="docs-tab-icon"></i-lucide>
+              <span>1. Quickstart Guide</span>
+            </button>
+
+            <button 
+              type="button" 
+              class="docs-tab-btn" 
+              [class.active]="activeDocsTab() === 'oauth'"
+              (click)="setDocsTab('oauth')">
+              <i-lucide [img]="Key" class="docs-tab-icon"></i-lucide>
+              <span>2. GitHub OAuth Setup</span>
+            </button>
+
+            <button 
+              type="button" 
+              class="docs-tab-btn" 
+              [class.active]="activeDocsTab() === 'shortcuts'"
+              (click)="setDocsTab('shortcuts')">
+              <i-lucide [img]="Terminal" class="docs-tab-icon"></i-lucide>
+              <span>3. Keyboard Shortcuts</span>
+            </button>
+
+            <button 
+              type="button" 
+              class="docs-tab-btn" 
+              [class.active]="activeDocsTab() === 'architecture'"
+              (click)="setDocsTab('architecture')">
+              <i-lucide [img]="Layers" class="docs-tab-icon"></i-lucide>
+              <span>4. System Architecture</span>
+            </button>
+          </div>
+
+          <!-- Docs Tab Content Panel -->
+          <div class="docs-content-panel">
+            
+            @if (activeDocsTab() === 'quickstart') {
+              <div class="doc-section">
+                <h2>🚀 Getting Started in 3 Minutes</h2>
+                <p>Welcome to DevBoard. Follow these simple steps to link your developer identity and explore the internal tools workspace:</p>
+
+                <div class="steps-list">
+                  <div class="step-item">
+                    <span class="step-badge">Step 1</span>
+                    <div>
+                      <h4>Authenticate with GitHub SSO</h4>
+                      <p>Click the <strong>Continue with GitHub</strong> button on the Home tab to authorize your developer account.</p>
+                    </div>
+                  </div>
+
+                  <div class="step-item">
+                    <span class="step-badge">Step 2</span>
+                    <div>
+                      <h4>Select Repositories & Sync</h4>
+                      <p>Navigate to <strong>/app/projects</strong> to choose repositories and synchronize PRs and active issues.</p>
+                    </div>
+                  </div>
+
+                  <div class="step-item">
+                    <span class="step-badge">Step 3</span>
+                    <div>
+                      <h4>Create Snippets & Markdown Notes</h4>
+                      <p>Use the Snippets & Notes modules to save reusable code blocks and architecture design documents.</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            }
+
+            @if (activeDocsTab() === 'oauth') {
+              <div class="doc-section">
+                <h2>🔑 GitHub OAuth & Security Scopes</h2>
+                <p>DevBoard requests minimal, transparent permissions required to synchronize your developer workflow:</p>
+
+                <div class="scope-table">
+                  <div class="scope-row header">
+                    <span>OAuth Scope</span>
+                    <span>Access Level</span>
+                    <span>Purpose</span>
+                  </div>
+                  <div class="scope-row">
+                    <code>read:user</code>
+                    <span class="badge-read">Read-Only</span>
+                    <span>Retrieve developer name, handle, and avatar for profile personalization.</span>
+                  </div>
+                  <div class="scope-row">
+                    <code>repo</code>
+                    <span class="badge-full">Full Control</span>
+                    <span>Synchronize commit history, branches, pull requests, and repository issues.</span>
+                  </div>
+                  <div class="scope-row">
+                    <code>read:org</code>
+                    <span class="badge-read">Read-Only</span>
+                    <span>Verify internal organization membership for SSO Single-Sign-On access.</span>
+                  </div>
+                </div>
+              </div>
+            }
+
+            @if (activeDocsTab() === 'shortcuts') {
+              <div class="doc-section">
+                <h2>⚡ Keyboard Shortcuts (Hotkeys)</h2>
+                <p>Boost your productivity with global hotkeys designed for high-velocity engineers:</p>
+
+                <div class="shortcuts-grid">
+                  <div class="shortcut-item">
+                    <div class="shortcut-keys"><kbd>⌘</kbd> + <kbd>K</kbd></div>
+                    <span>Open Global Search Palette</span>
+                  </div>
+                  <div class="shortcut-item">
+                    <div class="shortcut-keys"><kbd>⌘</kbd> + <kbd>N</kbd></div>
+                    <span>Create New Markdown Note</span>
+                  </div>
+                  <div class="shortcut-item">
+                    <div class="shortcut-keys"><kbd>⌘</kbd> + <kbd>S</kbd></div>
+                    <span>Save Code Snippet</span>
+                  </div>
+                  <div class="shortcut-item">
+                    <div class="shortcut-keys"><kbd>⇧</kbd> + <kbd>⌘</kbd> + <kbd>D</kbd></div>
+                    <span>Toggle Dark / Light Mode</span>
+                  </div>
+                  <div class="shortcut-item">
+                    <div class="shortcut-keys"><kbd>↵</kbd> <kbd>Enter</kbd></div>
+                    <span>Quick Login with GitHub</span>
+                  </div>
+                  <div class="shortcut-item">
+                    <div class="shortcut-keys"><kbd>Esc</kbd></div>
+                    <span>Close Modal / Return to Workspace</span>
+                  </div>
+                </div>
+              </div>
+            }
+
+            @if (activeDocsTab() === 'architecture') {
+              <div class="doc-section">
+                <h2>🏗️ System Architecture & Tech Stack</h2>
+                <p>DevBoard is built on modern, resilient web foundations for optimal speed and type-safety:</p>
+
+                <div class="arch-cards-grid">
+                  <div class="arch-card">
+                    <h4>Frontend Core</h4>
+                    <p>Angular 17 with Standalone Components, Reactive Signals state management, and strict TypeScript.</p>
+                  </div>
+                  <div class="arch-card">
+                    <h4>Server-Side Rendering</h4>
+                    <p>Node.js Express SSR engine for rapid initial loads, SEO, and secure server-side hydration.</p>
+                  </div>
+                  <div class="arch-card">
+                    <h4>Iconography & Design</h4>
+                    <p>Lucide Angular icons with unified inline-flex optical alignment and glassmorphism styling.</p>
+                  </div>
+                  <div class="arch-card">
+                    <h4>Data & Integration</h4>
+                    <p>Direct integration with GitHub REST / GraphQL APIs and Postgres backend persistence.</p>
+                  </div>
+                </div>
+              </div>
+            }
+
+          </div>
+
+        </div>
+      }
+
+    </div>
+  </main>
+
+</div>

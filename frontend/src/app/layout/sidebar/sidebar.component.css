@@ -1,0 +1,749 @@
+/* =========================================================
+   1. KHUNG CHÍNH (FLOATING SIDEBAR CARD)
+========================================================= */
+.sidebar {
+  position: relative;
+  width: 260px;
+  height: calc(100vh - 24px);
+  margin: 12px;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 24px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.04), 0 1px 3px rgba(0, 0, 0, 0.02);
+  display: flex;
+  flex-direction: column;
+  padding: 18px 14px;
+  box-sizing: border-box;
+  user-select: none;
+  transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+              padding 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+              background 0.3s ease,
+              border-color 0.3s ease,
+              box-shadow 0.3s ease;
+  z-index: 50;
+}
+
+.sidebar.collapsed {
+  width: 76px;
+  padding: 18px 10px;
+  border-radius: 32px;
+}
+
+/* =========================================================
+   LINEAR OBSIDIAN DARK TECH THEME (OPTION 1)
+========================================================= */
+.sidebar.dark-theme {
+  background: linear-gradient(180deg, #090d16 0%, #0d1322 100%);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 0 20px 50px -10px rgba(0, 0, 0, 0.7), 
+              inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  color: #f1f5f9;
+}
+
+/* =========================================================
+   2. HEADER & LOGO BRAND
+========================================================= */
+.sidebar-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 18px;
+  position: relative;
+}
+
+.logo-group {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.logo-badge {
+  width: 42px;
+  height: 42px;
+  border-radius: 12px;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  background: #000000;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.sidebar.dark-theme .logo-badge {
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  box-shadow: 0 0 20px rgba(99, 102, 241, 0.2);
+}
+
+.logo-badge:hover {
+  transform: scale(1.04);
+}
+
+.logo-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transform: scale(2.2);
+  display: block;
+}
+
+.brand-text {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.05;
+}
+
+.brand-line {
+  font-size: 17px;
+  font-weight: 900;
+  color: #0f172a;
+  letter-spacing: -0.2px;
+  font-style: italic;
+  transition: color 0.3s ease;
+}
+
+.brand-line-1 {
+  position: relative;
+  top: -2px;
+  font-size: 17px;
+  font-weight: 900;
+  color: #0f172a;
+  letter-spacing: -0.2px;
+  font-style: italic;
+  transition: color 0.3s ease;
+}
+
+.sidebar.dark-theme .brand-line,
+.sidebar.dark-theme .brand-line-1 {
+  color: #ffffff;
+}
+
+/* Nút Toggle tròn nhỏ ở mép */
+.toggle-btn {
+  position: absolute;
+  top: 26px;
+  right: -13px;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  color: #475569;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  z-index: 99;
+  padding: 0;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  transition: all 0.2s ease;
+}
+
+.sidebar.dark-theme .toggle-btn {
+  background: #111726;
+  border-color: rgba(255, 255, 255, 0.12);
+  color: #94a3b8;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.5);
+}
+
+.toggle-btn:hover {
+  background: #0f172a;
+  color: #ffffff;
+  border-color: #0f172a;
+  transform: scale(1.1);
+}
+
+.sidebar.dark-theme .toggle-btn:hover {
+  background: #6366f1;
+  color: #ffffff;
+  border-color: #6366f1;
+}
+
+.sidebar.collapsed .sidebar-header {
+  flex-direction: column;
+  gap: 12px;
+  align-items: center;
+}
+
+/* =========================================================
+   3. SEARCH BAR VỚI PHÍM TẮT ⌘ K (COMMAND PALETTE STYLE)
+========================================================= */
+.search-box {
+  height: 38px;
+  background: #f1f5f9;
+  border: 1px solid transparent;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  padding: 0 10px;
+  gap: 8px;
+  margin-bottom: 16px;
+  transition: all 0.2s ease;
+}
+
+.sidebar.dark-theme .search-box {
+  background: rgba(255, 255, 255, 0.04);
+  border-color: rgba(255, 255, 255, 0.06);
+}
+
+.search-box:focus-within {
+  background: #ffffff;
+  border-color: #6366f1;
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.12);
+}
+
+.sidebar.dark-theme .search-box:focus-within {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: #818cf8;
+  box-shadow: 0 0 0 3px rgba(129, 140, 248, 0.2);
+}
+
+.search-icon {
+  color: #64748b;
+  flex-shrink: 0;
+  width: 14px;
+  height: 14px;
+}
+
+.sidebar.dark-theme .search-icon {
+  color: #94a3b8;
+}
+
+.search-input {
+  flex: 1;
+  min-width: 0;
+  border: none;
+  background: transparent;
+  outline: none;
+  font-size: 13px;
+  color: #1e293b;
+}
+
+.sidebar.dark-theme .search-input {
+  color: #f1f5f9;
+}
+
+.search-input::placeholder {
+  color: #94a3b8;
+}
+
+.shortcut-keys {
+  display: flex;
+  gap: 3px;
+}
+
+.key-chip {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 5px;
+  font-size: 10px;
+  font-weight: 700;
+  color: #64748b;
+  padding: 1px 5px;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+  line-height: 1.2;
+}
+
+.sidebar.dark-theme .key-chip {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.1);
+  color: #cbd5e1;
+  box-shadow: none;
+}
+
+.search-collapsed-btn {
+  width: 42px;
+  height: 42px;
+  border-radius: 12px;
+  background: #f1f5f9;
+  border: none;
+  color: #64748b;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 16px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.sidebar.dark-theme .search-collapsed-btn {
+  background: rgba(255, 255, 255, 0.05);
+  color: #94a3b8;
+}
+
+.search-collapsed-btn:hover {
+  background: #e2e8f0;
+  color: #0f172a;
+}
+
+.sidebar.dark-theme .search-collapsed-btn:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: #ffffff;
+}
+
+/* =========================================================
+   4. TIÊU ĐỀ SECTION & DANH SÁCH MENU (LINEAR BADGES)
+========================================================= */
+.menu-section,
+.message-section {
+  display: flex;
+  flex-direction: column;
+}
+
+.menu-section {
+  flex: 1;
+  overflow-y: auto;
+}
+
+.menu-section::-webkit-scrollbar {
+  width: 0;
+}
+
+.section-title {
+  width: 100%;
+  height: 28px;
+  background: transparent;
+  border: none;
+  outline: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 8px;
+  margin-top: 6px;
+  margin-bottom: 4px;
+  color: #64748b;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  border-radius: 6px;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.sidebar.dark-theme .section-title {
+  color: #64748b;
+}
+
+.section-title:hover {
+  color: #0f172a;
+}
+
+.sidebar.dark-theme .section-title:hover {
+  color: #e2e8f0;
+}
+
+.section-dash {
+  color: #94a3b8;
+}
+
+.nav-list {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.nav-group {
+  display: flex;
+  flex-direction: column;
+}
+
+.nav-item {
+  height: 38px;
+  display: flex;
+  align-items: center;
+  padding: 0 10px;
+  gap: 12px;
+  border-radius: 10px;
+  text-decoration: none;
+  color: #475569;
+  font-size: 13.5px;
+  font-weight: 500;
+  cursor: pointer;
+  border: 1px solid transparent;
+  transition: all 0.18s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.sidebar.dark-theme .nav-item {
+  color: #94a3b8;
+}
+
+.nav-item:hover {
+  background: #f1f5f9;
+  color: #0f172a;
+}
+
+.sidebar.dark-theme .nav-item:hover {
+  background: rgba(255, 255, 255, 0.05);
+  color: #ffffff;
+}
+
+/* Khi Active hoặc Expanded */
+.nav-item.route-active,
+.nav-item.active {
+  background: #f8fafc;
+  border-color: #e2e8f0;
+  color: #4f46e5;
+  font-weight: 600;
+}
+
+.sidebar.dark-theme .nav-item.route-active,
+.sidebar.dark-theme .nav-item.active {
+  background: rgba(99, 102, 241, 0.12);
+  border-color: rgba(99, 102, 241, 0.3);
+  color: #a5b4fc;
+  box-shadow: 0 0 16px rgba(99, 102, 241, 0.15);
+}
+
+.nav-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #64748b;
+  transition: color 0.18s ease;
+}
+
+.sidebar.dark-theme .nav-icon {
+  color: #94a3b8;
+}
+
+.nav-item:hover .nav-icon,
+.nav-item.route-active .nav-icon {
+  color: #4f46e5;
+}
+
+.sidebar.dark-theme .nav-item:hover .nav-icon,
+.sidebar.dark-theme .nav-item.route-active .nav-icon {
+  color: #818cf8;
+}
+
+.nav-label {
+  flex: 1;
+  white-space: nowrap;
+  font-size: 13px;
+}
+
+/* Linear Counter Badges */
+.nav-badge,
+.sub-badge {
+  font-size: 10.5px;
+  font-weight: 700;
+  padding: 1px 6px;
+  border-radius: 999px;
+  background: #e2e8f0;
+  color: #475569;
+  line-height: 1.3;
+}
+
+.sidebar.dark-theme .nav-badge,
+.sidebar.dark-theme .sub-badge {
+  background: rgba(255, 255, 255, 0.08);
+  color: #cbd5e1;
+}
+
+.badge-cyan {
+  background: #ecfeff !important;
+  color: #0891b2 !important;
+  border: 1px solid #cffafe;
+}
+
+.sidebar.dark-theme .badge-cyan {
+  background: rgba(8, 145, 178, 0.2) !important;
+  color: #38bdf8 !important;
+  border-color: rgba(56, 189, 248, 0.3);
+}
+
+.badge-emerald {
+  background: #ecfdf5 !important;
+  color: #059669 !important;
+  border: 1px solid #a7f3d0;
+}
+
+.sidebar.dark-theme .badge-emerald {
+  background: rgba(16, 185, 129, 0.2) !important;
+  color: #34d399 !important;
+  border-color: rgba(52, 211, 153, 0.3);
+}
+
+.chevron-icon {
+  color: #94a3b8;
+}
+
+.sidebar.collapsed .nav-item {
+  justify-content: center;
+  padding: 0;
+  width: 42px;
+  height: 42px;
+  margin: 0 auto;
+}
+
+/* =========================================================
+   5. CÂY THƯ MỤC CON (NESTED INDENT & TREE NODES)
+========================================================= */
+.tree-menu {
+  display: flex;
+  flex-direction: column;
+  margin-left: 18px;
+  padding-left: 10px;
+  position: relative;
+  margin-top: 2px;
+  margin-bottom: 4px;
+}
+
+.tree-node {
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  position: relative;
+  text-decoration: none;
+  padding: 0 8px 0 20px;
+  font-size: 12.5px;
+  color: #64748b;
+  border-radius: 6px;
+  transition: all 0.15s ease;
+}
+
+.sidebar.dark-theme .tree-node {
+  color: #94a3b8;
+}
+
+.tree-node:hover {
+  color: #0f172a;
+  background: #f1f5f9;
+}
+
+.sidebar.dark-theme .tree-node:hover {
+  color: #ffffff;
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.tree-node.sub-active {
+  color: #4f46e5;
+  font-weight: 600;
+  background: #f8fafc;
+}
+
+.sidebar.dark-theme .tree-node.sub-active {
+  color: #818cf8;
+  font-weight: 600;
+  background: rgba(99, 102, 241, 0.1);
+}
+
+.tree-curve {
+  position: absolute;
+  left: 5px;
+  top: -6px;
+  width: 12px;
+  height: 21px;
+  border-left: 1.5px solid #cbd5e1;
+  border-bottom: 1.5px solid #cbd5e1;
+  border-bottom-left-radius: 6px;
+}
+
+.sidebar.dark-theme .tree-curve {
+  border-color: rgba(255, 255, 255, 0.15);
+}
+
+.tree-node.sub-active .tree-curve {
+  border-color: #6366f1;
+}
+
+.tree-node-label {
+  white-space: nowrap;
+}
+
+/* =========================================================
+   6. FOOTER: THEME SWITCHER & USER PROFILE
+========================================================= */
+.sidebar-footer {
+  margin-top: auto;
+  padding-top: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+/* Theme Switcher Segmented Bar */
+.theme-switcher-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.theme-segmented-bar {
+  width: 100%;
+  height: 32px;
+  background: #f1f5f9;
+  border: 1px solid #e2e8f0;
+  border-radius: 999px;
+  display: flex;
+  align-items: center;
+  padding: 2px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.sidebar.dark-theme .theme-segmented-bar {
+  background: rgba(255, 255, 255, 0.04);
+  border-color: rgba(255, 255, 255, 0.08);
+}
+
+.theme-opt {
+  flex: 1;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  font-size: 11.5px;
+  font-weight: 600;
+  color: #64748b;
+  border-radius: 999px;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.theme-opt.active {
+  background: #ffffff;
+  color: #0f172a;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+}
+
+.sidebar.dark-theme .theme-opt.active {
+  background: #1e293b;
+  color: #f8fafc;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+}
+
+.theme-icon {
+  width: 13px;
+  height: 13px;
+}
+
+.theme-icon-btn {
+  width: 42px;
+  height: 42px;
+  border-radius: 12px;
+  background: #f1f5f9;
+  border: 1px solid #e2e8f0;
+  color: #475569;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.sidebar.dark-theme .theme-icon-btn {
+  background: rgba(255, 255, 255, 0.05);
+  border-color: rgba(255, 255, 255, 0.08);
+  color: #cbd5e1;
+}
+
+.theme-icon-btn:hover {
+  transform: scale(1.05);
+}
+
+/* User Profile Pill */
+.user-pill {
+  height: 50px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 14px;
+  display: flex;
+  align-items: center;
+  padding: 0 10px;
+  gap: 10px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.sidebar.dark-theme .user-pill {
+  background: rgba(255, 255, 255, 0.03);
+  border-color: rgba(255, 255, 255, 0.07);
+}
+
+.user-pill:hover {
+  background: #f1f5f9;
+}
+
+.sidebar.dark-theme .user-pill:hover {
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.user-avatar-box {
+  position: relative;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.user-avatar-img {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  object-fit: cover;
+  display: block;
+  border: 1px solid #cbd5e1;
+}
+
+.sidebar.dark-theme .user-avatar-img {
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+.user-online-dot {
+  position: absolute;
+  bottom: -1px;
+  right: -1px;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: #10b981;
+  border: 2px solid #ffffff;
+  box-shadow: 0 0 6px #10b981;
+}
+
+.sidebar.dark-theme .user-online-dot {
+  border-color: #0b0f19;
+}
+
+.user-text {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  line-height: 1.15;
+}
+
+.user-name {
+  font-size: 13px;
+  font-weight: 600;
+  color: #0f172a;
+}
+
+.sidebar.dark-theme .user-name {
+  color: #f8fafc;
+}
+
+.user-role {
+  font-size: 11px;
+  font-weight: 500;
+  color: #64748b;
+}
+
+.sidebar.dark-theme .user-role {
+  color: #94a3b8;
+}
+
+.user-chevron {
+  color: #94a3b8;
+}
+
+.sidebar.collapsed .user-pill {
+  width: 42px;
+  height: 42px;
+  padding: 0;
+  justify-content: center;
+  margin: 0 auto;
+}

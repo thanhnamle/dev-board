@@ -1,0 +1,365 @@
+<div class="analytics-container">
+  
+  <!-- =========================================================
+       1. HEADER BAR & TIME RANGE CONTROLS
+  ========================================================= -->
+  <header class="analytics-header">
+    <div class="header-left">
+      <div class="title-row">
+        <h1 class="analytics-title">Engineering Velocity & Analytics</h1>
+        <div class="live-pulse-badge">
+          <span class="live-dot"></span>
+          <span>Live Telemetry</span>
+        </div>
+      </div>
+      <p class="analytics-subtitle">
+        Comprehensive throughput, review turnaround cycle, and repository health metrics
+      </p>
+    </div>
+
+    <div class="header-actions">
+      <!-- Bộ lọc thời gian (Segmented Tabs) -->
+      <div class="time-filter-bar">
+        <button 
+          type="button" 
+          class="filter-tab" 
+          [class.active]="selectedTimeRange() === '7d'"
+          (click)="setTimeRange('7d')">
+          7 Days
+        </button>
+        <button 
+          type="button" 
+          class="filter-tab" 
+          [class.active]="selectedTimeRange() === '30d'"
+          (click)="setTimeRange('30d')">
+          30 Days
+        </button>
+        <button 
+          type="button" 
+          class="filter-tab" 
+          [class.active]="selectedTimeRange() === '90d'"
+          (click)="setTimeRange('90d')">
+          90 Days
+        </button>
+        <button 
+          type="button" 
+          class="filter-tab" 
+          [class.active]="selectedTimeRange() === '1y'"
+          (click)="setTimeRange('1y')">
+          This Year
+        </button>
+      </div>
+
+      <!-- Nút Refresh & Export -->
+      <button 
+        type="button" 
+        class="action-btn btn-secondary" 
+        (click)="triggerRefresh()"
+        [disabled]="isSyncing()"
+        title="Sync analytics with GitHub API">
+        <lucide-icon 
+          [img]="RefreshCw" 
+          class="btn-icon" 
+          [class.spinning]="isSyncing()">
+        </lucide-icon>
+      </button>
+
+      <button type="button" class="action-btn btn-secondary" title="Export CSV Report">
+        <lucide-icon [img]="Download" class="btn-icon"></lucide-icon>
+        <span>Export</span>
+      </button>
+    </div>
+  </header>
+
+  <!-- =========================================================
+       2. TOP 4 METRIC RIBBON (KPI CARDS)
+  ========================================================= -->
+  <section class="metrics-grid">
+    
+    <!-- KPI 1: Commit Throughput -->
+    <div class="metric-card">
+      <div class="metric-top">
+        <span class="metric-label">Commit Throughput</span>
+        <div class="metric-icon-box box-cyan">
+          <lucide-icon [img]="GitCommit" class="metric-icon"></lucide-icon>
+        </div>
+      </div>
+      <div class="metric-value-row">
+        <span class="metric-value">148</span>
+        <span class="metric-pill pill-emerald">+24% MoM</span>
+      </div>
+      <div class="metric-footer">
+        <span class="metric-trend text-emerald">Avg 4.9 commits</span>
+        <span class="metric-sub">/ active day</span>
+      </div>
+    </div>
+
+    <!-- KPI 2: PR Turnaround Cycle Time -->
+    <div class="metric-card">
+      <div class="metric-top">
+        <span class="metric-label">Mean Time To Merge</span>
+        <div class="metric-icon-box box-purple">
+          <lucide-icon [img]="Clock" class="metric-icon"></lucide-icon>
+        </div>
+      </div>
+      <div class="metric-value-row">
+        <span class="metric-value">4.2h</span>
+        <span class="metric-pill pill-cyan">35% Faster</span>
+      </div>
+      <div class="metric-footer">
+        <span class="metric-trend text-purple">Top 5% Tier</span>
+        <span class="metric-sub">across organization</span>
+      </div>
+    </div>
+
+    <!-- KPI 3: First Review Response -->
+    <div class="metric-card">
+      <div class="metric-top">
+        <span class="metric-label">Review Response</span>
+        <div class="metric-icon-box box-emerald">
+          <lucide-icon [img]="Zap" class="metric-icon"></lucide-icon>
+        </div>
+      </div>
+      <div class="metric-value-row">
+        <span class="metric-value">28m</span>
+        <span class="metric-pill pill-emerald">94% Under 1h</span>
+      </div>
+      <div class="metric-footer">
+        <span class="metric-trend text-emerald">Sub-hour SLA</span>
+        <span class="metric-sub">for all linked PRs</span>
+      </div>
+    </div>
+
+    <!-- KPI 4: Code Churn & Refactor -->
+    <div class="metric-card">
+      <div class="metric-top">
+        <span class="metric-label">Refactor Ratio</span>
+        <div class="metric-icon-box box-amber">
+          <lucide-icon [img]="Layers" class="metric-icon"></lucide-icon>
+        </div>
+      </div>
+      <div class="metric-value-row">
+        <span class="metric-value">22%</span>
+        <span class="metric-pill pill-amber">Balanced</span>
+      </div>
+      <div class="metric-footer">
+        <span class="metric-trend text-blue">+12.4k LOC</span>
+        <span class="metric-sub">net code addition</span>
+      </div>
+    </div>
+
+  </section>
+
+  <!-- =========================================================
+       3. HÀNG BIỂU ĐỒ CHÍNH (2/3 VELOCITY + 1/3 LANGUAGE STACK)
+  ========================================================= -->
+  <div class="charts-row-primary">
+    
+    <!-- Cột Trái (2/3): Biểu đồ thanh Commit Velocity -->
+    <section class="dash-card velocity-card">
+      <div class="dash-card-header">
+        <div class="header-title-group">
+          <div class="section-icon-badge badge-cyan">
+            <lucide-icon [img]="BarChart3" class="section-icon"></lucide-icon>
+          </div>
+          <div>
+            <h2 class="section-title">Weekly Commit Velocity & Breakdown</h2>
+            <p class="section-desc">Daily commit throughput categorized by commit type</p>
+          </div>
+        </div>
+
+        <!-- Chú thích màu sắc biểu đồ (Chart Legend) -->
+        <div class="chart-legend">
+          <div class="legend-item">
+            <span class="legend-dot dot-feat"></span>
+            <span>Feature</span>
+          </div>
+          <div class="legend-item">
+            <span class="legend-dot dot-fix"></span>
+            <span>Bug Fix</span>
+          </div>
+          <div class="legend-item">
+            <span class="legend-dot dot-refactor"></span>
+            <span>Refactor</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Khung biểu đồ thanh (Pure CSS / SVG Stacked Bar Chart) -->
+      <div class="bar-chart-container">
+        <div class="bars-track">
+          @for (item of velocityDays; track item.day) {
+            <div 
+              class="bar-column-wrap"
+              (mouseenter)="hoveredDay.set(item)"
+              (mouseleave)="hoveredDay.set(null)">
+              
+              <!-- Cột phân tầng Stacked Bar -->
+              <div class="bar-stacked-pillar">
+                <div 
+                  class="segment seg-feat" 
+                  [style.height.px]="calculateHeight(item.feat)"
+                  [title]="'Feature: ' + item.feat + ' commits'">
+                </div>
+                <div 
+                  class="segment seg-fix" 
+                  [style.height.px]="calculateHeight(item.fix)"
+                  [title]="'Bugfix: ' + item.fix + ' commits'">
+                </div>
+                <div 
+                  class="segment seg-refactor" 
+                  [style.height.px]="calculateHeight(item.refactor)"
+                  [title]="'Refactor: ' + item.refactor + ' commits'">
+                </div>
+              </div>
+
+              <!-- Nhãn ngày ở dưới cột -->
+              <div class="bar-label-group">
+                <span class="bar-day-name">{{ item.day }}</span>
+                <span class="bar-day-date">{{ item.date }}</span>
+              </div>
+            </div>
+          }
+        </div>
+
+        <!-- Tooltip chi tiết khi rê chuột vào cột -->
+        <div class="chart-tooltip-panel">
+          @if (hoveredDay(); as d) {
+            <div class="active-tooltip">
+              <span class="tooltip-title">{{ d.day }} ({{ d.date }}) • Total {{ d.total }} Commits</span>
+              <div class="tooltip-breakdown">
+                <span class="text-emerald">✨ {{ d.feat }} features</span>
+                <span class="text-rose">🐛 {{ d.fix }} fixes</span>
+                <span class="text-purple">⚡ {{ d.refactor }} refactor</span>
+              </div>
+            </div>
+          } @else {
+            <span class="tooltip-idle">Hover over any bar to inspect daily breakdown</span>
+          }
+        </div>
+      </div>
+    </section>
+
+    <!-- Cột Phải (1/3): Tech Stack & Language Volume -->
+    <section class="dash-card stack-card">
+      <div class="dash-card-header">
+        <div class="header-title-group">
+          <div class="section-icon-badge badge-purple">
+            <lucide-icon [img]="PieChart" class="section-icon"></lucide-icon>
+          </div>
+          <div>
+            <h2 class="section-title">Tech Stack & Volume</h2>
+            <p class="section-desc">Code distribution across repositories</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Thanh tiến độ phân tầng nhiều màu -->
+      <div class="stacked-progress-bar">
+        @for (lang of languages; track lang.name) {
+          <div 
+            class="progress-slice" 
+            [style.width.%]="lang.percent"
+            [style.background-color]="lang.color"
+            [title]="lang.name + ': ' + lang.percent + '%'">
+          </div>
+        }
+      </div>
+
+      <!-- Danh sách chi tiết từng ngôn ngữ -->
+      <div class="language-list">
+        @for (lang of languages; track lang.name) {
+          <div class="lang-item">
+            <div class="lang-left">
+              <span class="lang-color-pill" [style.background-color]="lang.color"></span>
+              <div class="lang-info">
+                <span class="lang-name">{{ lang.name }}</span>
+                <span class="lang-lines">{{ lang.lines }}</span>
+              </div>
+            </div>
+            <span class="lang-percent">{{ lang.percent }}%</span>
+          </div>
+        }
+      </div>
+    </section>
+
+  </div>
+
+  <!-- =========================================================
+       4. HÀNG THỨ HAI (1/2 PR QUALITY & 1/2 FOCUS HOURS)
+  ========================================================= -->
+  <div class="charts-row-secondary">
+    
+    <!-- Box Trái: PR Size & Turnaround Distribution -->
+    <section class="dash-card">
+      <div class="dash-card-header">
+        <div class="header-title-group">
+          <div class="section-icon-badge badge-emerald">
+            <lucide-icon [img]="GitPullRequest" class="section-icon"></lucide-icon>
+          </div>
+          <div>
+            <h2 class="section-title">PR Quality & Size Distribution</h2>
+            <p class="section-desc">Code review volume and size efficiency metrics</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="pr-size-list">
+        @for (item of prSizes; track item.label) {
+          <div class="pr-size-row">
+            <div class="pr-size-top">
+              <div class="pr-size-title-group">
+                <span class="pr-size-label">{{ item.label }}</span>
+                <span class="pr-size-desc">{{ item.desc }}</span>
+              </div>
+              <span class="metric-pill {{ item.badgeClass }}">{{ item.count }} PRs ({{ item.percent }}%)</span>
+            </div>
+            <div class="pr-bar-bg">
+              <div class="pr-bar-fill" [style.width.%]="item.percent"></div>
+            </div>
+          </div>
+        }
+      </div>
+    </section>
+
+    <!-- Box Phải: Peak Focus Hours & Coding Habits -->
+    <section class="dash-card">
+      <div class="dash-card-header">
+        <div class="header-title-group">
+          <div class="section-icon-badge badge-amber">
+            <lucide-icon [img]="Flame" class="section-icon"></lucide-icon>
+          </div>
+          <div>
+            <h2 class="section-title">Peak Focus Hours</h2>
+            <p class="section-desc">Productivity heatmap and active coding windows</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="focus-hours-list">
+        @for (item of focusHours; track item.period) {
+          <div class="focus-item">
+            <div class="focus-left">
+              <div class="focus-badge-icon">
+                <lucide-icon [img]="Clock" class="clock-mini-icon"></lucide-icon>
+              </div>
+              <div class="focus-text">
+                <div class="focus-title-row">
+                  <span class="focus-period">{{ item.period }}</span>
+                  <span class="focus-tag-chip">{{ item.tag }}</span>
+                </div>
+                <span class="focus-range">{{ item.timeRange }}</span>
+              </div>
+            </div>
+            <div class="focus-stat">
+              <span class="focus-count">{{ item.commitsCount }} commits</span>
+              <span class="focus-pct text-emerald">{{ item.percent }}%</span>
+            </div>
+          </div>
+        }
+      </div>
+    </section>
+
+  </div>
+
+</div>

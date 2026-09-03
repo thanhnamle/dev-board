@@ -1,0 +1,96 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+:root,
+body.light-theme {
+  --app-bg: #f1f5f9;
+  --card-bg: #ffffff;
+  --card-border: #e2e8f0;
+  --card-shadow: 0 1px 3px rgba(0, 0, 0, 0.03), 0 1px 2px rgba(0, 0, 0, 0.02);
+  --item-bg: #f8fafc;
+  --item-border: #f1f5f9;
+  --item-hover-bg: #ffffff;
+  --item-hover-border: #cbd5e1;
+  --text-title: #0f172a;
+  --text-body: #334155;
+  --text-muted: #64748b;
+  --text-subtle: #94a3b8;
+  --btn-sec-bg: #ffffff;
+  --btn-sec-border: #e2e8f0;
+  --btn-sec-text: #334155;
+  --btn-sec-hover: #f8fafc;
+  --divider-color: #f1f5f9;
+}
+
+body.dark-theme {
+  --app-bg: #06090e;
+  --card-bg: #0d1322;
+  --card-border: rgba(255, 255, 255, 0.08);
+  --card-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+  --item-bg: rgba(255, 255, 255, 0.03);
+  --item-border: rgba(255, 255, 255, 0.06);
+  --item-hover-bg: rgba(255, 255, 255, 0.06);
+  --item-hover-border: rgba(255, 255, 255, 0.12);
+  --text-title: #f8fafc;
+  --text-body: #f1f5f9;
+  --text-muted: #94a3b8;
+  --text-subtle: #64748b;
+  --btn-sec-bg: #0f172a;
+  --btn-sec-border: rgba(255, 255, 255, 0.1);
+  --btn-sec-text: #f1f5f9;
+  --btn-sec-hover: #1e293b;
+  --divider-color: rgba(255, 255, 255, 0.06);
+}
+
+body {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  background-color: var(--app-bg);
+  color: var(--text-body);
+  overflow: hidden;
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+.app-container {
+  display: flex;
+  height: 100vh;
+  background-color: var(--app-bg);
+  transition: background-color 0.3s ease;
+}
+
+
+.main-content {
+  flex: 1;
+  padding: 24px 32px;
+  overflow-y: auto;
+  scroll-behavior: smooth;
+}
+
+
+
+/* Chuẩn hóa căn giữa tuyệt đối cho tất cả icon Lucide */
+lucide-icon,
+i-lucide,
+lucide-angular {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 0;
+  vertical-align: middle;
+  flex-shrink: 0;
+}
+
+lucide-icon svg,
+i-lucide svg,
+lucide-angular svg {
+  display: block;
+  width: 100% !important;
+  height: 100% !important;
+  max-width: 100%;
+  max-height: 100%;
+}
+

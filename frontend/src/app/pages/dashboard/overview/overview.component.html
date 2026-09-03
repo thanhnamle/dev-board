@@ -1,0 +1,427 @@
+<div class="overview-container">
+  
+  <!-- 1. Header Bar: Lời chào cá nhân & Thao tác nhanh -->
+  <header class="overview-header">
+    <div class="header-left">
+      <div class="greeting-row">
+        <h1 class="greeting-title">Good morning, Thành Nam ☕</h1>
+        <div class="streak-badge" title="You committed for 12 consecutive days!">
+          <lucide-icon [img]="Flame" class="streak-icon"></lucide-icon>
+          <span>12-day streak</span>
+        </div>
+      </div>
+      <p class="greeting-subtitle">
+        Here's what is happening across your engineering workspace and GitHub repositories today.
+      </p>
+    </div>
+
+    <div class="header-actions">
+      <!-- Nút Đồng bộ GitHub -->
+      <button 
+        type="button" 
+        class="action-btn btn-secondary" 
+        (click)="triggerSync()" 
+        [disabled]="isSyncing()"
+        title="Sync repositories and PRs with GitHub">
+        <lucide-icon 
+          [img]="RefreshCw" 
+          class="btn-icon" 
+          [class.spinning]="isSyncing()">
+        </lucide-icon>
+        <span>{{ isSyncing() ? 'Syncing...' : 'Sync GitHub' }}</span>
+      </button>
+
+      <!-- Nút tạo Note mới -->
+      <button 
+        type="button" 
+        class="action-btn btn-secondary" 
+        routerLink="/app/notes/all-notes"
+        title="Write a new engineering note">
+        <lucide-icon [img]="FileText" class="btn-icon"></lucide-icon>
+        <span>+ New Note</span>
+      </button>
+
+      <!-- Nút tạo Snippet mới -->
+      <button 
+        type="button" 
+        class="action-btn btn-primary" 
+        routerLink="/app/snippets/all-snippets"
+        title="Create a new reusable snippet">
+        <lucide-icon [img]="Code" class="btn-icon"></lucide-icon>
+        <span>+ New Snippet</span>
+      </button>
+    </div>
+  </header>
+
+  <!-- 2. Hàng 4 Thẻ Chỉ Số Nhanh (Top Metric Cards) -->
+  <section class="metrics-grid">
+    
+    <!-- Card 1: Active Repositories -->
+    <div class="metric-card">
+      <div class="metric-top">
+        <span class="metric-label">Tracked Repos</span>
+        <div class="metric-icon-box box-purple">
+          <lucide-icon [img]="FolderGit2" class="metric-icon"></lucide-icon>
+        </div>
+      </div>
+      <div class="metric-value-row">
+        <span class="metric-value">8</span>
+        <span class="metric-pill pill-purple">2 PRs Pending</span>
+      </div>
+      <div class="metric-footer">
+        <span class="metric-trend text-emerald">↑ +2 repos</span>
+        <span class="metric-sub">added this month</span>
+      </div>
+    </div>
+
+    <!-- Card 2: Weekly Velocity -->
+    <div class="metric-card">
+      <div class="metric-top">
+        <span class="metric-label">Weekly Commits</span>
+        <div class="metric-icon-box box-cyan">
+          <lucide-icon [img]="GitCommit" class="metric-icon"></lucide-icon>
+        </div>
+      </div>
+      <div class="metric-value-row">
+        <span class="metric-value">42</span>
+        <span class="metric-pill pill-emerald">+18% vs last week</span>
+      </div>
+      <div class="metric-footer">
+        <span class="metric-trend text-emerald">High Velocity</span>
+        <span class="metric-sub">across 4 active branches</span>
+      </div>
+    </div>
+
+    <!-- Card 3: Engineering Notes -->
+    <div class="metric-card">
+      <div class="metric-top">
+        <span class="metric-label">Tech Docs & Notes</span>
+        <div class="metric-icon-box box-emerald">
+          <lucide-icon [img]="FileText" class="metric-icon"></lucide-icon>
+        </div>
+      </div>
+      <div class="metric-value-row">
+        <span class="metric-value">19</span>
+        <span class="metric-pill pill-cyan">3 Pinned Specs</span>
+      </div>
+      <div class="metric-footer">
+        <span class="metric-trend text-purple">1 updated today</span>
+        <span class="metric-sub">SSR Architecture RFC</span>
+      </div>
+    </div>
+
+    <!-- Card 4: Code Snippets -->
+    <div class="metric-card">
+      <div class="metric-top">
+        <span class="metric-label">Code Snippets</span>
+        <div class="metric-icon-box box-amber">
+          <lucide-icon [img]="Code" class="metric-icon"></lucide-icon>
+        </div>
+      </div>
+      <div class="metric-value-row">
+        <span class="metric-value">64</span>
+        <span class="metric-pill pill-amber">4 Copied Today</span>
+      </div>
+      <div class="metric-footer">
+        <span class="metric-trend text-blue">12 TypeScript</span>
+        <span class="metric-sub">• 8 Go • 6 SQL</span>
+      </div>
+    </div>
+
+  </section>
+
+  <!-- 3. Khu vực chính chia 2 Cột (2/3 Cột Trái & 1/3 Cột Phải) -->
+  <div class="dashboard-body-grid">
+    
+    <!-- =========================================================
+         CỘT BÊN TRÁI (2/3): WORKFLOW & GIT OPERATIONS
+    ========================================================= -->
+    <div class="workflow-column">
+      
+      <!-- Box 1: Active Pull Requests & Review Queue -->
+      <section class="dash-card">
+        <div class="dash-card-header">
+          <div class="header-title-group">
+            <div class="section-icon-badge badge-purple">
+              <lucide-icon [img]="GitPullRequest" class="section-icon"></lucide-icon>
+            </div>
+            <div>
+              <h2 class="section-title">Active Pull Requests</h2>
+              <p class="section-desc">Review queue and CI/CD status for linked GitHub repositories</p>
+            </div>
+          </div>
+
+          <a href="https://github.com" target="_blank" class="section-link-btn" title="View all PRs on GitHub">
+            <span>View all</span>
+            <lucide-icon [img]="ArrowUpRight" class="link-arrow"></lucide-icon>
+          </a>
+        </div>
+
+        <div class="pr-list">
+          @for (pr of activePRs; track pr.id) {
+            <div class="pr-item">
+              <div class="pr-left">
+                <!-- Avatar & CI Badge -->
+                <div class="pr-avatar-box">
+                  <img [src]="pr.avatar" [alt]="pr.author" class="pr-avatar" />
+                  <span 
+                    class="ci-indicator" 
+                    [class.ci-passing]="pr.ciStatus === 'passing'"
+                    [class.ci-running]="pr.ciStatus === 'running'"
+                    [class.ci-failed]="pr.ciStatus === 'failed'"
+                    [title]="'CI/CD: ' + pr.ciStatus">
+                  </span>
+                </div>
+
+                <div class="pr-info">
+                  <div class="pr-title-row">
+                    <span class="pr-number">#{{ pr.id }}</span>
+                    <a [href]="pr.url" target="_blank" class="pr-title">{{ pr.title }}</a>
+                  </div>
+
+                  <div class="pr-meta-row">
+                    <span class="repo-badge">{{ pr.repo }}</span>
+                    <span class="branch-pill-sm">
+                      <lucide-icon [img]="GitBranch" class="pill-icon"></lucide-icon>
+                      {{ pr.branch }}
+                    </span>
+                    <span class="meta-dot">•</span>
+                    <span class="pr-time">{{ pr.timeAgo }}</span>
+                  </div>
+                </div>
+              </div>
+
+              <div class="pr-right">
+                <!-- CI Status Badge -->
+                @if (pr.ciStatus === 'passing') {
+                  <span class="ci-status-badge badge-passing">
+                    <lucide-icon [img]="CheckCircle2" class="ci-icon"></lucide-icon>
+                    Passing
+                  </span>
+                } @else if (pr.ciStatus === 'running') {
+                  <span class="ci-status-badge badge-running">
+                    <lucide-icon [img]="Clock" class="ci-icon"></lucide-icon>
+                    Running
+                  </span>
+                }
+
+                <a [href]="pr.url" target="_blank" class="pr-action-btn" title="Open PR on GitHub">
+                  <lucide-icon [img]="ExternalLink" class="action-icon"></lucide-icon>
+                </a>
+              </div>
+            </div>
+          }
+        </div>
+      </section>
+
+      <!-- Box 2: Live Git Activity Feed -->
+      <section class="dash-card">
+        <div class="dash-card-header">
+          <div class="header-title-group">
+            <div class="section-icon-badge badge-cyan">
+              <lucide-icon [img]="Activity" class="section-icon"></lucide-icon>
+            </div>
+            <div>
+              <h2 class="section-title">Recent Git Activity</h2>
+              <p class="section-desc">Live commit stream across tracked engineering repositories</p>
+            </div>
+          </div>
+
+          <div class="live-status-pill">
+            <span class="live-dot"></span>
+            <span>Real-time Sync</span>
+          </div>
+        </div>
+
+        <div class="timeline-list">
+          @for (item of recentActivities; track item.id) {
+            <div class="timeline-item">
+              <div class="timeline-line"></div>
+              <div class="timeline-dot">
+                <lucide-icon [img]="GitCommit" class="commit-dot-icon"></lucide-icon>
+              </div>
+
+              <div class="timeline-content">
+                <div class="timeline-header">
+                  <span class="commit-msg">{{ item.message }}</span>
+                  <span class="commit-time">{{ item.timeAgo }}</span>
+                </div>
+
+                <div class="timeline-details">
+                  <span class="repo-name">{{ item.repo }}</span>
+                  <span class="branch-tag">
+                    <lucide-icon [img]="GitBranch" class="tag-branch-icon"></lucide-icon>
+                    {{ item.branch }}
+                  </span>
+                  <span class="commit-hash">`{{ item.hash }}`</span>
+                  <span class="diff-badge text-emerald">+{{ item.additions }}</span>
+                  <span class="diff-badge text-rose">-{{ item.deletions }}</span>
+                </div>
+              </div>
+            </div>
+          }
+        </div>
+      </section>
+
+      <!-- Box 3: Quick Code Scratchpad (1-Click Copy) -->
+      <section class="dash-card">
+        <div class="dash-card-header">
+          <div class="header-title-group">
+            <div class="section-icon-badge badge-emerald">
+              <lucide-icon [img]="Code" class="section-icon"></lucide-icon>
+            </div>
+            <div>
+              <h2 class="section-title">Pinned Code Scratchpad</h2>
+              <p class="section-desc">Frequently used snippet with 1-click clipboard copy</p>
+            </div>
+          </div>
+
+          <button 
+            type="button" 
+            class="copy-btn" 
+            (click)="copyCode()" 
+            [class.copied]="copiedSnippet()">
+            @if (copiedSnippet()) {
+              <lucide-icon [img]="Check" class="copy-btn-icon text-emerald"></lucide-icon>
+              <span>Copied!</span>
+            } @else {
+              <lucide-icon [img]="Copy" class="copy-btn-icon"></lucide-icon>
+              <span>Copy Code</span>
+            }
+          </button>
+        </div>
+
+        <div class="scratchpad-editor">
+          <div class="editor-bar">
+            <span class="editor-tag">TypeScript</span>
+            <span class="editor-file-name">auth-guard.ts</span>
+          </div>
+          <pre class="scratchpad-pre"><code><span class="c-comment">// Core Signal Auth Guard</span>
+<span class="c-kw">export const</span> <span class="c-fn">authGuard</span>: <span class="c-typ">CanActivateFn</span> = (route, state) =&gt; &#123;
+  <span class="c-kw">const</span> auth = <span class="c-fn">inject</span>(DevBoardAuthService);
+  <span class="c-kw">return</span> auth.<span class="c-fn">isAuthenticated</span>() ? <span class="c-bool">true</span> : <span class="c-fn">createUrlTreeFromSnapshot</span>(route, [<span class="c-str">'/login'</span>]);
+&#125;;</code></pre>
+        </div>
+      </section>
+
+    </div>
+
+    <!-- =========================================================
+         CỘT BÊN PHẢI (1/3): WIDGETS & DAILY FOCUS
+    ========================================================= -->
+    <div class="widgets-column">
+      
+      <!-- Widget 1: Daily Focus Checklist -->
+      <section class="dash-card">
+        <div class="dash-card-header">
+          <div class="header-title-group">
+            <div class="section-icon-badge badge-amber">
+              <lucide-icon [img]="ListTodo" class="section-icon"></lucide-icon>
+            </div>
+            <div>
+              <h2 class="section-title">Daily Focus</h2>
+              <p class="section-desc">Today's engineering tasks & reviews</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="task-list">
+          @for (task of dailyTasks(); track task.id) {
+            <div 
+              class="task-item" 
+              [class.done]="task.done"
+              (click)="toggleTask(task.id)">
+              <div class="checkbox-custom" [class.checked]="task.done">
+                @if (task.done) {
+                  <lucide-icon [img]="Check" class="check-icon"></lucide-icon>
+                }
+              </div>
+              <div class="task-text-group">
+                <span class="task-text">{{ task.text }}</span>
+                <span class="task-tag">{{ task.tag }}</span>
+              </div>
+            </div>
+          }
+        </div>
+      </section>
+
+      <!-- Widget 2: Pinned Engineering Notes -->
+      <section class="dash-card">
+        <div class="dash-card-header">
+          <div class="header-title-group">
+            <div class="section-icon-badge badge-purple">
+              <lucide-icon [img]="Bookmark" class="section-icon"></lucide-icon>
+            </div>
+            <div>
+              <h2 class="section-title">Pinned Tech Specs</h2>
+              <p class="section-desc">Quick access to architectural docs</p>
+            </div>
+          </div>
+
+          <a routerLink="/app/notes/all-notes" class="section-link-btn" title="All notes">
+            <lucide-icon [img]="ArrowUpRight" class="link-arrow"></lucide-icon>
+          </a>
+        </div>
+
+        <div class="pinned-notes-list">
+          @for (note of pinnedNotes; track note.id) {
+            <a routerLink="/app/notes/all-notes" class="pinned-note-item">
+              <div class="note-top-line">
+                <span class="note-cat-badge {{ note.categoryClass }}">{{ note.category }}</span>
+                <span class="note-read-time">{{ note.readTime }}</span>
+              </div>
+              <h4 class="note-title">{{ note.title }}</h4>
+              <span class="note-time-sub">Updated {{ note.updatedAt }}</span>
+            </a>
+          }
+        </div>
+      </section>
+
+      <!-- Widget 3: GitHub System & Rate Limit Health -->
+      <section class="dash-card">
+        <div class="dash-card-header">
+          <div class="header-title-group">
+            <div class="section-icon-badge badge-emerald">
+              <lucide-icon [img]="ShieldCheck" class="section-icon"></lucide-icon>
+            </div>
+            <div>
+              <h2 class="section-title">GitHub API Status</h2>
+              <p class="section-desc">OAuth Token & Organization Health</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="api-health-box">
+          <div class="health-row">
+            <span class="health-label">API Rate Limit</span>
+            <span class="health-val font-mono">4,820 / 5,000</span>
+          </div>
+
+          <!-- Thanh progress bar Rate Limit -->
+          <div class="progress-bar-bg">
+            <div class="progress-bar-fill" style="width: 96.4%;"></div>
+          </div>
+
+          <div class="health-meta-grid">
+            <div class="health-meta-item">
+              <span class="meta-title">Org Auth</span>
+              <span class="meta-val text-emerald">Verified</span>
+            </div>
+            <div class="health-meta-item">
+              <span class="meta-title">Latency</span>
+              <span class="meta-val">4ms (Fast)</span>
+            </div>
+            <div class="health-meta-item">
+              <span class="meta-title">Webhooks</span>
+              <span class="meta-val text-emerald">Active (3)</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+    </div>
+
+  </div>
+
+</div>
+

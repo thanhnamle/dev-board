@@ -1,0 +1,258 @@
+<aside class="sidebar" [class.collapsed]="collapsed()" [class.dark-theme]="themeService.isDarkMode()">
+  <!-- =====================================================
+       TOGGLE BUTTON
+  ====================================================== -->
+
+  <button
+    class="toggle-btn"
+    type="button"
+    (click)="toggleSidebar()"
+    title="Toggle Sidebar"
+  >
+    <lucide-icon [img]="collapsed() ? ChevronRight : ChevronLeft" size="12">
+    </lucide-icon>
+  </button>
+
+  <!-- =====================================================
+       1. HEADER
+  ====================================================== -->
+
+  <div class="sidebar-header">
+    <div class="logo-group">
+      <div class="logo-badge">
+        <img
+          src="assets/devboard_logo.jpg"
+          alt="DevBoard Logo"
+          class="logo-img"
+        />
+      </div>
+
+      @if (!collapsed()) {
+        <div class="brand-text">
+          <span class="brand-line">DEV</span>
+          <span class="brand-line-1">BOARD</span>
+        </div>
+      }
+    </div>
+  </div>
+
+  <!-- =====================================================
+       2. SEARCH
+  ====================================================== -->
+
+  @if (!collapsed()) {
+    <div class="search-box">
+      <lucide-icon [img]="Search" size="15" class="search-icon"> </lucide-icon>
+
+      <input type="text" placeholder="Search..." class="search-input" />
+
+      <div class="shortcut-keys">
+        <span class="key-chip">⌘</span>
+        <span class="key-chip">K</span>
+      </div>
+    </div>
+  } @else {
+    <button type="button" class="search-collapsed-btn" title="Search (⌘K)">
+      <lucide-icon [img]="Search" size="16"> </lucide-icon>
+    </button>
+  }
+
+  <!-- =====================================================
+       3. MAIN MENU
+  ====================================================== -->
+
+  <div class="menu-section">
+    <!-- Section title -->
+    @if (!collapsed()) {
+      <button type="button" class="section-title" (click)="toggleMain()">
+        <span>Main</span>
+
+        <lucide-icon
+          [img]="mainExpanded() ? Minus : Plus"
+          size="14"
+          class="section-dash"
+        >
+        </lucide-icon>
+      </button>
+    }
+
+    @if (mainExpanded()) {
+      <!-- Main navigation -->
+      <nav class="nav-list">
+        @for (item of mainMenu; track item.label) {
+          <div class="nav-group">
+            <!-- Parent item -->
+            <a
+              class="nav-item"
+              [class.expanded]="expandedItem() === item.label"
+              [routerLink]="item.children?.length ? null : item.path"
+              routerLinkActive="route-active"
+              [routerLinkActiveOptions]="{ exact: true }"
+              (click)="item.children?.length ? toggleExpand(item.label) : null"
+            >
+              <!-- Icon -->
+              <span class="nav-icon">
+                <lucide-icon [img]="item.icon" size="17"> </lucide-icon>
+              </span>
+
+              <!-- Label -->
+              @if (!collapsed()) {
+                <span class="nav-label">
+                  {{ item.label }}
+                </span>
+
+                <!-- Counter Badge -->
+                @if (item.badge) {
+                  <span class="nav-badge" [ngClass]="item.badgeClass || ''">
+                    {{ item.badge }}
+                  </span>
+                }
+
+                <!-- Chevron -->
+                @if (item.children?.length) {
+                  <lucide-icon
+                    [img]="
+                      expandedItem() === item.label ? ChevronUp : ChevronDown
+                    "
+                    size="14"
+                    class="chevron-icon"
+                  >
+                  </lucide-icon>
+                }
+              }
+            </a>
+
+            <!-- =================================================
+               TREE SUBMENU
+            ================================================== -->
+
+            @if (
+              item.children?.length &&
+              expandedItem() === item.label &&
+              !collapsed()
+            ) {
+              <div class="tree-menu">
+                @for (sub of item.children; track sub.path) {
+                  <a
+                    class="tree-node"
+                    [routerLink]="sub.path"
+                    routerLinkActive="sub-active"
+                    [routerLinkActiveOptions]="{ exact: true }"
+                  >
+                    <span class="tree-curve"></span>
+
+                    <span class="tree-node-label">
+                      {{ sub.label }}
+                    </span>
+
+                    @if (sub.badge) {
+                      <span class="sub-badge" [ngClass]="sub.badgeClass || ''">
+                        {{ sub.badge }}
+                      </span>
+                    }
+                  </a>
+                }
+              </div>
+            }
+          </div>
+        }
+      </nav>
+    }
+  </div>
+
+  <!-- =====================================================
+       3.5. MESSAGES
+  ====================================================== -->
+
+  <div class="message-section">
+    @if (!collapsed()) {
+      <button class="section-title" (click)="toggleMessage()" type="button">
+        <span>Messages</span>
+
+        <lucide-icon
+          [img]="messageExpanded() ? Minus : Plus"
+          size="14"
+          class="section-dash"
+        >
+        </lucide-icon>
+      </button>
+    }
+    @if (messageExpanded()) {
+      <nav class="nav-list">
+        @for (item of messageMenu; track item.label) {
+          <a
+            class="nav-item"
+            [routerLink]="item.path"
+            routerLinkActive="route-active"
+            [routerLinkActiveOptions]="{ exact: true }"
+          >
+            <span class="nav-icon">
+              <lucide-icon [img]="item.icon" size="17"> </lucide-icon>
+            </span>
+
+            @if (!collapsed()) {
+              <span class="nav-label">
+                {{ item.label }}
+              </span>
+
+              @if (item.badge) {
+                <span class="nav-badge" [ngClass]="item.badgeClass || ''">
+                  {{ item.badge }}
+                </span>
+              }
+            }
+          </a>
+        }
+      </nav>
+    }
+  </div>
+
+  <!-- =====================================================
+       4. FOOTER: THEME SWITCHER & USER PROFILE
+  ====================================================== -->
+
+  <div class="sidebar-footer">
+    <!-- Switcher Theme -->
+    <div class="theme-switcher-container">
+      @if (!collapsed()) {
+        <div class="theme-segmented-bar" (click)="toggleTheme()" [title]="themeService.isDarkMode() ? 'Switch to Light Mode' : 'Switch to Dark Mode'">
+          <div class="theme-opt" [class.active]="!themeService.isDarkMode()">
+            <lucide-icon [img]="Sun" size="13" class="theme-icon"></lucide-icon>
+            <span>Light</span>
+          </div>
+          <div class="theme-opt" [class.active]="themeService.isDarkMode()">
+            <lucide-icon [img]="Moon" size="13" class="theme-icon"></lucide-icon>
+            <span>Dark</span>
+          </div>
+        </div>
+      } @else {
+        <button type="button" class="theme-icon-btn" (click)="toggleTheme()" [title]="themeService.isDarkMode() ? 'Switch to Light Mode' : 'Switch to Dark Mode'">
+          <lucide-icon [img]="themeService.isDarkMode() ? Moon : Sun" size="16"></lucide-icon>
+        </button>
+      }
+    </div>
+
+    <!-- User Profile Card -->
+    <div class="user-pill">
+      <div class="user-avatar-box">
+        <img
+          src="assets/Avatar.jpg"
+          [alt]="currentUser().name"
+          class="user-avatar-img"
+        />
+        <span class="user-online-dot" title="Online"></span>
+      </div>
+
+      @if (!collapsed()) {
+        <div class="user-text">
+          <span class="user-name">{{ currentUser().name }}</span>
+          <span class="user-role">{{ currentUser().role }}</span>
+        </div>
+
+        <lucide-icon [img]="ChevronUp" size="14" class="user-chevron">
+        </lucide-icon>
+      }
+    </div>
+  </div>
+</aside>
+
