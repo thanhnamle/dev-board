@@ -276,13 +276,17 @@
                 </svg>
               </div>
 
-              <!-- Nút Continue with GitHub phong cách Linear Shimmer -->
-              <button type="button" class="btn-continue-github" routerLink="/app">
-                <i-lucide [img]="Github" class="btn-github-icon"></i-lucide>
-                <span>Continue with GitHub</span>
-                <span class="btn-kbd">↵</span>
-              </button>
+              <div class="auth-card-group">
+                <input type="text" placeholder="Enter your Role" class="auth-input">
+                
 
+                <!-- Nút Continue with GitHub phong cách Linear Shimmer -->
+                <button type="button" class="btn-continue-github" routerLink="/app">
+                  <i-lucide [img]="Github" class="btn-github-icon"></i-lucide>
+                  <span>Continue with GitHub</span>
+                  <span class="btn-kbd">↵</span>
+                </button>
+              </div>
               <p class="auth-security-note">
                 🔒 End-to-end encrypted • Internal Org OAuth
               </p>

@@ -1,0 +1,524 @@
+/* =========================================================
+   STARRED CONTAINER & ANIMATIONS
+========================================================= */
+.starred-container {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  max-width: 1440px;
+  margin: 0 auto;
+  padding: 8px 12px 32px 12px;
+  animation: pageFadeIn 0.35s ease-out;
+}
+
+@keyframes pageFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* =========================================================
+   1. HEADER & SEARCH CONTROLS
+========================================================= */
+.starred-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+
+.header-left {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.title-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.starred-title {
+  font-size: 1.6rem;
+  font-weight: 800;
+  color: var(--text-title);
+  letter-spacing: -0.02em;
+  margin: 0;
+  transition: color 0.3s ease;
+}
+
+.count-pill {
+  font-size: 0.74rem;
+  font-weight: 700;
+  padding: 3px 10px;
+  border-radius: 999px;
+  background: var(--item-bg);
+  border: 1px solid var(--item-border);
+  color: var(--text-muted);
+}
+
+.starred-subtitle {
+  font-size: 0.88rem;
+  color: var(--text-muted);
+  margin: 0;
+}
+
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+/* Search Box */
+.search-box {
+  height: 38px;
+  background: var(--card-bg);
+  border: 1px solid var(--card-border);
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  padding: 0 12px;
+  gap: 8px;
+  box-shadow: var(--card-shadow);
+  transition: all 0.2s ease;
+}
+
+.search-box:focus-within {
+  border-color: #6366f1;
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.18);
+}
+
+.search-icon {
+  color: var(--text-muted);
+  flex-shrink: 0;
+}
+
+.search-input {
+  border: none;
+  background: transparent;
+  outline: none;
+  font-size: 0.82rem;
+  color: var(--text-title);
+  width: 170px;
+}
+
+.search-input::placeholder {
+  color: var(--text-subtle);
+}
+
+/* Sort Toggle Bar */
+.sort-toggle-bar {
+  display: flex;
+  background: var(--card-bg);
+  border: 1px solid var(--card-border);
+  border-radius: 10px;
+  padding: 3px;
+  gap: 2px;
+}
+
+.sort-btn {
+  background: transparent;
+  border: none;
+  outline: none;
+  padding: 6px 12px;
+  border-radius: 7px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.sort-btn:hover {
+  color: var(--text-title);
+}
+
+.sort-btn.active {
+  background: #6366f1;
+  color: #ffffff;
+  box-shadow: 0 1px 3px rgba(99, 102, 241, 0.3);
+}
+
+/* =========================================================
+   2. TOP 3 METRICS RIBBON (LIGHT & DARK TƯƠNG PHẢN CAO)
+========================================================= */
+.metrics-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+}
+
+.metric-card {
+  background: var(--card-bg);
+  border: 1px solid var(--card-border);
+  border-radius: 16px;
+  padding: 16px 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  box-shadow: var(--card-shadow);
+  transition: all 0.25s ease;
+}
+
+.metric-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px -4px rgba(0, 0, 0, 0.2);
+}
+
+.metric-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.metric-label {
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.metric-icon-box {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.metric-icon { width: 16px; height: 16px; }
+
+/* ☀️ MÀU LIGHT THEME MẶC ĐỊNH (ĐẬM NÉT, RÕ RÀNG) */
+.box-amber   { background: #fffbeb; color: #b45309; border: 1px solid #fde68a; }
+.box-purple  { background: #f5f3ff; color: #6d28d9; border: 1px solid #ddd6fe; }
+.box-emerald { background: #ecfdf5; color: #047857; border: 1px solid #a7f3d0; }
+
+.pill-amber   { background: #fffbeb; color: #b45309; border: 1px solid #fde68a; font-weight: 700; }
+.pill-purple  { background: #f5f3ff; color: #6d28d9; border: 1px solid #ddd6fe; font-weight: 700; }
+.pill-emerald { background: #ecfdf5; color: #047857; border: 1px solid #a7f3d0; font-weight: 700; }
+
+/* 🌙 MÀU DARK THEME TỰ ĐỘNG PHÁT SÁNG */
+:host-context(.dark-theme) .box-amber   { background: rgba(217, 119, 6, 0.15); color: #fbbf24; border-color: rgba(217, 119, 6, 0.3); }
+:host-context(.dark-theme) .box-purple  { background: rgba(124, 58, 237, 0.15); color: #a78bfa; border-color: rgba(124, 58, 237, 0.3); }
+:host-context(.dark-theme) .box-emerald { background: rgba(5, 150, 105, 0.15); color: #34d399; border-color: rgba(5, 150, 105, 0.3); }
+
+:host-context(.dark-theme) .pill-amber   { background: rgba(217, 119, 6, 0.18); color: #fde68a; border-color: rgba(217, 119, 6, 0.35); }
+:host-context(.dark-theme) .pill-purple  { background: rgba(124, 58, 237, 0.18); color: #c4b5fd; border-color: rgba(124, 58, 237, 0.35); }
+:host-context(.dark-theme) .pill-emerald { background: rgba(5, 150, 105, 0.18); color: #6ee7b7; border-color: rgba(5, 150, 105, 0.35); }
+
+.metric-value-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.metric-value {
+  font-size: 1.85rem;
+  font-weight: 800;
+  color: var(--text-title);
+  letter-spacing: -0.03em;
+  line-height: 1;
+}
+
+.metric-pill {
+  font-size: 0.72rem;
+  font-weight: 700;
+  padding: 3px 8px;
+  border-radius: 6px;
+}
+
+.metric-footer {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.76rem;
+  padding-top: 4px;
+  border-top: 1px dashed var(--divider-color);
+}
+
+.metric-trend { font-weight: 700; }
+.metric-sub { color: var(--text-subtle); }
+.text-amber { color: #d97706; }
+.text-purple { color: #7c3aed; }
+.text-emerald { color: #059669; }
+
+:host-context(.dark-theme) .text-amber { color: #fbbf24; }
+:host-context(.dark-theme) .text-purple { color: #a78bfa; }
+:host-context(.dark-theme) .text-emerald { color: #34d399; }
+
+/* =========================================================
+   3. STARRED CARDS GRID
+========================================================= */
+.starred-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 20px;
+}
+
+.starred-card {
+  background: var(--card-bg);
+  border: 1px solid var(--card-border);
+  border-radius: 16px;
+  padding: 18px;
+  box-shadow: var(--card-shadow);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  transition: all 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.starred-card:hover {
+  transform: translateY(-3px);
+  border-color: rgba(245, 158, 11, 0.4);
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.25);
+}
+
+.card-header-row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.repo-title-group {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+.lang-circle {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  display: inline-block;
+}
+
+.title-details {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.starred-name {
+  font-size: 0.96rem;
+  font-weight: 700;
+  color: var(--text-title);
+  margin: 0;
+  line-height: 1.2;
+}
+
+.repo-owner-link {
+  font-family: monospace;
+  font-size: 0.74rem;
+  color: var(--text-muted);
+  text-decoration: none;
+  transition: color 0.15s ease;
+}
+
+.repo-owner-link:hover {
+  color: #6366f1;
+}
+
+.card-top-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* 🌟 Nút Star: Sắc sảo ở Light, Phát sáng ở Dark */
+.star-toggle-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 9px;
+  border-radius: 6px;
+  background: #fffbeb;
+  border: 1px solid #fde68a;
+  color: #b45309;
+  font-size: 0.74rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.star-toggle-btn:hover {
+  background: #fef3c7;
+  transform: scale(1.04);
+}
+
+.star-icon {
+  color: #d97706;
+}
+
+:host-context(.dark-theme) .star-toggle-btn {
+  background: rgba(245, 158, 11, 0.15);
+  border-color: rgba(245, 158, 11, 0.3);
+  color: #fbbf24;
+}
+
+:host-context(.dark-theme) .star-toggle-btn:hover {
+  background: rgba(245, 158, 11, 0.25);
+}
+
+:host-context(.dark-theme) .star-icon {
+  color: #fbbf24;
+}
+
+.icon-link-btn {
+  width: 26px;
+  height: 26px;
+  border-radius: 6px;
+  background: var(--item-bg);
+  border: 1px solid var(--item-border);
+  color: var(--text-muted);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-decoration: none;
+  transition: all 0.15s ease;
+}
+
+.icon-link-btn:hover {
+  color: var(--text-title);
+  background: var(--item-hover-bg);
+}
+
+.starred-desc {
+  font-size: 0.82rem;
+  color: var(--text-muted);
+  line-height: 1.5;
+  margin: 0;
+  min-height: 42px;
+}
+
+/* Tags Kính mờ sắc sảo */
+.tags-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.tech-tag {
+  font-size: 0.72rem;
+  font-weight: 600;
+  padding: 3px 8px;
+  border-radius: 6px;
+  background: var(--item-bg);
+  color: var(--text-body);
+  border: 1px solid var(--item-border);
+  transition: all 0.15s ease;
+}
+
+.tech-tag:hover {
+  background: var(--item-hover-bg);
+  border-color: rgba(99, 102, 241, 0.3);
+  color: #6366f1;
+}
+
+.card-footer-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-top: 10px;
+  border-top: 1px dashed var(--divider-color);
+  font-size: 0.74rem;
+}
+
+.git-status-group {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* 🌿 Branch Pill: Đậm nét ở Light, Phát sáng ở Dark */
+.branch-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  font-family: monospace;
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: #4338ca;
+  background: #eef2ff;
+  border: 1px solid #c7d2fe;
+  padding: 2px 7px;
+  border-radius: 5px;
+}
+
+:host-context(.dark-theme) .branch-pill {
+  color: #a5b4fc;
+  background: rgba(99, 102, 241, 0.15);
+  border-color: rgba(99, 102, 241, 0.3);
+}
+
+/* 🏷️ Version Pill */
+.version-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  font-family: monospace;
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: #047857;
+  background: #ecfdf5;
+  border: 1px solid #a7f3d0;
+  padding: 2px 7px;
+  border-radius: 5px;
+}
+
+:host-context(.dark-theme) .version-pill {
+  color: #6ee7b7;
+  background: rgba(16, 185, 129, 0.15);
+  border-color: rgba(16, 185, 129, 0.3);
+}
+
+.last-updated {
+  color: var(--text-subtle);
+}
+
+/* =========================================================
+   RESPONSIVE DESIGN
+========================================================= */
+@media (max-width: 1200px) {
+  .starred-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 768px) {
+  .metrics-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .starred-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .starred-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .header-actions {
+    width: 100%;
+  }
+
+  .search-box {
+    flex: 1;
+  }
+}

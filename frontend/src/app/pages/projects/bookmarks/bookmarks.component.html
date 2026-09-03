@@ -1,1 +1,206 @@
-<p>bookmarks works!</p>
+<div class="bookmarks-container">
+  
+  <!-- =========================================================
+       1. HEADER BAR & ACTIONS
+  ========================================================= -->
+  <header class="bookmarks-header">
+    <div class="header-left">
+      <div class="title-row">
+        <h1 class="bookmarks-title">Bookmarked Resources</h1>
+        <span class="count-pill">{{ filteredBookmarks().length }} Saved</span>
+      </div>
+      <p class="bookmarks-subtitle">
+        Curated repository links, architectural RFC specs, and essential developer tools
+      </p>
+    </div>
+
+    <div class="header-actions">
+      <!-- Ô tìm kiếm Bookmarks -->
+      <div class="search-box">
+        <lucide-icon [img]="Search" size="14" class="search-icon"></lucide-icon>
+        <input 
+          type="text" 
+          placeholder="Search bookmarks or tags..." 
+          [value]="searchQuery()"
+          (input)="searchQuery.set($any($event.target).value)"
+          class="search-input"
+        />
+      </div>
+
+      <!-- Nút tạo Bookmark mới -->
+      <button type="button" class="action-btn btn-primary" title="Add new bookmark">
+        <lucide-icon [img]="Plus" size="15"></lucide-icon>
+        <span>+ Add Bookmark</span>
+      </button>
+    </div>
+  </header>
+
+  <!-- =========================================================
+       2. TOP 3 METRICS RIBBON
+  ========================================================= -->
+  <section class="metrics-grid">
+    <div class="metric-card">
+      <div class="metric-top">
+        <span class="metric-label">Saved Resources</span>
+        <div class="metric-icon-box box-purple">
+          <lucide-icon [img]="Bookmark" class="metric-icon"></lucide-icon>
+        </div>
+      </div>
+      <div class="metric-value-row">
+        <span class="metric-value">{{ bookmarksList().length }}</span>
+        <span class="metric-pill pill-purple">8 Pinned</span>
+      </div>
+      <div class="metric-footer">
+        <span class="metric-trend text-purple">4 Repos • 5 Specs</span>
+        <span class="metric-sub">• 3 Cloud Tools</span>
+      </div>
+    </div>
+
+    <div class="metric-card">
+      <div class="metric-top">
+        <span class="metric-label">Access Velocity</span>
+        <div class="metric-icon-box box-emerald">
+          <lucide-icon [img]="Sparkles" class="metric-icon"></lucide-icon>
+        </div>
+      </div>
+      <div class="metric-value-row">
+        <span class="metric-value">Instant</span>
+        <span class="metric-pill pill-emerald">1-Click Jump</span>
+      </div>
+      <div class="metric-footer">
+        <span class="metric-trend text-emerald">Shortcuts Synced</span>
+        <span class="metric-sub">with Command Palette</span>
+      </div>
+    </div>
+
+    <div class="metric-card">
+      <div class="metric-top">
+        <span class="metric-label">Active Endpoints</span>
+        <div class="metric-icon-box box-cyan">
+          <lucide-icon [img]="Globe" class="metric-icon"></lucide-icon>
+        </div>
+      </div>
+      <div class="metric-value-row">
+        <span class="metric-value">100%</span>
+        <span class="metric-pill pill-cyan">All Healthy</span>
+      </div>
+      <div class="metric-footer">
+        <span class="metric-trend text-blue">Verified Links</span>
+        <span class="metric-sub">checked today</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- =========================================================
+       3. CATEGORY FILTER TABS
+  ========================================================= -->
+  <div class="category-tabs-row">
+    <button 
+      type="button" 
+      class="cat-tab" 
+      [class.active]="selectedCategory() === 'all'"
+      (click)="setCategory('all')">
+      All Resources
+    </button>
+    <button 
+      type="button" 
+      class="cat-tab" 
+      [class.active]="selectedCategory() === 'repos'"
+      (click)="setCategory('repos')">
+      Repositories (3)
+    </button>
+    <button 
+      type="button" 
+      class="cat-tab" 
+      [class.active]="selectedCategory() === 'specs'"
+      (click)="setCategory('specs')">
+      Technical Specs (3)
+    </button>
+    <button 
+      type="button" 
+      class="cat-tab" 
+      [class.active]="selectedCategory() === 'tools'"
+      (click)="setCategory('tools')">
+      Dev Tools & Cloud (2)
+    </button>
+  </div>
+
+  <!-- =========================================================
+       4. BOOKMARK CARDS GRID
+  ========================================================= -->
+  <div class="bookmarks-grid">
+    @for (item of filteredBookmarks(); track item.id) {
+      <div class="bookmark-card">
+        
+        <!-- Card Top Bar: Icon + Category + Action Icons -->
+        <div class="card-header-row">
+          <div class="cat-badge-group" [ngClass]="{
+            'badge-purple': item.category === 'repos',
+            'badge-cyan': item.category === 'specs',
+            'badge-emerald': item.category === 'tools'
+          }">
+            <lucide-icon [img]="item.categoryIcon" size="13"></lucide-icon>
+            <span class="cat-name-tag">{{ item.categoryLabel }}</span>
+          </div>
+          <div class="card-actions">
+            <!-- Pin Button -->
+            <button 
+              type="button" 
+              class="icon-action-btn" 
+              [class.pinned]="item.pinned"
+              (click)="togglePin(item.id)"
+              title="Pin to top">
+              <lucide-icon [img]="Star" size="13"></lucide-icon>
+            </button>
+            <!-- External Link Button -->
+            <a 
+              [href]="item.url" 
+              target="_blank" 
+              class="icon-action-btn" 
+              title="Open link in new tab">
+              <lucide-icon [img]="ExternalLink" size="13"></lucide-icon>
+            </a>
+            <!-- Delete Bookmark Button -->
+            <button 
+              type="button" 
+              class="icon-action-btn btn-danger" 
+              (click)="removeBookmark(item.id)"
+              title="Remove bookmark">
+              <lucide-icon [img]="Trash2" size="13"></lucide-icon>
+            </button>
+          </div>
+        </div>
+
+        <!-- Title & URL -->
+        <div class="title-section">
+          <h3 class="bookmark-title">
+            <a [href]="item.url" target="_blank" class="title-link">
+              {{ item.title }}
+            </a>
+          </h3>
+          <span class="bookmark-url" [title]="item.url">{{ item.url }}</span>
+        </div>
+
+        <!-- Description -->
+        <p class="bookmark-desc">{{ item.description }}</p>
+
+        <!-- Tags Row -->
+        <div class="tags-row">
+          @for (tag of item.tags; track tag) {
+            <span class="bookmark-tag">#{{ tag }}</span>
+          }
+        </div>
+
+        <!-- Card Footer -->
+        <div class="card-footer-row">
+          <span class="last-visited">Last accessed: {{ item.lastVisited }}</span>
+          @if (item.pinned) {
+            <span class="pin-status-pill">⭐ Pinned</span>
+          }
+        </div>
+
+      </div>
+    }
+  </div>
+
+</div>

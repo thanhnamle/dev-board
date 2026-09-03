@@ -1,1 +1,221 @@
-<p>all-projects works!</p>
+<div class="projects-container">
+  
+  <!-- =========================================================
+       1. HEADER BAR & CONTROLS
+  ========================================================= -->
+  <header class="projects-header">
+    <div class="header-left">
+      <div class="title-row">
+        <h1 class="projects-title">Engineering Projects & Repos</h1>
+        <span class="project-count-pill">{{ filteredProjects().length }} Projects</span>
+      </div>
+      <p class="projects-subtitle">
+        Manage repositories, CI/CD deployment pipelines, and active engineering services
+      </p>
+    </div>
+
+    <div class="header-actions">
+      <!-- Ô tìm kiếm Project -->
+      <div class="search-input-box">
+        <lucide-icon [img]="Search" size="14" class="search-icon"></lucide-icon>
+        <input 
+          type="text" 
+          placeholder="Filter repositories..." 
+          [value]="searchQuery()"
+          (input)="searchQuery.set($any($event.target).value)"
+          class="project-search"
+        />
+      </div>
+
+      <!-- Toggle View Grid / List -->
+      <div class="view-toggle-bar">
+        <button 
+          type="button" 
+          class="toggle-btn" 
+          [class.active]="viewMode() === 'grid'"
+          (click)="viewMode.set('grid')"
+          title="Grid View">
+          <lucide-icon [img]="LayoutGrid" size="15"></lucide-icon>
+        </button>
+        <button 
+          type="button" 
+          class="toggle-btn" 
+          [class.active]="viewMode() === 'list'"
+          (click)="viewMode.set('list')"
+          title="List View">
+          <lucide-icon [img]="List" size="15"></lucide-icon>
+        </button>
+      </div>
+
+      <!-- Nút tạo Project mới -->
+      <button type="button" class="action-btn btn-primary" title="Create or link new repository">
+        <lucide-icon [img]="Plus" size="15"></lucide-icon>
+        <span>+ New Project</span>
+      </button>
+    </div>
+  </header>
+
+  <!-- =========================================================
+       2. TOP 3 METRICS RIBBON
+  ========================================================= -->
+  <section class="metrics-grid">
+    <div class="metric-card">
+      <div class="metric-top">
+        <span class="metric-label">Tracked Repos</span>
+        <div class="metric-icon-box box-purple">
+          <lucide-icon [img]="FolderGit2" class="metric-icon"></lucide-icon>
+        </div>
+      </div>
+      <div class="metric-value-row">
+        <span class="metric-value">8</span>
+        <span class="metric-pill pill-purple">6 Production</span>
+      </div>
+      <div class="metric-footer">
+        <span class="metric-trend text-emerald">100% Synced</span>
+        <span class="metric-sub">with GitHub org</span>
+      </div>
+    </div>
+
+    <div class="metric-card">
+      <div class="metric-top">
+        <span class="metric-label">Deployment Health</span>
+        <div class="metric-icon-box box-emerald">
+          <lucide-icon [img]="CheckCircle2" class="metric-icon"></lucide-icon>
+        </div>
+      </div>
+      <div class="metric-value-row">
+        <span class="metric-value">98.4%</span>
+        <span class="metric-pill pill-emerald">Passing</span>
+      </div>
+      <div class="metric-footer">
+        <span class="metric-trend text-emerald">Vercel & Docker</span>
+        <span class="metric-sub">automated CI/CD</span>
+      </div>
+    </div>
+
+    <div class="metric-card">
+      <div class="metric-top">
+        <span class="metric-label">Active Branches</span>
+        <div class="metric-icon-box box-cyan">
+          <lucide-icon [img]="GitBranch" class="metric-icon"></lucide-icon>
+        </div>
+      </div>
+      <div class="metric-value-row">
+        <span class="metric-value">14</span>
+        <span class="metric-pill pill-cyan">5 Open PRs</span>
+      </div>
+      <div class="metric-footer">
+        <span class="metric-trend text-blue">High Velocity</span>
+        <span class="metric-sub">across 4 active teams</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- =========================================================
+       3. TECH STACK FILTER PILLS
+  ========================================================= -->
+  <div class="filter-pills-row">
+    @for (tech of techFilters; track tech) {
+      <button 
+        type="button" 
+        class="tech-pill" 
+        [class.active]="selectedTech() === tech"
+        (click)="selectedTech.set(tech)">
+        {{ tech }}
+      </button>
+    }
+  </div>
+
+  <!-- =========================================================
+       4. PROJECTS GRID / LIST VIEW
+  ========================================================= -->
+  <div [class]="viewMode() === 'grid' ? 'projects-grid' : 'projects-list'">
+    @for (project of filteredProjects(); track project.id) {
+      <div class="project-card">
+        
+        <!-- Card Top Bar: Title & Action Icons -->
+        <div class="card-header-row">
+          <div class="repo-title-group">
+            <div class="lang-dot-box">
+              <span class="lang-circle" [style.background-color]="project.languageColor"></span>
+            </div>
+            <div class="title-details">
+              <h3 class="project-name">{{ project.name }}</h3>
+              <a [href]="project.githubUrl" target="_blank" class="repo-name-link">
+                {{ project.repoName }}
+              </a>
+            </div>
+          </div>
+
+          <div class="card-top-actions">
+            <!-- Bookmark Button -->
+            <button 
+              type="button" 
+              class="icon-action-btn" 
+              [class.bookmarked]="project.isBookmarked"
+              (click)="toggleBookmark(project.id)"
+              title="Bookmark this project">
+              <lucide-icon [img]="Bookmark" size="14"></lucide-icon>
+            </button>
+
+            <!-- Star Button -->
+            <button 
+              type="button" 
+              class="star-btn" 
+              [class.starred]="project.isStarred"
+              (click)="toggleStar(project.id)"
+              title="Star on GitHub">
+              <lucide-icon [img]="Star" size="13"></lucide-icon>
+              <span>{{ project.starsCount }}</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Card Description -->
+        <p class="project-desc">{{ project.description }}</p>
+
+        <!-- Tech Stack Tags -->
+        <div class="tags-row">
+          @for (tag of project.tags; track tag) {
+            <span class="tech-tag">{{ tag }}</span>
+          }
+        </div>
+
+        <!-- Card Footer: Branch, Commit & Deploy Status -->
+        <div class="card-footer-row">
+          <div class="git-status-group">
+            <span class="branch-pill">
+              <lucide-icon [img]="GitBranch" size="12" class="pill-icon"></lucide-icon>
+              {{ project.branch }}
+            </span>
+            <span class="commit-sub" [title]="project.lastCommit">
+              {{ project.lastCommitTime }}
+            </span>
+          </div>
+
+          <div class="deploy-status-group">
+            @if (project.deployStatus === 'production') {
+              <span class="deploy-pill pill-prod">
+                <span class="status-dot dot-green"></span>
+                <span>Production</span>
+              </span>
+            } @else if (project.deployStatus === 'staging') {
+              <span class="deploy-pill pill-stage">
+                <span class="status-dot dot-amber"></span>
+                <span>Staging</span>
+              </span>
+            }
+
+            @if (project.deployUrl) {
+              <a [href]="project.deployUrl" target="_blank" class="live-link-btn" title="Open Live Deployment">
+                <lucide-icon [img]="ExternalLink" size="13"></lucide-icon>
+              </a>
+            }
+          </div>
+        </div>
+
+      </div>
+    }
+  </div>
+
+</div>

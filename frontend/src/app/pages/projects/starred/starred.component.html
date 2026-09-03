@@ -1,1 +1,180 @@
-<p>starred works!</p>
+<div class="starred-container">
+  
+  <!-- =========================================================
+       1. HEADER BAR & SEARCH CONTROLS
+  ========================================================= -->
+  <header class="starred-header">
+    <div class="header-left">
+      <div class="title-row">
+        <h1 class="starred-title">Starred Repositories</h1>
+        <span class="count-pill">{{ filteredList().length }} Starred</span>
+      </div>
+      <p class="starred-subtitle">
+        Your highest priority repositories, core microservices, and pinned open-source dependencies
+      </p>
+    </div>
+
+    <div class="header-actions">
+      <!-- Ô tìm kiếm Starred Repos -->
+      <div class="search-box">
+        <lucide-icon [img]="Search" size="14" class="search-icon"></lucide-icon>
+        <input 
+          type="text" 
+          placeholder="Filter starred repos..." 
+          [value]="searchQuery()"
+          (input)="searchQuery.set($any($event.target).value)"
+          class="search-input"
+        />
+      </div>
+
+      <!-- Segmented Sort Buttons -->
+      <div class="sort-toggle-bar">
+        <button 
+          type="button" 
+          class="sort-btn" 
+          [class.active]="sortBy() === 'stars'"
+          (click)="setSortBy('stars')">
+          ★ Most Stars
+        </button>
+        <button 
+          type="button" 
+          class="sort-btn" 
+          [class.active]="sortBy() === 'updated'"
+          (click)="setSortBy('updated')">
+          🕒 Recently Updated
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- =========================================================
+       2. TOP 3 METRICS RIBBON
+  ========================================================= -->
+  <section class="metrics-grid">
+    <div class="metric-card">
+      <div class="metric-top">
+        <span class="metric-label">Starred Repos</span>
+        <div class="metric-icon-box box-amber">
+          <lucide-icon [img]="Star" class="metric-icon"></lucide-icon>
+        </div>
+      </div>
+      <div class="metric-value-row">
+        <span class="metric-value">{{ starredList().length }}</span>
+        <span class="metric-pill pill-amber">All Pinned</span>
+      </div>
+      <div class="metric-footer">
+        <span class="metric-trend text-amber">3 Internal Repos</span>
+        <span class="metric-sub">• 2 Libraries</span>
+      </div>
+    </div>
+
+    <div class="metric-card">
+      <div class="metric-top">
+        <span class="metric-label">Combined Stars</span>
+        <div class="metric-icon-box box-purple">
+          <lucide-icon [img]="Sparkles" class="metric-icon"></lucide-icon>
+        </div>
+      </div>
+      <div class="metric-value-row">
+        <span class="metric-value">642</span>
+        <span class="metric-pill pill-purple">Top Rated</span>
+      </div>
+      <div class="metric-footer">
+        <span class="metric-trend text-purple">High Community</span>
+        <span class="metric-sub">engagement</span>
+      </div>
+    </div>
+
+    <div class="metric-card">
+      <div class="metric-top">
+        <span class="metric-label">Release Track</span>
+        <div class="metric-icon-box box-emerald">
+          <lucide-icon [img]="CheckCircle2" class="metric-icon"></lucide-icon>
+        </div>
+      </div>
+      <div class="metric-value-row">
+        <span class="metric-value">100%</span>
+        <span class="metric-pill pill-emerald">Up to Date</span>
+      </div>
+      <div class="metric-footer">
+        <span class="metric-trend text-emerald">SemVer Tracked</span>
+        <span class="metric-sub">across all branches</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- =========================================================
+       3. STARRED CARDS GRID
+  ========================================================= -->
+  <div class="starred-grid">
+    @for (item of filteredList(); track item.id) {
+      <div class="starred-card">
+        
+        <!-- Card Top Bar: Title + Language Dot + Star Action -->
+        <div class="card-header-row">
+          <div class="repo-title-group">
+            <div class="lang-dot-box">
+              <span class="lang-circle" [style.background-color]="item.languageColor"></span>
+            </div>
+            <div class="title-details">
+              <h3 class="starred-name">{{ item.name }}</h3>
+              <a [href]="item.githubUrl" target="_blank" class="repo-owner-link">
+                {{ item.repoOwner }}/{{ item.repoName }}
+              </a>
+            </div>
+          </div>
+
+          <div class="card-top-actions">
+            <!-- Nút Star Ánh Kim Hổ Phách -->
+            <button 
+              type="button" 
+              class="star-toggle-btn" 
+              [class.active]="item.isStarred"
+              (click)="toggleStar(item.id)"
+              title="Click to Star / Unstar">
+              <lucide-icon [img]="Star" size="13" class="star-icon"></lucide-icon>
+              <span>{{ item.starsCount }}</span>
+            </button>
+
+            <!-- External Link Button -->
+            <a 
+              [href]="item.githubUrl" 
+              target="_blank" 
+              class="icon-link-btn" 
+              title="Open GitHub Repository">
+              <lucide-icon [img]="ExternalLink" size="13"></lucide-icon>
+            </a>
+          </div>
+        </div>
+
+        <!-- Description -->
+        <p class="starred-desc">{{ item.description }}</p>
+
+        <!-- Tech Stack Tags (Kính mờ sắc sảo) -->
+        <div class="tags-row">
+          @for (tag of item.tags; track tag) {
+            <span class="tech-tag">{{ tag }}</span>
+          }
+        </div>
+
+        <!-- Card Footer: Branch + Version Tag + Updated Time -->
+        <div class="card-footer-row">
+          <div class="git-status-group">
+            <span class="branch-pill">
+              <lucide-icon [img]="GitBranch" size="12" class="pill-icon"></lucide-icon>
+              {{ item.branch }}
+            </span>
+            <span class="version-pill">
+              <lucide-icon [img]="Tag" size="11"></lucide-icon>
+              {{ item.versionTag }}
+            </span>
+          </div>
+
+          <span class="last-updated">Updated {{ item.lastUpdated }}</span>
+        </div>
+
+      </div>
+    }
+  </div>
+
+</div>
