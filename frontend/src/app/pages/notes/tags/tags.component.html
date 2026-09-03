@@ -1,1 +1,158 @@
-<p>tags works!</p>
+<div class="tags-page-container">
+  
+  <!-- =========================================================
+       1. HEADER BAR & ACTIONS
+  ========================================================= -->
+  <header class="tags-header">
+    <div class="header-left">
+      <div class="title-row">
+        <h1 class="tags-title">Topic Tags & Categorization</h1>
+        <span class="count-pill">{{ tagList.length - 1 }} Active Topics</span>
+      </div>
+      <p class="tags-subtitle">
+        Explore technical documentation, architectural RFCs, and runbooks grouped by topic
+      </p>
+    </div>
+
+    <div class="header-actions">
+      <!-- Ô tìm kiếm Tag -->
+      <div class="search-box">
+        <lucide-icon [img]="Search" size="14" class="search-icon"></lucide-icon>
+        <input 
+          type="text" 
+          placeholder="Filter topics or notes..." 
+          [value]="searchQuery()"
+          (input)="searchQuery.set($any($event.target).value)"
+          class="search-input"
+        />
+      </div>
+
+      <!-- Nút tạo Tag mới -->
+      <button type="button" class="action-btn btn-primary" title="Create new tag">
+        <lucide-icon [img]="Plus" size="15"></lucide-icon>
+        <span>+ New Tag</span>
+      </button>
+    </div>
+  </header>
+
+  <!-- =========================================================
+       2. TOP 3 METRICS RIBBON
+  ========================================================= -->
+  <section class="metrics-grid">
+    <div class="metric-card">
+      <div class="metric-top">
+        <span class="metric-label">Indexed Topics</span>
+        <div class="metric-icon-box box-purple">
+          <lucide-icon [img]="Tag" class="metric-icon"></lucide-icon>
+        </div>
+      </div>
+      <div class="metric-value-row">
+        <span class="metric-value">{{ tagList.length - 1 }}</span>
+        <span class="metric-pill pill-purple">19 Notes Linked</span>
+      </div>
+      <div class="metric-footer">
+        <span class="metric-trend text-purple">100% Coverage</span>
+        <span class="metric-sub">across knowledge base</span>
+      </div>
+    </div>
+
+    <div class="metric-card">
+      <div class="metric-top">
+        <span class="metric-label">Top Category</span>
+        <div class="metric-icon-box box-emerald">
+          <lucide-icon [img]="Layers" class="metric-icon"></lucide-icon>
+        </div>
+      </div>
+      <div class="metric-value-row">
+        <span class="metric-value">#Architecture</span>
+        <span class="metric-pill pill-emerald">6 Specs</span>
+      </div>
+      <div class="metric-footer">
+        <span class="metric-trend text-emerald">Core Foundation</span>
+        <span class="metric-sub">most active spec topic</span>
+      </div>
+    </div>
+
+    <div class="metric-card">
+      <div class="metric-top">
+        <span class="metric-label">Filter Speed</span>
+        <div class="metric-icon-box box-cyan">
+          <lucide-icon [img]="Sparkles" class="metric-icon"></lucide-icon>
+        </div>
+      </div>
+      <div class="metric-value-row">
+        <span class="metric-value">Instant</span>
+        <span class="metric-pill pill-cyan">Reactive Signals</span>
+      </div>
+      <div class="metric-footer">
+        <span class="metric-trend text-blue">1-Click Filter</span>
+        <span class="metric-sub">zero page reloads</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- =========================================================
+       3. INTERACTIVE TAG CLOUD (ĐÁM MÂY CHỦ ĐỀ)
+  ========================================================= -->
+  <section class="tag-cloud-section">
+    <h2 class="section-heading">
+      <lucide-icon [img]="Hash" size="16"></lucide-icon>
+      <span>Select Topic Tag:</span>
+    </h2>
+
+    <div class="tag-cloud-pills">
+      @for (tag of tagList; track tag.name) {
+        <button 
+          type="button" 
+          class="topic-pill"
+          [class.active]="selectedTag() === tag.name"
+          (click)="selectTag(tag.name)">
+          <span class="pill-hash">#</span>
+          <span class="pill-name">{{ tag.name }}</span>
+          <span class="pill-badge">{{ tag.count }}</span>
+        </button>
+      }
+    </div>
+  </section>
+
+  <!-- =========================================================
+       4. TAGGED NOTES GRID (DANH SÁCH BÀI VIẾT THEO TAG)
+  ========================================================= -->
+  <div class="tagged-notes-grid">
+    @for (note of filteredNotes(); track note.id) {
+      <div class="tagged-note-card">
+        
+        <div class="card-header-line">
+          <span class="cat-pill pill-purple">{{ note.category }}</span>
+          <span class="read-time">{{ note.readTime }}</span>
+        </div>
+
+        <h3 class="note-title">{{ note.title }}</h3>
+        <p class="note-excerpt">{{ note.excerpt }}</p>
+
+        <!-- Attached Tags Mini Row -->
+        <div class="attached-tags-row">
+          @for (t of note.tags; track t) {
+            <span 
+              class="tag-chip"
+              [class.highlight]="selectedTag() === t"
+              (click)="selectTag(t)">
+              #{{ t }}
+            </span>
+          }
+        </div>
+
+        <!-- Card Footer with Jump Link -->
+        <div class="card-footer-line">
+          <span class="updated-time">Updated: {{ note.lastUpdated }}</span>
+          <a routerLink="/app/notes/all-notes" class="jump-link">
+            <span>Read Note</span>
+            <lucide-icon [img]="ArrowRight" size="13"></lucide-icon>
+          </a>
+        </div>
+
+      </div>
+    }
+  </div>
+
+</div>

@@ -1,1 +1,253 @@
-<p>all-notes works!</p>
+<div class="notes-container">
+  
+  <!-- =========================================================
+       1. HEADER BAR & CONTROLS
+  ========================================================= -->
+  <header class="notes-header">
+    <div class="header-left">
+      <div class="title-row">
+        <h1 class="notes-title">Engineering Notes & Specs</h1>
+        <span class="count-pill">{{ filteredNotes().length }} Notes</span>
+      </div>
+      <p class="notes-subtitle">
+        Architectural RFC documents, database runbooks, and engineering knowledge base
+      </p>
+    </div>
+
+    <div class="header-actions">
+      <!-- Ô tìm kiếm Note -->
+      <div class="search-box">
+        <lucide-icon [img]="Search" size="14" class="search-icon"></lucide-icon>
+        <input 
+          type="text" 
+          placeholder="Search specs or tags..." 
+          [value]="searchQuery()"
+          (input)="searchQuery.set($any($event.target).value)"
+          class="search-input"
+        />
+      </div>
+
+      <!-- Nút tạo Note mới -->
+      <button type="button" class="action-btn btn-primary" title="Create new note">
+        <lucide-icon [img]="Plus" size="15"></lucide-icon>
+        <span>+ New Note</span>
+      </button>
+    </div>
+  </header>
+
+  <!-- =========================================================
+       2. TOP 3 METRICS RIBBON
+  ========================================================= -->
+  <section class="metrics-grid">
+    <div class="metric-card">
+      <div class="metric-top">
+        <span class="metric-label">Total Notes</span>
+        <div class="metric-icon-box box-purple">
+          <lucide-icon [img]="FileText" class="metric-icon"></lucide-icon>
+        </div>
+      </div>
+      <div class="metric-value-row">
+        <span class="metric-value">{{ notesList().length }}</span>
+        <span class="metric-pill pill-purple">3 Pinned Specs</span>
+      </div>
+      <div class="metric-footer">
+        <span class="metric-trend text-purple">12 Specs • 4 Runbooks</span>
+        <span class="metric-sub">• 3 Drafts</span>
+      </div>
+    </div>
+
+    <div class="metric-card">
+      <div class="metric-top">
+        <span class="metric-label">Pinned RFCs</span>
+        <div class="metric-icon-box box-amber">
+          <lucide-icon [img]="Star" class="metric-icon"></lucide-icon>
+        </div>
+      </div>
+      <div class="metric-value-row">
+        <span class="metric-value">3</span>
+        <span class="metric-pill pill-amber">High Priority</span>
+      </div>
+      <div class="metric-footer">
+        <span class="metric-trend text-amber">Active RFCs</span>
+        <span class="metric-sub">in implementation</span>
+      </div>
+    </div>
+
+    <div class="metric-card">
+      <div class="metric-top">
+        <span class="metric-label">Knowledge Depth</span>
+        <div class="metric-icon-box box-emerald">
+          <lucide-icon [img]="BookOpen" class="metric-icon"></lucide-icon>
+        </div>
+      </div>
+      <div class="metric-value-row">
+        <span class="metric-value">48m</span>
+        <span class="metric-pill pill-emerald">Total Reading</span>
+      </div>
+      <div class="metric-footer">
+        <span class="metric-trend text-emerald">8.5k Words</span>
+        <span class="metric-sub">technical documentation</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- =========================================================
+       3. CATEGORY TABS
+  ========================================================= -->
+  <div class="category-tabs-row">
+    <button 
+      type="button" 
+      class="cat-tab" 
+      [class.active]="selectedCategory() === 'all'"
+      (click)="setCategory('all')">
+      All Notes ({{ notesList().length }})
+    </button>
+    <button 
+      type="button" 
+      class="cat-tab" 
+      [class.active]="selectedCategory() === 'architecture'"
+      (click)="setCategory('architecture')">
+      Architecture (2)
+    </button>
+    <button 
+      type="button" 
+      class="cat-tab" 
+      [class.active]="selectedCategory() === 'infrastructure'"
+      (click)="setCategory('infrastructure')">
+      Infrastructure (1)
+    </button>
+    <button 
+      type="button" 
+      class="cat-tab" 
+      [class.active]="selectedCategory() === 'security'"
+      (click)="setCategory('security')">
+      Security (1)
+    </button>
+    <button 
+      type="button" 
+      class="cat-tab" 
+      [class.active]="selectedCategory() === 'runbooks'"
+      (click)="setCategory('runbooks')">
+      Runbooks (1)
+    </button>
+  </div>
+
+  <!-- =========================================================
+       4. SPLIT-VIEW WORKSPACE (1/3 NOTE LIST + 2/3 NOTE VIEWER)
+  ========================================================= -->
+  <div class="split-workspace-grid">
+    
+    <!-- CỘT TRÁI (1/3): DANH SÁCH NOTE EXPLORER -->
+    <div class="note-list-column">
+      @for (note of filteredNotes(); track note.id) {
+        <div 
+          class="note-card-item"
+          [class.active]="activeNote().id === note.id"
+          (click)="selectNote(note.id)">
+          
+          <div class="note-item-top">
+            <span class="cat-pill" [ngClass]="{
+              'pill-purple': note.category === 'architecture',
+              'pill-cyan': note.category === 'infrastructure',
+              'pill-emerald': note.category === 'security',
+              'pill-amber': note.category === 'runbooks'
+            }">
+              {{ note.categoryLabel }}
+            </span>
+
+            <div class="note-item-meta">
+              <span class="read-time">{{ note.readTime }}</span>
+              <button 
+                type="button" 
+                class="star-mini-btn" 
+                [class.pinned]="note.pinned"
+                (click)="togglePin(note.id, $event)"
+                title="Pin Note">
+                <lucide-icon [img]="Star" size="13"></lucide-icon>
+              </button>
+            </div>
+          </div>
+
+          <h3 class="note-item-title">{{ note.title }}</h3>
+          <p class="note-item-excerpt">{{ note.excerpt }}</p>
+
+          <div class="note-item-footer">
+            <div class="tags-mini-row">
+              @for (tag of note.tags; track tag) {
+                <span class="tag-chip">#{{ tag }}</span>
+              }
+            </div>
+          </div>
+        </div>
+      }
+    </div>
+
+    <!-- CỘT PHẢI (2/3): KHUNG ĐỌC & SOẠN THẢO MARKDOWN -->
+    @if (activeNote(); as current) {
+      <div class="note-viewer-column">
+        
+        <!-- Viewer Header -->
+        <div class="viewer-header">
+          <div class="viewer-title-group">
+            <span class="cat-pill" [ngClass]="{
+              'pill-purple': current.category === 'architecture',
+              'pill-cyan': current.category === 'infrastructure',
+              'pill-emerald': current.category === 'security',
+              'pill-amber': current.category === 'runbooks'
+            }">
+              {{ current.categoryLabel }}
+            </span>
+            <h2 class="viewer-title">{{ current.title }}</h2>
+          </div>
+
+          <div class="viewer-actions">
+            <!-- Nút Copy Markdown -->
+            <button 
+              type="button" 
+              class="action-icon-btn" 
+              (click)="copyNoteContent()"
+              title="Copy Markdown">
+              <lucide-icon [img]="copied() ? Check : Copy" size="14"></lucide-icon>
+              <span>{{ copied() ? 'Copied' : 'Copy' }}</span>
+            </button>
+
+            <!-- Nút Edit -->
+            <button type="button" class="action-icon-btn" title="Edit Spec">
+              <lucide-icon [img]="Edit3" size="14"></lucide-icon>
+              <span>Edit</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Meta Sub-bar -->
+        <div class="viewer-meta-bar">
+          <span class="meta-author">Author: <strong>Thành Nam (Lead Architect)</strong></span>
+          <span class="meta-dot">•</span>
+          <span class="meta-date">Updated: {{ current.lastUpdated }}</span>
+          <span class="meta-dot">•</span>
+          <span class="meta-words">{{ current.wordCount }} words</span>
+        </div>
+
+        <!-- Article Content Body (Rendered Markdown) -->
+        <div class="viewer-content-body">
+          @for (paragraph of current.content; track $index) {
+            <p class="content-paragraph">{{ paragraph }}</p>
+          }
+        </div>
+
+        <!-- Viewer Footer Tags -->
+        <div class="viewer-footer">
+          <span class="footer-label">Attached Tags:</span>
+          <div class="viewer-tags-row">
+            @for (t of current.tags; track t) {
+              <span class="tag-chip">#{{ t }}</span>
+            }
+          </div>
+        </div>
+
+      </div>
+    }
+
+  </div>
+
+</div>
