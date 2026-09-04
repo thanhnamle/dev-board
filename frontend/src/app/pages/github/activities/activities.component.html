@@ -1,1 +1,365 @@
-<p>activities works!</p>
+<div class="activities-container">
+
+  <!-- =========================================================
+       1. HEADER BAR & CONTROLS
+  ========================================================= -->
+  <header class="activities-header">
+    <div class="header-left">
+      <div class="title-row">
+        <h1 class="activities-title">GitHub Activity Timeline</h1>
+        <span class="count-pill">
+          <span class="pulse-dot"></span>
+          Live Feed
+        </span>
+      </div>
+      <p class="activities-subtitle">
+        Real-time audit log of commits, pull requests, code reviews, and deployments across all repositories
+      </p>
+    </div>
+
+    <div class="header-actions">
+      <!-- Nút làm mới -->
+      <button 
+        type="button" 
+        class="action-btn btn-secondary" 
+        (click)="refreshActivities()"
+        [disabled]="loading()"
+        title="Refresh activity feed">
+        <lucide-icon [img]="RefreshCw" size="14" [class.spin]="loading()"></lucide-icon>
+        <span>{{ loading() ? 'Refreshing...' : 'Refresh Feed' }}</span>
+      </button>
+
+      <!-- Mở trang GitHub Activity -->
+      <a 
+        href="https://github.com/thanhnamle" 
+        target="_blank" 
+        class="action-btn btn-primary" 
+        title="View profile feed on GitHub">
+        <lucide-icon [img]="Activity" size="15"></lucide-icon>
+        <span>GitHub Stream</span>
+        <lucide-icon [img]="ExternalLink" size="13"></lucide-icon>
+      </a>
+    </div>
+  </header>
+
+  <!-- =========================================================
+       2. TOP 4 METRICS RIBBON (DUAL THEME)
+  ========================================================= -->
+  <section class="metrics-grid">
+    <!-- Metric 1: Commits -->
+    <div class="metric-card">
+      <div class="metric-top">
+        <span class="metric-label">Commits Pushed</span>
+        <div class="metric-icon-box box-purple">
+          <lucide-icon [img]="GitCommit" class="metric-icon"></lucide-icon>
+        </div>
+      </div>
+      <div class="metric-value-row">
+        <span class="metric-value">842</span>
+        <span class="metric-pill pill-purple">This Year</span>
+      </div>
+      <div class="metric-footer">
+        <span class="metric-trend text-purple">+18 commits</span>
+        <span class="metric-sub">in the last 7 days</span>
+      </div>
+    </div>
+
+    <!-- Metric 2: Pull Requests -->
+    <div class="metric-card">
+      <div class="metric-top">
+        <span class="metric-label">PRs Merged</span>
+        <div class="metric-icon-box box-emerald">
+          <lucide-icon [img]="GitPullRequest" class="metric-icon"></lucide-icon>
+        </div>
+      </div>
+      <div class="metric-value-row">
+        <span class="metric-value">68</span>
+        <span class="metric-pill pill-emerald">98% Merged</span>
+      </div>
+      <div class="metric-footer">
+        <span class="metric-trend text-emerald">Zero conflicts</span>
+        <span class="metric-sub">clean rebases</span>
+      </div>
+    </div>
+
+    <!-- Metric 3: Code Reviews -->
+    <div class="metric-card">
+      <div class="metric-top">
+        <span class="metric-label">Reviews Done</span>
+        <div class="metric-icon-box box-cyan">
+          <lucide-icon [img]="CheckCircle2" class="metric-icon"></lucide-icon>
+        </div>
+      </div>
+      <div class="metric-value-row">
+        <span class="metric-value">114</span>
+        <span class="metric-pill pill-cyan">Architect</span>
+      </div>
+      <div class="metric-footer">
+        <span class="metric-trend text-blue">High Quality</span>
+        <span class="metric-sub">peer collaboration</span>
+      </div>
+    </div>
+
+    <!-- Metric 4: Active Streak -->
+    <div class="metric-card">
+      <div class="metric-top">
+        <span class="metric-label">Active Streak</span>
+        <div class="metric-icon-box box-amber">
+          <lucide-icon [img]="Flame" class="metric-icon"></lucide-icon>
+        </div>
+      </div>
+      <div class="metric-value-row">
+        <span class="metric-value">18 Days</span>
+        <span class="metric-pill pill-amber">🔥 On Fire</span>
+      </div>
+      <div class="metric-footer">
+        <span class="metric-trend text-amber">Record: 42 days</span>
+        <span class="metric-sub">keep momentum</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- =========================================================
+       3. COMMIT HEATMAP BOARD
+  ========================================================= -->
+  <section class="heatmap-card">
+    <div class="heatmap-header">
+      <div class="heatmap-title-group">
+        <lucide-icon [img]="Calendar" size="16" class="text-purple"></lucide-icon>
+        <h3 class="heatmap-title">30-Day Contribution Heatmap</h3>
+      </div>
+      <div class="heatmap-legend">
+        <span class="legend-text">Less</span>
+        <span class="heatmap-box lvl-0"></span>
+        <span class="heatmap-box lvl-1"></span>
+        <span class="heatmap-box lvl-2"></span>
+        <span class="heatmap-box lvl-3"></span>
+        <span class="heatmap-box lvl-4"></span>
+        <span class="legend-text">More</span>
+      </div>
+    </div>
+
+    <!-- Heatmap Grid Cells -->
+    <div class="heatmap-matrix">
+      @for (cell of heatmapCells(); track cell.day) {
+        <div 
+          class="heatmap-cell" 
+          [class.lvl-0]="cell.level === 0"
+          [class.lvl-1]="cell.level === 1"
+          [class.lvl-2]="cell.level === 2"
+          [class.lvl-3]="cell.level === 3"
+          [class.lvl-4]="cell.level === 4"
+          [title]="cell.count + ' contributions on ' + cell.date">
+        </div>
+      }
+    </div>
+  </section>
+
+  <!-- =========================================================
+       4. FILTER & SEARCH TOOLBAR
+  ========================================================= -->
+  <div class="toolbar-card">
+    <div class="toolbar-left">
+      <!-- Search Input -->
+      <div class="search-box">
+        <lucide-icon [img]="Search" size="14" class="search-icon"></lucide-icon>
+        <input 
+          type="text" 
+          placeholder="Filter activity by commit message, hash or repo..." 
+          [value]="searchQuery()"
+          (input)="searchQuery.set($any($event.target).value)"
+          class="search-input"
+        />
+      </div>
+
+      <!-- Type Filter Pills -->
+      <div class="filter-pills">
+        <button 
+          type="button" 
+          class="pill-btn" 
+          [class.active]="selectedType() === 'all'"
+          (click)="selectedType.set('all')">
+          All
+        </button>
+        <button 
+          type="button" 
+          class="pill-btn" 
+          [class.active]="selectedType() === 'commit'"
+          (click)="selectedType.set('commit')">
+          Commits
+        </button>
+        <button 
+          type="button" 
+          class="pill-btn" 
+          [class.active]="selectedType() === 'pr'"
+          (click)="selectedType.set('pr')">
+          Pull Requests
+        </button>
+        <button 
+          type="button" 
+          class="pill-btn" 
+          [class.active]="selectedType() === 'review'"
+          (click)="selectedType.set('review')">
+          Reviews
+        </button>
+      </div>
+    </div>
+
+    <div class="toolbar-right">
+      <!-- Repo Filter Dropdown -->
+      <div class="select-wrapper">
+        <select 
+          class="custom-select" 
+          [value]="selectedRepo()" 
+          (change)="selectedRepo.set($any($event.target).value)">
+          @for (repo of repoList; track repo.value) {
+            <option [value]="repo.value">{{ repo.label }}</option>
+          }
+        </select>
+      </div>
+    </div>
+  </div>
+
+  <!-- =========================================================
+       5. MAIN CONTENT: TIMELINE & SIDEBAR METRICS
+  ========================================================= -->
+  <div class="activities-grid">
+
+    <!-- CỘT TRÁI: DÒNG THỜI GIAN TIMELINE -->
+    <div class="timeline-column">
+      <div class="section-card">
+        <div class="section-header">
+          <div class="section-header-left">
+            <lucide-icon [img]="Clock" size="17" class="text-purple"></lucide-icon>
+            <h3 class="section-title">Activity Stream</h3>
+          </div>
+          <span class="section-counter">{{ filteredActivities().length }} Events</span>
+        </div>
+
+        <div class="timeline-list">
+          @for (item of filteredActivities(); track item.id) {
+            <div class="timeline-item">
+              
+              <!-- Timeline Marker Icon -->
+              <div class="timeline-icon-box" [ngClass]="'icon-' + item.type">
+                @if (item.type === 'commit') {
+                  <lucide-icon [img]="GitCommit" size="15"></lucide-icon>
+                } @else if (item.type === 'pr') {
+                  <lucide-icon [img]="GitPullRequest" size="15"></lucide-icon>
+                } @else if (item.type === 'review') {
+                  <lucide-icon [img]="CheckCircle2" size="15"></lucide-icon>
+                } @else if (item.type === 'release') {
+                  <lucide-icon [img]="Tag" size="15"></lucide-icon>
+                } @else {
+                  <lucide-icon [img]="GitBranch" size="15"></lucide-icon>
+                }
+              </div>
+
+              <!-- Content Body -->
+              <div class="timeline-content">
+                <div class="timeline-header-row">
+                  <div class="timeline-meta-left">
+                    <a [href]="item.repoUrl" target="_blank" class="repo-badge">
+                      <lucide-icon [img]="FolderGit2" size="12"></lucide-icon>
+                      <span>{{ item.repoName }}</span>
+                    </a>
+
+                    @if (item.branch) {
+                      <span class="branch-badge">
+                        <lucide-icon [img]="GitBranch" size="11"></lucide-icon>
+                        <span>{{ item.branch }}</span>
+                      </span>
+                    }
+
+                    @if (item.commitHash) {
+                      <span class="hash-pill">#{{ item.commitHash }}</span>
+                    }
+
+                    @if (item.prNumber) {
+                      <span class="pr-pill">PR #{{ item.prNumber }}</span>
+                    }
+                  </div>
+
+                  <span class="timeline-time">{{ item.timeAgo }}</span>
+                </div>
+
+                <p class="timeline-title">{{ item.title }}</p>
+
+                @if (item.description) {
+                  <p class="timeline-desc">{{ item.description }}</p>
+                }
+              </div>
+
+            </div>
+          } @empty {
+            <div class="empty-state">
+              <p>No activity records match your current filters.</p>
+            </div>
+          }
+        </div>
+      </div>
+    </div>
+
+    <!-- CỘT PHẢI: PHÂN BỔ HOẠT ĐỘNG & NĂNG SUẤT TUẦN -->
+    <aside class="sidebar-column">
+
+      <!-- Card 1: Phân bổ loại hoạt động -->
+      <div class="section-card">
+        <div class="section-header">
+          <div class="section-header-left">
+            <lucide-icon [img]="Layers" size="17" class="text-cyan"></lucide-icon>
+            <h3 class="section-title">Action Velocity</h3>
+          </div>
+        </div>
+
+        <div class="distribution-bars">
+          @for (item of activityDistribution; track item.label) {
+            <div class="dist-row">
+              <div class="dist-labels">
+                <span class="dist-name">{{ item.label }}</span>
+                <span class="dist-percent">{{ item.percentage }}%</span>
+              </div>
+              <div class="dist-track">
+                <div 
+                  class="dist-fill" 
+                  [style.width.%]="item.percentage" 
+                  [style.backgroundColor]="item.color">
+                </div>
+              </div>
+            </div>
+          }
+        </div>
+      </div>
+
+      <!-- Card 2: Thống kê năng suất ngày trong tuần -->
+      <div class="section-card">
+        <div class="section-header">
+          <div class="section-header-left">
+            <lucide-icon [img]="TrendingUp" size="17" class="text-emerald"></lucide-icon>
+            <h3 class="section-title">Weekly Cadence</h3>
+          </div>
+          <span class="section-counter">Mon - Sun</span>
+        </div>
+
+        <!-- Mini Bar Chart -->
+        <div class="chart-container">
+          @for (bar of weeklyProductivity; track bar.day) {
+            <div class="chart-bar-col">
+              <div class="bar-wrapper">
+                <div 
+                  class="bar-fill" 
+                  [style.height.%]="bar.height" 
+                  [title]="bar.commits + ' commits on ' + bar.day">
+                </div>
+              </div>
+              <span class="bar-label">{{ bar.day }}</span>
+            </div>
+          }
+        </div>
+      </div>
+
+    </aside>
+
+  </div>
+
+</div>

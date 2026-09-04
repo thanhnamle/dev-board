@@ -1,1 +1,379 @@
-<p>repositories works!</p>
+<div class="repos-container">
+
+  <!-- =========================================================
+       1. HEADER BAR & MAIN ACTIONS
+  ========================================================= -->
+  <header class="repos-header">
+    <div class="header-left">
+      <div class="title-row">
+        <h1 class="repos-title">GitHub Repositories</h1>
+        <span class="count-pill">{{ filteredRepos().length }} Repositories</span>
+      </div>
+      <p class="repos-subtitle">
+        Manage source code repositories, open pull requests, branches, and 1-click git clone commands
+      </p>
+    </div>
+
+    <div class="header-actions">
+      <!-- Toggle Grid / List View -->
+      <div class="view-mode-toggle">
+        <button 
+          type="button" 
+          class="mode-btn" 
+          [class.active]="viewMode() === 'grid'"
+          (click)="viewMode.set('grid')"
+          title="Grid View">
+          <lucide-icon [img]="LayoutGrid" size="15"></lucide-icon>
+        </button>
+        <button 
+          type="button" 
+          class="mode-btn" 
+          [class.active]="viewMode() === 'list'"
+          (click)="viewMode.set('list')"
+          title="List View">
+          <lucide-icon [img]="List" size="15"></lucide-icon>
+        </button>
+      </div>
+
+      <!-- Sync Button -->
+      <button 
+        type="button" 
+        class="action-btn btn-secondary" 
+        (click)="syncRepositories()" 
+        [disabled]="loading()"
+        title="Sync repositories from GitHub">
+        <lucide-icon [img]="RefreshCw" size="14" [class.spin]="loading()"></lucide-icon>
+        <span>{{ loading() ? 'Syncing...' : 'Sync GitHub' }}</span>
+      </button>
+
+      <!-- Open GitHub Orgs/User Link -->
+      <a 
+        href="https://github.com/thanhnamle?tab=repositories" 
+        target="_blank" 
+        class="action-btn btn-primary" 
+        title="View on GitHub">
+        <lucide-icon [img]="FolderGit2" size="15"></lucide-icon>
+        <span>New Repository</span>
+        <lucide-icon [img]="ExternalLink" size="13"></lucide-icon>
+      </a>
+    </div>
+  </header>
+
+  <!-- =========================================================
+       2. TOP 4 METRICS RIBBON (DUAL THEME)
+  ========================================================= -->
+  <section class="metrics-grid">
+    <!-- Card 1: Tracked Repos -->
+    <div class="metric-card">
+      <div class="metric-top">
+        <span class="metric-label">All Repositories</span>
+        <div class="metric-icon-box box-purple">
+          <lucide-icon [img]="FolderGit2" class="metric-icon"></lucide-icon>
+        </div>
+      </div>
+      <div class="metric-value-row">
+        <span class="metric-value">{{ repositories().length }}</span>
+        <span class="metric-pill pill-purple">7 Source • 1 Fork</span>
+      </div>
+      <div class="metric-footer">
+        <span class="metric-trend text-purple">100% Synced</span>
+        <span class="metric-sub">with remote branch</span>
+      </div>
+    </div>
+
+    <!-- Card 2: Total Stars -->
+    <div class="metric-card">
+      <div class="metric-top">
+        <span class="metric-label">Stars Acquired</span>
+        <div class="metric-icon-box box-amber">
+          <lucide-icon [img]="Star" class="metric-icon"></lucide-icon>
+        </div>
+      </div>
+      <div class="metric-value-row">
+        <span class="metric-value">{{ totalStars() }}</span>
+        <span class="metric-pill pill-amber">★ Popular</span>
+      </div>
+      <div class="metric-footer">
+        <span class="metric-trend text-amber">Top Repos</span>
+        <span class="metric-sub">payment-sdk & signals</span>
+      </div>
+    </div>
+
+    <!-- Card 3: Forks Count -->
+    <div class="metric-card">
+      <div class="metric-top">
+        <span class="metric-label">Total Forks</span>
+        <div class="metric-icon-box box-cyan">
+          <lucide-icon [img]="GitFork" class="metric-icon"></lucide-icon>
+        </div>
+      </div>
+      <div class="metric-value-row">
+        <span class="metric-value">{{ totalForks() }}</span>
+        <span class="metric-pill pill-cyan">Ecosystem</span>
+      </div>
+      <div class="metric-footer">
+        <span class="metric-trend text-blue">24 Forks</span>
+        <span class="metric-sub">on primary SDK</span>
+      </div>
+    </div>
+
+    <!-- Card 4: Branch Health -->
+    <div class="metric-card">
+      <div class="metric-top">
+        <span class="metric-label">Branch Status</span>
+        <div class="metric-icon-box box-emerald">
+          <lucide-icon [img]="GitBranch" class="metric-icon"></lucide-icon>
+        </div>
+      </div>
+      <div class="metric-value-row">
+        <span class="metric-value">Main</span>
+        <span class="metric-pill pill-emerald">Protected</span>
+      </div>
+      <div class="metric-footer">
+        <span class="metric-trend text-emerald">11 Issues</span>
+        <span class="metric-sub">across repositories</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- =========================================================
+       3. FILTER & SEARCH TOOLBAR
+  ========================================================= -->
+  <div class="toolbar-card">
+    <div class="toolbar-left">
+      <!-- Search Input -->
+      <div class="search-box">
+        <lucide-icon [img]="Search" size="14" class="search-icon"></lucide-icon>
+        <input 
+          type="text" 
+          placeholder="Filter repositories by name, topic or description..." 
+          [value]="searchQuery()"
+          (input)="searchQuery.set($any($event.target).value)"
+          class="search-input"
+        />
+      </div>
+
+      <!-- Type Filter Pills -->
+      <div class="filter-pills">
+        <button 
+          type="button" 
+          class="pill-btn" 
+          [class.active]="selectedType() === 'all'"
+          (click)="selectedType.set('all')">
+          All
+        </button>
+        <button 
+          type="button" 
+          class="pill-btn" 
+          [class.active]="selectedType() === 'public'"
+          (click)="selectedType.set('public')">
+          Sources
+        </button>
+        <button 
+          type="button" 
+          class="pill-btn" 
+          [class.active]="selectedType() === 'forks'"
+          (click)="selectedType.set('forks')">
+          Forks
+        </button>
+      </div>
+    </div>
+
+    <div class="toolbar-right">
+      <!-- Language Dropdown -->
+      <div class="select-wrapper">
+        <select 
+          class="custom-select" 
+          [value]="selectedLang()" 
+          (change)="selectedLang.set($any($event.target).value)">
+          @for (lang of availableLanguages; track lang.value) {
+            <option [value]="lang.value">{{ lang.label }}</option>
+          }
+        </select>
+      </div>
+
+      <!-- Sort Dropdown -->
+      <div class="select-wrapper">
+        <select 
+          class="custom-select" 
+          [value]="sortBy()" 
+          (change)="sortBy.set($any($event.target).value)">
+          <option value="updated">Recently Updated</option>
+          <option value="stars">Most Stars</option>
+          <option value="forks">Most Forks</option>
+          <option value="name">Repository Name</option>
+        </select>
+      </div>
+    </div>
+  </div>
+
+  <!-- =========================================================
+       4. REPOSITORIES CONTENT (GRID OR LIST)
+  ========================================================= -->
+  @if (viewMode() === 'grid') {
+    <!-- GRID VIEW -->
+    <div class="repos-grid">
+      @for (repo of filteredRepos(); track repo.id) {
+        <div class="repo-card">
+          <!-- Card Header -->
+          <div class="repo-card-header">
+            <div class="repo-title-row">
+              <lucide-icon 
+                [img]="repo.isFork ? GitFork : FolderGit2" 
+                size="17" 
+                [class.text-cyan]="repo.isFork"
+                [class.text-purple]="!repo.isFork">
+              </lucide-icon>
+              <a [href]="repo.htmlUrl" target="_blank" class="repo-title" [title]="repo.fullName">
+                {{ repo.name }}
+              </a>
+            </div>
+
+            <div class="badge-group">
+              @if (repo.isFork) {
+                <span class="visibility-badge badge-fork">Fork</span>
+              } @else {
+                <span class="visibility-badge badge-public">Public</span>
+              }
+            </div>
+          </div>
+
+          <!-- Description -->
+          <p class="repo-description">{{ repo.description }}</p>
+
+          <!-- Topics / Tags -->
+          <div class="repo-tags-row">
+            @for (tag of repo.tags.slice(0, 4); track tag) {
+              <span class="topic-tag">#{{ tag }}</span>
+            }
+          </div>
+
+          <!-- Card Footer -->
+          <div class="repo-card-footer">
+            <div class="footer-meta-left">
+              <!-- Language with dot -->
+              <div class="meta-item">
+                <span class="lang-dot" [style.backgroundColor]="repo.languageColor"></span>
+                <span class="lang-name">{{ repo.language }}</span>
+              </div>
+
+              <!-- Stars -->
+              <div class="meta-item" title="Stars count">
+                <lucide-icon [img]="Star" size="13" class="text-amber"></lucide-icon>
+                <span>{{ repo.starsCount }}</span>
+              </div>
+
+              <!-- Forks -->
+              <div class="meta-item" title="Forks count">
+                <lucide-icon [img]="GitFork" size="13"></lucide-icon>
+                <span>{{ repo.forksCount }}</span>
+              </div>
+
+              <!-- License -->
+              @if (repo.license) {
+                <div class="meta-item meta-license" title="License">
+                  <lucide-icon [img]="Scale" size="13"></lucide-icon>
+                  <span>{{ repo.license }}</span>
+                </div>
+              }
+            </div>
+
+            <!-- Footer Action: Copy Clone Command -->
+            <div class="footer-actions">
+              <button 
+                type="button" 
+                class="btn-clone" 
+                (click)="copyCloneUrl(repo, $event)" 
+                title="Copy git clone command">
+                @if (copiedRepoId() === repo.id) {
+                  <lucide-icon [img]="Check" size="13" class="text-emerald"></lucide-icon>
+                  <span class="text-emerald">Copied!</span>
+                } @else {
+                  <lucide-icon [img]="Copy" size="13"></lucide-icon>
+                  <span>Clone</span>
+                }
+              </button>
+
+              <a [href]="repo.htmlUrl" target="_blank" class="btn-icon-link" title="Open repository on GitHub">
+                <lucide-icon [img]="ExternalLink" size="13"></lucide-icon>
+              </a>
+            </div>
+          </div>
+        </div>
+      } @empty {
+        <div class="empty-state-card">
+          <lucide-icon [img]="FolderGit2" size="42" class="empty-icon"></lucide-icon>
+          <h3>No repositories found</h3>
+          <p>Try clearing your search query or adjusting your language & type filters.</p>
+        </div>
+      }
+    </div>
+  } @else {
+    <!-- LIST VIEW -->
+    <div class="repos-list">
+      @for (repo of filteredRepos(); track repo.id) {
+        <div class="repo-list-item">
+          <div class="list-left">
+            <lucide-icon 
+              [img]="repo.isFork ? GitFork : FolderGit2" 
+              size="18" 
+              [class.text-cyan]="repo.isFork"
+              [class.text-purple]="!repo.isFork">
+            </lucide-icon>
+            <div class="list-info">
+              <div class="list-title-row">
+                <a [href]="repo.htmlUrl" target="_blank" class="repo-title">
+                  {{ repo.name }}
+                </a>
+                <span class="visibility-badge" [class.badge-fork]="repo.isFork" [class.badge-public]="!repo.isFork">
+                  {{ repo.isFork ? 'Fork' : 'Public' }}
+                </span>
+                <span class="list-updated">{{ repo.updatedRelative }}</span>
+              </div>
+              <p class="list-desc">{{ repo.description }}</p>
+            </div>
+          </div>
+
+          <div class="list-right">
+            <div class="list-meta">
+              <div class="meta-item">
+                <span class="lang-dot" [style.backgroundColor]="repo.languageColor"></span>
+                <span>{{ repo.language }}</span>
+              </div>
+              <div class="meta-item">
+                <lucide-icon [img]="Star" size="13" class="text-amber"></lucide-icon>
+                <span>{{ repo.starsCount }}</span>
+              </div>
+              <div class="meta-item">
+                <lucide-icon [img]="GitFork" size="13"></lucide-icon>
+                <span>{{ repo.forksCount }}</span>
+              </div>
+            </div>
+
+            <div class="footer-actions">
+              <button 
+                type="button" 
+                class="btn-clone" 
+                (click)="copyCloneUrl(repo, $event)" 
+                title="Copy git clone command">
+                @if (copiedRepoId() === repo.id) {
+                  <span class="text-emerald">Copied!</span>
+                } @else {
+                  <span>Clone</span>
+                }
+              </button>
+              <a [href]="repo.htmlUrl" target="_blank" class="btn-icon-link">
+                <lucide-icon [img]="ExternalLink" size="13"></lucide-icon>
+              </a>
+            </div>
+          </div>
+        </div>
+      } @empty {
+        <div class="empty-state-card">
+          <p>No repositories match the current filters.</p>
+        </div>
+      }
+    </div>
+  }
+
+</div>

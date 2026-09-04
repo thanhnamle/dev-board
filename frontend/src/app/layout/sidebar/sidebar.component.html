@@ -233,25 +233,82 @@
     </div>
 
     <!-- User Profile Card -->
-    <div class="user-pill">
-      <div class="user-avatar-box">
-        <img
-          src="assets/Avatar.jpg"
-          [alt]="currentUser().name"
-          class="user-avatar-img"
-        />
-        <span class="user-online-dot" title="Online"></span>
-      </div>
+        <!-- User Profile Card Container -->
+    <div class="user-profile-container">
+      
+      <!-- DROPDOWN MENU NỔI (HIỆN KHI USER BẤM VÀO CARD) -->
+      @if (userMenuOpen() && !collapsed()) {
+        <div class="user-dropdown-menu">
+          
+          <!-- Header thông tin nhanh -->
+          <div class="dropdown-header">
+            <span class="dropdown-user-name">{{ currentUser().name }}</span>
+            <span class="dropdown-user-handle">&#64;thanhnamle</span>
+          </div>
 
-      @if (!collapsed()) {
-        <div class="user-text">
-          <span class="user-name">{{ currentUser().name }}</span>
-          <span class="user-role">{{ currentUser().role }}</span>
+          <div class="dropdown-divider"></div>
+
+          <!-- Các nút hành động -->
+          <a 
+            routerLink="/app/github/profile" 
+            (click)="userMenuOpen.set(false)" 
+            class="dropdown-item">
+            <lucide-icon [img]="User" size="14"></lucide-icon>
+            <span>View Profile</span>
+          </a>
+
+          <a 
+            routerLink="/app/github/repositories" 
+            (click)="userMenuOpen.set(false)" 
+            class="dropdown-item">
+            <lucide-icon [img]="FolderGit2" size="14"></lucide-icon>
+            <span>Repositories</span>
+          </a>
+
+          <a 
+            href="https://github.com/thanhnamle" 
+            target="_blank" 
+            (click)="userMenuOpen.set(false)" 
+            class="dropdown-item">
+            <lucide-icon [img]="ExternalLink" size="14"></lucide-icon>
+            <span>Open GitHub</span>
+          </a>
+
+          <div class="dropdown-divider"></div>
+
+          <!-- NÚT LOGOUT MÀU ĐỎ -->
+          <button type="button" class="dropdown-item logout-item" (click)="logout()">
+            <lucide-icon [img]="LogOut" size="14"></lucide-icon>
+            <span>Log out</span>
+          </button>
+        </div>
+      }
+
+      <!-- Nút User Pill bấm để bật/tắt Menu -->
+      <div class="user-pill" (click)="toggleUserMenu()" [class.menu-active]="userMenuOpen()">
+        <div class="user-avatar-box">
+          <img
+            src="assets/Avatar.jpg"
+            [alt]="currentUser().name"
+            class="user-avatar-img"
+          />
+          <span class="user-online-dot" title="Online"></span>
         </div>
 
-        <lucide-icon [img]="ChevronUp" size="14" class="user-chevron">
-        </lucide-icon>
-      }
+        @if (!collapsed()) {
+          <div class="user-text">
+            <span class="user-name">{{ currentUser().name }}</span>
+            <span class="user-role">{{ currentUser().role }}</span>
+          </div>
+
+          <lucide-icon 
+            [img]="userMenuOpen() ? ChevronDown : ChevronUp" 
+            size="14" 
+            class="user-chevron">
+          </lucide-icon>
+        }
+      </div>
+
     </div>
   </div>
 </aside>

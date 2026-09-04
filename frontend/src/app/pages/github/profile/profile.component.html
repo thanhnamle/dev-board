@@ -1,1 +1,326 @@
-<p>profile works!</p>
+<div class="profile-container">
+
+  <!-- =========================================================
+       1. HEADER BAR & CONTROLS
+  ========================================================= -->
+  <header class="profile-header">
+    <div class="header-left">
+      <div class="title-row">
+        <h1 class="profile-title">GitHub Profile Overview</h1>
+        <span class="sync-badge">
+          <span class="live-pulse"></span>
+          Connected via GitHub SSO
+        </span>
+      </div>
+      <p class="profile-subtitle">
+        Real-time authenticated profile overview, developer repositories, and technical contributions
+      </p>
+    </div>
+
+    <div class="header-actions">
+      <!-- Ô tìm kiếm và live sync user GitHub khác -->
+      <div class="search-box">
+        <lucide-icon [img]="Search" size="14" class="search-icon"></lucide-icon>
+        <input 
+          type="text" 
+          placeholder="Fetch another username..." 
+          [value]="searchQuery()"
+          (input)="searchQuery.set($any($event.target).value)"
+          (keyup.enter)="fetchLiveProfile(searchQuery())"
+          class="search-input"
+        />
+      </div>
+
+      <!-- Nút làm mới / Sync -->
+      <button 
+        type="button" 
+        class="action-btn btn-secondary" 
+        (click)="fetchLiveProfile(searchQuery())"
+        [disabled]="loading()"
+        title="Refresh data from GitHub">
+        <lucide-icon [img]="RefreshCw" size="14" [class.spin]="loading()"></lucide-icon>
+        <span>{{ loading() ? 'Syncing...' : 'Sync Live' }}</span>
+      </button>
+
+      <!-- Nút mở profile trên GitHub -->
+      <a 
+        [href]="profile().html_url" 
+        target="_blank" 
+        class="action-btn btn-primary" 
+        title="Open profile on GitHub">
+        <lucide-icon [img]="Github" size="15"></lucide-icon>
+        <span>Open on GitHub</span>
+        <lucide-icon [img]="ExternalLink" size="13"></lucide-icon>
+      </a>
+    </div>
+  </header>
+
+  <!-- =========================================================
+       2. HERO PROFILE CARD
+  ========================================================= -->
+  <section class="hero-card">
+    <div class="hero-left">
+      <div class="avatar-wrapper">
+        <img [src]="profile().avatar_url" [alt]="profile().name" class="avatar-img" />
+        <span class="status-indicator" title="Active on GitHub"></span>
+      </div>
+
+      <div class="user-meta">
+        <div class="name-row">
+          <h2 class="user-name">{{ profile().name }}</h2>
+          <span class="username-handle">{{ '@' + profile().login }}</span>
+          <span class="badge-role">Core Architect</span>
+        </div>
+
+        <p class="user-bio">{{ profile().bio }}</p>
+
+        <!-- Thông tin chi tiết: Company, Location, Blog, Joined -->
+        <div class="meta-tags-row">
+          @if (profile().company) {
+            <span class="meta-tag">
+              <lucide-icon [img]="Building2" size="14"></lucide-icon>
+              <span>{{ profile().company }}</span>
+            </span>
+          }
+
+          @if (profile().location) {
+            <span class="meta-tag">
+              <lucide-icon [img]="MapPin" size="14"></lucide-icon>
+              <span>{{ profile().location }}</span>
+            </span>
+          }
+
+          @if (profile().blog) {
+            <a [href]="profile().blog" target="_blank" class="meta-tag meta-link">
+              <lucide-icon [img]="Link" size="14"></lucide-icon>
+              <span>{{ profile().blog }}</span>
+            </a>
+          }
+
+          <span class="meta-tag">
+            <lucide-icon [img]="Calendar" size="14"></lucide-icon>
+            <span>Joined {{ memberSince() }}</span>
+          </span>
+        </div>
+      </div>
+    </div>
+
+    <div class="hero-right">
+      <button 
+        type="button" 
+        class="btn-copy-link" 
+        (click)="copyProfileUrl()" 
+        title="Copy GitHub Profile URL">
+        @if (copied()) {
+          <lucide-icon [img]="Check" size="14" class="text-emerald"></lucide-icon>
+          <span class="text-emerald">Copied URL!</span>
+        } @else {
+          <lucide-icon [img]="Copy" size="14"></lucide-icon>
+          <span>Copy Link</span>
+        }
+      </button>
+    </div>
+  </section>
+
+  <!-- =========================================================
+       3. TOP 4 METRICS RIBBON (DUAL THEME)
+  ========================================================= -->
+  <section class="metrics-grid">
+    <!-- Metric 1: Repositories -->
+    <div class="metric-card">
+      <div class="metric-top">
+        <span class="metric-label">Repositories</span>
+        <div class="metric-icon-box box-purple">
+          <lucide-icon [img]="FolderGit2" class="metric-icon"></lucide-icon>
+        </div>
+      </div>
+      <div class="metric-value-row">
+        <span class="metric-value">{{ profile().public_repos }}</span>
+        <span class="metric-pill pill-purple">Public</span>
+      </div>
+      <div class="metric-footer">
+        <span class="metric-trend text-purple">100% Synced</span>
+        <span class="metric-sub">with remote</span>
+      </div>
+    </div>
+
+    <!-- Metric 2: Network / Followers -->
+    <div class="metric-card">
+      <div class="metric-top">
+        <span class="metric-label">Network</span>
+        <div class="metric-icon-box box-emerald">
+          <lucide-icon [img]="Users" class="metric-icon"></lucide-icon>
+        </div>
+      </div>
+      <div class="metric-value-row">
+        <span class="metric-value">{{ profile().followers }}</span>
+        <span class="metric-pill pill-emerald">{{ profile().following }} Following</span>
+      </div>
+      <div class="metric-footer">
+        <span class="metric-trend text-emerald">Active community</span>
+        <span class="metric-sub">collaborators</span>
+      </div>
+    </div>
+
+    <!-- Metric 3: Stars Earned -->
+    <div class="metric-card">
+      <div class="metric-top">
+        <span class="metric-label">Stars Earned</span>
+        <div class="metric-icon-box box-amber">
+          <lucide-icon [img]="Star" class="metric-icon"></lucide-icon>
+        </div>
+      </div>
+      <div class="metric-value-row">
+        <span class="metric-value">226</span>
+        <span class="metric-pill pill-amber">Top 10%</span>
+      </div>
+      <div class="metric-footer">
+        <span class="metric-trend text-amber">62 Stars</span>
+        <span class="metric-sub">this quarter</span>
+      </div>
+    </div>
+
+    <!-- Metric 4: Public Gists / Snippets -->
+    <div class="metric-card">
+      <div class="metric-top">
+        <span class="metric-label">Public Gists</span>
+        <div class="metric-icon-box box-cyan">
+          <lucide-icon [img]="Code2" class="metric-icon"></lucide-icon>
+        </div>
+      </div>
+      <div class="metric-value-row">
+        <span class="metric-value">{{ profile().public_gists }}</span>
+        <span class="metric-pill pill-cyan">Reusable</span>
+      </div>
+      <div class="metric-footer">
+        <span class="metric-trend text-blue">Integrated</span>
+        <span class="metric-sub">with Snippets tab</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- =========================================================
+       4. MAIN TWO-COLUMN CONTENT AREA
+  ========================================================= -->
+  <div class="profile-content-grid">
+    
+    <!-- LEFT COLUMN: PINNED REPOSITORIES -->
+    <div class="main-column">
+      <div class="section-card">
+        <div class="section-header">
+          <div class="section-header-left">
+            <lucide-icon [img]="BookOpen" size="18" class="text-purple"></lucide-icon>
+            <h3 class="section-title">Pinned & Top Repositories</h3>
+          </div>
+          <span class="section-counter">{{ pinnedRepos().length }} Featured</span>
+        </div>
+
+        <!-- Grid 4 Repositories Pinned -->
+        <div class="repos-grid">
+          @for (repo of pinnedRepos(); track repo.id) {
+            <div class="repo-card">
+              <div class="repo-top">
+                <div class="repo-name-group">
+                  <lucide-icon [img]="FolderGit2" size="15" class="repo-folder-icon"></lucide-icon>
+                  <a [href]="repo.url" target="_blank" class="repo-name" [title]="repo.name">
+                    {{ repo.name }}
+                  </a>
+                </div>
+                <span class="repo-visibility-pill">Public</span>
+              </div>
+
+              <p class="repo-desc">{{ repo.description }}</p>
+
+              <div class="repo-footer">
+                <div class="repo-lang">
+                  <span class="lang-dot" [style.backgroundColor]="repo.languageColor"></span>
+                  <span class="lang-name">{{ repo.language }}</span>
+                </div>
+
+                <div class="repo-stats">
+                  <span class="stat-item" title="Stars">
+                    <lucide-icon [img]="Star" size="13"></lucide-icon>
+                    <span>{{ repo.stars }}</span>
+                  </span>
+                  <span class="stat-item" title="Forks">
+                    <lucide-icon [img]="GitFork" size="13"></lucide-icon>
+                    <span>{{ repo.forks }}</span>
+                  </span>
+                </div>
+
+                <span class="repo-updated">{{ repo.updatedAt }}</span>
+              </div>
+            </div>
+          } @empty {
+            <p class="empty-state">No repositories found for this user.</p>
+          }
+        </div>
+      </div>
+    </div>
+
+    <!-- RIGHT COLUMN: LANGUAGE BREAKDOWN & ACHIEVEMENTS -->
+    <aside class="sidebar-column">
+      
+      <!-- Card 1: Ngôn ngữ lập trình -->
+      <div class="section-card">
+        <div class="section-header">
+          <div class="section-header-left">
+            <lucide-icon [img]="Code2" size="17" class="text-cyan"></lucide-icon>
+            <h3 class="section-title">Top Languages</h3>
+          </div>
+        </div>
+
+        <!-- Progress bar tổng hợp -->
+        <div class="lang-progress-bar">
+          @for (lang of languages(); track lang.name) {
+            <span 
+              class="progress-segment" 
+              [style.width.%]="lang.percentage" 
+              [style.backgroundColor]="lang.color"
+              [title]="lang.name + ': ' + lang.percentage + '%'">
+            </span>
+          }
+        </div>
+
+        <!-- Danh sách % chi tiết -->
+        <div class="lang-list">
+          @for (lang of languages(); track lang.name) {
+            <div class="lang-list-item">
+              <div class="lang-item-left">
+                <span class="lang-dot" [style.backgroundColor]="lang.color"></span>
+                <span class="lang-title">{{ lang.name }}</span>
+              </div>
+              <span class="lang-percent">{{ lang.percentage }}%</span>
+            </div>
+          }
+        </div>
+      </div>
+
+      <!-- Card 2: GitHub Achievements -->
+      <div class="section-card">
+        <div class="section-header">
+          <div class="section-header-left">
+            <lucide-icon [img]="Award" size="17" class="text-amber"></lucide-icon>
+            <h3 class="section-title">Achievements</h3>
+          </div>
+          <span class="section-counter">4 Unlocked</span>
+        </div>
+
+        <div class="achievements-list">
+          @for (item of achievements; track item.title) {
+            <div class="achievement-item">
+              <span class="achievement-emoji">{{ item.icon }}</span>
+              <div class="achievement-info">
+                <h4 class="achievement-name">{{ item.title }}</h4>
+                <p class="achievement-desc">{{ item.desc }}</p>
+              </div>
+            </div>
+          }
+        </div>
+      </div>
+
+    </aside>
+
+  </div>
+
+</div>

@@ -1,5 +1,5 @@
 import { Component, signal, inject } from '@angular/core';
-import { RouterLink, RouterLinkActive } from '@angular/router';
+import { Router, RouterLink, RouterLinkActive } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { ThemeService } from '../../core/services/theme.service';
 import {
@@ -20,10 +20,11 @@ import {
   Moon,
   MessageSquare,
   Sparkles,
-  Bookmark,
-  Star,
-  Activity,
-  Layers
+  FolderGit2,
+  LogOut,
+  User,
+  Settings,
+  ExternalLink
 } from 'lucide-angular';
 
 export interface UserProfile {
@@ -58,6 +59,7 @@ export interface MenuItem {
 })
 export class SidebarComponent {
   // Theme Service toàn cục
+  private readonly router = inject(Router);
   readonly themeService = inject(ThemeService);
 
   // Khai báo icon
@@ -72,6 +74,11 @@ export class SidebarComponent {
   readonly Moon = Moon;
   readonly MessageSquare = MessageSquare;
   readonly Sparkles = Sparkles;
+  readonly LogOut = LogOut;
+  readonly User = User;
+  readonly Settings = Settings;
+  readonly ExternalLink = ExternalLink;
+  readonly FolderGit2 = FolderGit2;
 
   // Signal quản lý trạng thái thu gọn sidebar
   collapsed = signal(false);
@@ -88,6 +95,8 @@ export class SidebarComponent {
     avatarUrl: 'assets/Avatar.jpg',
     status: 'Online'
   });
+
+  userMenuOpen = signal<boolean>(false);
 
   // Danh sách menu chính với Badges chuẩn Linear Obsidian
   mainMenu: MenuItem[] = [
@@ -175,5 +184,19 @@ export class SidebarComponent {
     } else {
       this.expandedItem.update(curr => (curr === label ? null : label));
     }
+  }
+
+  toggleUserMenu() {
+    this.userMenuOpen.update(open => !open);
+  }
+
+  logout() {
+    this.userMenuOpen.set(false);
+
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem('github_token');
+    }
+
+    this.router.navigate(['/']);
   }
 }
