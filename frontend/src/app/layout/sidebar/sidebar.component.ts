@@ -26,6 +26,7 @@ import {
   Settings,
   ExternalLink
 } from 'lucide-angular';
+import { UserService } from '../../core/services/user.service';
 
 export interface UserProfile {
   name: string;
@@ -79,6 +80,7 @@ export class SidebarComponent {
   readonly Settings = Settings;
   readonly ExternalLink = ExternalLink;
   readonly FolderGit2 = FolderGit2;
+  readonly userService = inject(UserService);
 
   // Signal quản lý trạng thái thu gọn sidebar
   collapsed = signal(false);

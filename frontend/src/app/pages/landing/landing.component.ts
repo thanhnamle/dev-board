@@ -1,5 +1,5 @@
-import { Component, signal } from '@angular/core';
-import { RouterLink } from '@angular/router';
+import { Component, inject, signal } from '@angular/core';
+import { Router, RouterLink } from '@angular/router';
 import {
   BarChart2,
   BookOpen,
@@ -24,6 +24,7 @@ import {
   User,
   Zap
 } from 'lucide-angular';
+import { UserService } from '../../core/services/user.service';
 
 @Component({
   selector: 'app-landing',
@@ -54,6 +55,18 @@ export class LandingComponent {
   readonly BarChart2 = BarChart2;
   readonly FolderGit2 = FolderGit2;
   readonly Key = Key;
+
+  private readonly userService = inject(UserService);
+  private readonly router = inject(Router);
+
+  userRole = signal<string>('');
+
+  continueWithGitHub(): void {
+    if (this.userRole()) {
+      this.userService.setUserRole(this.userRole());
+    }
+    this.router.navigate(['/app/dashboard/overview']);
+  }
 
   // Quản lý mục đang được chọn ở Sidebar (Home, Features, About Us, Docs)
   currentSection = signal<'home' | 'features' | 'about' | 'docs'>('home');

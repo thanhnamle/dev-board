@@ -297,8 +297,8 @@
 
         @if (!collapsed()) {
           <div class="user-text">
-            <span class="user-name">{{ currentUser().name }}</span>
-            <span class="user-role">{{ currentUser().role }}</span>
+            <span class="user-name">{{ userService.currentUser().name }}</span>
+            <span class="user-role">{{ userService.currentUser().role }}</span>
           </div>
 
           <lucide-icon 

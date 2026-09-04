@@ -277,11 +277,17 @@
               </div>
 
               <div class="auth-card-group">
-                <input type="text" placeholder="Enter your Role" class="auth-input">
+                <!-- Gắn sự kiện lấy text người dùng gõ -->
+                <input 
+                  type="text" 
+                  placeholder="Enter your Role (e.g. Lead Architect, DevOps, Frontend...)" 
+                  class="auth-input"
+                  [value]="userRole()"
+                  (input)="userRole.set($any($event.target).value)"
+                />
                 
-
-                <!-- Nút Continue with GitHub phong cách Linear Shimmer -->
-                <button type="button" class="btn-continue-github" routerLink="/app">
+                <!-- Bấm nút sẽ lưu Role vào Service rồi chuyển trang -->
+                <button type="button" class="btn-continue-github" (click)="continueWithGitHub()">
                   <i-lucide [img]="Github" class="btn-github-icon"></i-lucide>
                   <span>Continue with GitHub</span>
                   <span class="btn-kbd">↵</span>
