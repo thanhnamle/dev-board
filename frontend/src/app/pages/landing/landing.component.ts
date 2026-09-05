@@ -62,6 +62,7 @@ export class LandingComponent {
   userRole = signal<string>('');
 
   continueWithGitHub(): void {
+    window.location.href = 'http://localhost:3000/api/auth/github';
     if (this.userRole()) {
       this.userService.setUserRole(this.userRole());
     }
