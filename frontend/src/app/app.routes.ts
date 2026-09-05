@@ -17,6 +17,10 @@ export const routes: Routes = [
         loadComponent: () => import('./layout/main-layout/main-layout.component').then(m => m.MainLayoutComponent),
         children: [
             { path: '', redirectTo: 'dashboard/overview', pathMatch: 'full' },
+            {
+                path: 'messages',
+                loadComponent: () => import('./pages/messages/messages.component').then(m => m.MessagesComponent)
+            },
             { 
                 path: 'dashboard/overview', 
                 loadComponent: () => import('./pages/dashboard/overview/overview.component').then(m => m.OverviewComponent) 
@@ -72,4 +76,3 @@ export const routes: Routes = [
         redirectTo: ''
     }
 ];
-

@@ -123,14 +123,19 @@ Hệ thống điều hướng được cấu hình tại [frontend/src/app/app.r
 | `/` | `LandingComponent` | Public | Giới thiệu dự án, tính năng GitHub Integration và Card Đăng nhập |
 | `/login` | *Redirect về `/`* | Public | Chuyển hướng về trang đăng nhập thống nhất |
 | `/app` | `MainLayoutComponent` | Auth | Khung layout chính (Tự chuyển hướng mặc định về `dashboard/overview`) |
-| `/app/dashboard/overview` | `OverviewComponent` | Auth | Trang tổng quan chỉ số, hoạt động gần đây |
-| `/app/dashboard/analytics`| `AnalyticsComponent`| Auth | Báo cáo phân tích tốc độ phát triển |
-| `/app/projects/all-projects`| `AllProjectsComponent`| Auth | Danh mục toàn bộ các repository được kết nối |
+| `/app/dashboard/overview` | `OverviewComponent` | Auth | Trang tổng quan chỉ số, hoạt động gần đây, daily engineering tasks |
+| `/app/dashboard/analytics`| `AnalyticsComponent`| Auth | Báo cáo phân tích tốc độ phát triển (velocity, review health) |
+| `/app/projects/all-projects`| `AllProjectsComponent`| Auth | Danh mục toàn bộ các repository và dịch vụ kỹ thuật |
 | `/app/projects/bookmarks`| `BookmarksComponent` | Auth | Các dự án được bookmark để truy cập nhanh |
 | `/app/projects/starred` | `StarredComponent`   | Auth | Các kho mã nguồn ưa thích |
 | `/app/notes/all-notes`   | `AllNotesComponent`  | Auth | Trình soạn thảo và danh sách ghi chú dev |
-| `/app/notes/tags`        | `TagsComponent`      | Auth | Lọc và quản lý ghi chú theo nhãn |
-| `/app/snippets/all-snippets`| `AllSnippetsComponent`| Auth | Thư viện code snippets theo ngôn ngữ |
+| `/app/notes/tags`        | `TagsComponent`      | Auth | Lọc và quản lý ghi chú theo nhãn chuyên môn |
+| `/app/snippets/all-snippets`| `AllSnippetsComponent`| Auth | Thư viện 64 code snippets theo 6 ngôn ngữ lập trình |
+| `/app/snippets/favorites`| `FavoritesComponent`| Auth | Kho lưu trữ code snippets ưu tiên |
+| `/app/github/profile`    | `ProfileComponent`   | Auth | Hồ sơ lập trình viên, metrics ribbon, pinned repos, tech stack |
+| `/app/github/repositories`| `RepositoriesComponent`| Auth | Quản lý 8 kho GitHub, Dual View Grid/List, 1-Click `git clone` |
+| `/app/github/activities` | `ActivitiesComponent`| Auth | Dòng thời gian commit/PR/review, ma trận heatmap 30 ngày |
+| `/app/messages`          | *Đang phát triển*    | Auth | Trung tâm thông báo GitHub & Team Discussion |
 | `**` (Wildcard)          | *Redirect về `/`*    | - | Bắt lỗi 404 và quay về trang chủ |
 
 ---
@@ -140,27 +145,24 @@ Hệ thống điều hướng được cấu hình tại [frontend/src/app/app.r
 ### 5.1. Trang Landing & Authentication (`LandingComponent`)
 * **Đặc điểm:** Tối giản, tập trung vào trải nghiệm internal tool.
 * **Cấu trúc:**
-  1. **Sidebar Mini (Bên trái):**
-     * Logo DEV BOARD đóng khung màu tối tạo sự chuyên nghiệp.
-     * Menu điều hướng các tab nội dung: `Home`, `Features`, `About Us`, `Docs`.
-     * Footer liên kết trực tiếp tới GitHub.
-  2. **Hero Section (Nội dung chính):**
-     * Tiêu đề lớn **GitHub Integration**.
-     * Giới thiệu các giá trị mang lại cho đội ngũ kỹ thuật: Đồng bộ repo, gắn snippet, bảo mật nội bộ.
-  3. **Auth Card (Khối đăng nhập bên phải):**
-     * Thiết kế card trắng nổi bật trên nền xám nhạt (`#cacdd2`), bo góc lớn và đổ bóng mềm.
-     * Avatar Mascot GitHub dạng tối giản.
-     * Nút bấm **Continue with GitHub** với hiệu ứng hover và điều hướng thẳng vào `/app`.
+  1. **Sidebar Mini (Bên trái):** Logo DEV BOARD, Menu điều hướng, Footer liên kết GitHub.
+  2. **Hero Section (Nội dung chính):** Tiêu đề GitHub Integration, giải thích lợi ích công cụ nội bộ.
+  3. **Auth Card (Khối đăng nhập bên phải):** Card trắng, Avatar GitHub Mascot, nút bấm **Continue with GitHub** chuyển hướng thẳng vào `/app`.
 
 ### 5.2. Thanh Điều Hướng Đa Năng (`SidebarComponent`)
 * **Đặc điểm:** 
   * Quản lý trạng thái thu gọn/mở rộng bằng Signal (`collapsed = signal(false)`).
   * Hỗ trợ Accordion menu lồng nhau (Submenu cho Dashboard, Projects, Notes, Snippets, GitHub).
-  * Tích hợp khối thông tin User Profile ở chân trang (`name`, `role`, `avatarUrl`).
-  * Sử dụng các icon chuyên biệt từ `lucide-angular`: `LayoutGrid`, `Folder`, `NotebookPen`, `Code2`, `Github`, `Search`,...
+  * Chuyển đổi giao diện sáng/tối toàn cục thông qua `ThemeService`.
+  * **User Profile Floating Dropdown Menu:** Tích hợp menu nổi phía trên hiển thị thông tin Lead Architect, liên kết Profile, Repositories, mở GitHub và nút **Log out** điều hướng về `/`.
 
 ### 5.3. Khung Ứng Dụng Chính (`MainLayoutComponent`)
 * **Đặc điểm:** Sử dụng thẻ `<app-sidebar>` cố định bên trái và vùng hiển thị linh hoạt `<main class="main-content"><router-outlet></router-outlet></main>` giúp chuyển đổi giữa các module mà không cần tải lại toàn trang.
+
+### 5.4. Nhóm Module GitHub Explorer (`Profile`, `Repositories`, `Activities`)
+* **ProfileComponent:** Thẻ Hero cá nhân, 4 chỉ số thống kê, danh sách Pinned Repos, tỷ lệ % ngôn ngữ và huy hiệu GitHub Achievements. Hỗ trợ gọi live GitHub API công khai.
+* **RepositoriesComponent:** Danh mục 8 repo phong phú với chế độ Grid/List view, bộ lọc đa năng (Sources/Forks/Ngôn ngữ), nút 1-Click sao chép lệnh `git clone`.
+* **ActivitiesComponent:** Dòng thời gian sự kiện kỹ thuật (Commit, PR, Review, Release), ma trận đóng góp (Contribution Heatmap) 30 ngày, phân bổ vận tốc code và biểu đồ tuần.
 
 ---
 
@@ -169,50 +171,54 @@ Hệ thống điều hướng được cấu hình tại [frontend/src/app/app.r
 ### 6.1. Yêu cầu môi trường
 * **Node.js:** Phiên bản `>= 18.13.0` hoặc `>= 20.9.0`
 * **npm:** Phiên bản `>= 9.x`
-* **Angular CLI:** Khuyến nghị cài đặt toàn cục:
-  ```powershell
-  npm install -g @angular/cli@17
-  ```
+* **Angular CLI:** Phiên bản 17.x
 
 ### 6.2. Cài đặt thư viện dependencies
-Di chuyển vào thư mục frontend và cài đặt các gói cần thiết:
-```powershell
-cd "d:\Coding\Computer Science\Personal Project\PayooWork\AngularProject\frontend"
+```bash
+cd frontend
 npm install
 ```
 
 ### 6.3. Khởi chạy môi trường phát triển (Development Server)
-```powershell
+```bash
 npm start
 # Hoặc chạy thông qua Angular CLI:
 ng serve
 ```
 * Mở trình duyệt và truy cập: `http://localhost:4200/`
-* Tính năng Hot Reload (Live Reload) sẽ tự động kích hoạt khi có thay đổi code.
+* Hot Reload sẽ tự động cập nhật ngay khi lưu file.
 
 ### 6.4. Đóng gói bản phát hành (Production Build)
-```powershell
+```bash
 npm run build
 ```
-* Kết quả build sẽ được xuất ra thư mục: `frontend/dist/frontend/`
-  * `dist/frontend/browser/`: Chứa các bundle tĩnh dành cho Client.
-  * `dist/frontend/server/`: Chứa các bundle phục vụ Server-Side Rendering (Node/Express).
 
 ---
 
 ## 7. 📋 Kế Hoạch Phát Triển Tiếp Theo (Roadmap)
 
+### Đã hoàn thành (Completed):
 - [x] Thiết lập khung xương dự án Monorepo (`frontend` & `backend`).
 - [x] Xây dựng hệ thống routing 2 luồng (Public Landing & Authenticated App).
-- [x] Hoàn thiện Sidebar điều hướng có thể thu gọn với đầy đủ các mục chức năng.
+- [x] Hoàn thiện Sidebar điều hướng thu gọn/mở rộng, Theme Switcher và User Card Floating Dropdown Menu (Logout).
 - [x] Thiết kế giao diện Landing Page kết hợp Login Auth Card.
-- [ ] **Giai đoạn 1 (Frontend UI/UX):**
-  - Xây dựng giao diện trang `Dashboard Overview` (Thống kê số lượng commits, repo đang theo dõi).
-  - Xây dựng giao diện trang `Notes` (Trình soạn thảo Markdown, gắn tag màu sắc).
-  - Xây dựng trang `Snippets` (Hiển thị code block có syntax highlighting và nút copy nhanh).
-- [ ] **Giai đoạn 2 (Backend & Authentication):**
+- [x] Module Dashboard (`OverviewComponent`, `AnalyticsComponent`).
+- [x] Module Projects (`AllProjectsComponent`, `BookmarksComponent`, `StarredComponent`).
+- [x] Module Notes (`AllNotesComponent`, `TagsComponent`).
+- [x] Module Snippets (`AllSnippetsComponent`, `FavoritesComponent`).
+- [x] Nhánh GitHub Explorer (`ProfileComponent`, `RepositoriesComponent`, `ActivitiesComponent`).
+
+### Kế hoạch tiếp theo (Upcoming):
+- [ ] **Giai đoạn 1 (Hoàn thiện UI còn lại):**
+  - Xây dựng module `Messages Hub` (`/app/messages`) theo hướng **GitHub Notifications & PR Mentions Hub**.
+  - Xây dựng Global Command Palette Modal (`Cmd + K`) tìm kiếm nhanh xuyên suốt dự án.
+- [ ] **Giai đoạn 2 (Authentication Thật & Security):**
   - Cấu hình GitHub OAuth App trên GitHub Developer Settings để lấy `Client ID` & `Client Secret`.
-  - Viết API xử lý OAuth Callback tại `backend/` và cấp phát JWT token.
-- [ ] **Giai đoạn 3 (Database & State Management):**
-  - Thiết kế lược đồ cơ sở dữ liệu lưu trữ User, Notes, Snippets.
-  - Viết Angular Services tích hợp `HttpClient` để gọi API Backend.
+  - Triển khai `AuthGuard` bảo vệ các route `/app/*`.
+- [ ] **Giai đoạn 3 (Backend API & Database):**
+  - Khởi tạo REST API service tại `backend/` (Node.js/NestJS hoặc Go).
+  - Thiết kế CSDL PostgreSQL (Prisma ORM) để lưu trữ Notes, Snippets và Bookmarks cá nhân.
+  - Xây dựng chức năng CRUD (Create, Edit, Delete) cho Notes và Snippets.
+- [ ] **Giai đoạn 4 (DevOps & Production):**
+  - Docker hóa Monorepo (Docker Compose cho Frontend SSR, Backend API và PostgreSQL).
+  - Thiết lập CI/CD tự động bằng GitHub Actions.

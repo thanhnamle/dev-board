@@ -48,11 +48,11 @@
       </div>
       <div class="metric-value-row">
         <span class="metric-value">{{ snippets().length }}</span>
-        <span class="metric-pill pill-purple">6 Languages</span>
+        <span class="metric-pill pill-purple">{{ languageCount() }} Languages</span>
       </div>
       <div class="metric-footer">
-        <span class="metric-trend text-purple">18 TypeScript</span>
-        <span class="metric-sub">• 14 Go • 12 SQL</span>
+        <span class="metric-trend text-purple">Counts from current data</span>
+        <span class="metric-sub">updated automatically</span>
       </div>
     </div>
 
@@ -95,7 +95,7 @@
        3. LANGUAGE FILTER TABS
   ========================================================= -->
   <div class="language-filter-row">
-    @for (item of languagesList; track item.name) {
+    @for (item of languagesList(); track item.name) {
       <button 
         type="button" 
         class="lang-pill" 

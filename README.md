@@ -31,3 +31,9 @@
    ```powershell
    npm run build
    ```
+
+## Phát triển tiếp
+
+- [Kế hoạch triển khai](./DEVELOPMENT_PLAN.md) ghi lại hiện trạng và các giai đoạn tiếp theo.
+- Messages Hub: mở `/app/messages` sau khi chạy frontend. Thông báo, phản hồi và trạng thái đã đọc hiện là demo trong bộ nhớ; reload sẽ reset.
+- Global search: nhấn `Cmd + K` trên macOS hoặc `Ctrl + K` trên Windows/Linux để tìm page, project, note và snippet.

@@ -1,6 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 
 import { AllNotesComponent } from './all-notes.component';
+import { provideRouter } from '@angular/router';
 
 describe('AllNotesComponent', () => {
   let component: AllNotesComponent;
@@ -8,7 +9,8 @@ describe('AllNotesComponent', () => {
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [AllNotesComponent]
+      imports: [AllNotesComponent],
+      providers: [provideRouter([])]
     })
     .compileComponents();
     

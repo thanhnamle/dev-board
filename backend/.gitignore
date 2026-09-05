@@ -1,0 +1,48 @@
+# =========================================================
+# 1. BẢO MẬT: TUYỆT ĐỐI KHÔNG UP LÊN GIT
+# =========================================================
+# File chứa Client Secret, JWT Secret, mật khẩu CSDL
+.env
+.env.production
+.env.local
+.env.*.local
+*.pem
+
+# =========================================================
+# 2. DEPENDENCIES (Cài đặt qua npm install)
+# =========================================================
+node_modules/
+
+# =========================================================
+# 3. BUILD OUTPUT (Sinh ra khi chạy npm run build)
+# =========================================================
+dist/
+build/
+
+# =========================================================
+# 4. LOGS & RUNTIME
+# =========================================================
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+lerna-debug.log*
+.pnpm-debug.log*
+
+# =========================================================
+# 5. OS & IDE TEMPORARY FILES
+# =========================================================
+.DS_Store
+.AppleDouble
+.LSOverride
+Thumbs.db
+.idea/
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?

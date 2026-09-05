@@ -16,12 +16,13 @@ export class UserService {
   readonly currentUser = signal<UserProfile>(this.getInitialUser());
 
   private getInitialUser(): UserProfile {
-    const saved = localStorage.getItem(this.STORAGE_KEY);
-    if (saved) {
-      try {
-        return JSON.parse(saved);
-      } catch {}
-    }
+    try {
+      const saved = typeof window !== 'undefined' ? window.localStorage.getItem(this.STORAGE_KEY) : null;
+      if (saved) {
+        const user = JSON.parse(saved);
+        if (user && typeof user.name === 'string' && typeof user.role === 'string' && typeof user.avatarUrl === 'string') return user;
+      }
+    } catch { /* Fall back when browser storage is unavailable or invalid. */ }
     return {
       name: 'Thành Nam',
       role: 'Lead Architect',
@@ -33,7 +34,9 @@ export class UserService {
   setUserRole(role: string): void {
     this.currentUser.update(user => {
       const updated = { ...user, role: role.trim() || 'Software Engineer' };
-      localStorage.setItem(this.STORAGE_KEY, JSON.stringify(updated));
+      try {
+        if (typeof window !== 'undefined') window.localStorage.setItem(this.STORAGE_KEY, JSON.stringify(updated));
+      } catch { /* Keep the in-memory profile when storage is unavailable. */ }
       return updated;
     });
   }

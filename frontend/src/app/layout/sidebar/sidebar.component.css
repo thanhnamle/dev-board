@@ -179,6 +179,7 @@
    3. SEARCH BAR VỚI PHÍM TẮT ⌘ K (COMMAND PALETTE STYLE)
 ========================================================= */
 .search-box {
+  width: 100%;
   height: 38px;
   background: #f1f5f9;
   border: 1px solid transparent;
@@ -189,6 +190,10 @@
   gap: 8px;
   margin-bottom: 16px;
   transition: all 0.2s ease;
+  color: inherit;
+  cursor: pointer;
+  font-family: inherit;
+  text-align: left;
 }
 
 .sidebar.dark-theme .search-box {

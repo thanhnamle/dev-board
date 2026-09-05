@@ -1,0 +1,27 @@
+@if (palette.isOpen()) {
+  <div class="backdrop" (mousedown)="close()">
+    <section #paletteRoot class="palette" role="dialog" aria-modal="true" aria-labelledby="palette-title" (mousedown)="$event.stopPropagation()">
+      <h2 id="palette-title" class="sr-only">Search DevBoard</h2>
+      <div class="search-row">
+        <lucide-icon [img]="Search" size="19"></lucide-icon>
+        <input #searchInput type="search" autocomplete="off" placeholder="Search pages, projects, notes and snippets…"
+          [value]="palette.query()" (input)="updateQuery($any($event.target).value)" aria-controls="command-results"
+          [attr.aria-activedescendant]="activeDescendant()" />
+        <kbd>Esc</kbd>
+      </div>
+      <div id="command-results" class="results" role="listbox" aria-live="polite">
+        @for (result of palette.results(); track result.id; let index = $index) {
+          <button type="button" role="option" [id]="'command-' + result.id" [attr.aria-selected]="activeIndex() === index"
+            [class.active]="activeIndex() === index" (mouseenter)="activeIndex.set(index)" (click)="run(result)">
+            <span class="kind">{{ result.kind }}</span>
+            <span class="result-copy"><strong>{{ result.title }}</strong><small>{{ result.description }}</small></span>
+            @if (activeIndex() === index) { <span class="enter">↵</span> }
+          </button>
+        } @empty {
+          <div class="empty"><strong>No results found</strong><span>Try a project name, tag, language or page.</span></div>
+        }
+      </div>
+      <footer><span><kbd>↑</kbd><kbd>↓</kbd> Navigate</span><span><kbd>↵</kbd> Open</span><span><kbd>Esc</kbd> Close</span></footer>
+    </section>
+  </div>
+}

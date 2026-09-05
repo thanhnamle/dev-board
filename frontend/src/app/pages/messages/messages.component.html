@@ -1,0 +1,48 @@
+<header class="page-header">
+  <div><p class="eyebrow">WORKSPACE / INBOX</p><h1>Messages Hub</h1><p>Mentions, review requests and engineering updates.</p></div>
+  <button type="button" (click)="inbox.markAllRead()" [disabled]="!inbox.unreadCount()">Mark all as read</button>
+</header>
+<p class="demo-notice">Demo workspace · Sample notifications. Replies and read status stay in memory until you reload. GitHub is not connected.</p>
+<div class="inbox">
+  <section class="thread-list" aria-label="Notifications">
+    <div class="filters">
+      <label for="message-search">Search messages</label>
+      <input id="message-search" type="search" placeholder="Search title, repository or message…" [ngModel]="query()" (ngModelChange)="query.set($event)" />
+      <div class="categories" aria-label="Message category">
+        @for (item of categories; track item.id) {
+          <button type="button" [class.active]="category() === item.id" [attr.aria-pressed]="category() === item.id" (click)="category.set(item.id)">{{ item.label }}</button>
+        }
+      </div>
+      <label class="unread-filter"><input type="checkbox" [ngModel]="unreadOnly()" (ngModelChange)="unreadOnly.set($event)" /> Unread only <span>{{ inbox.unreadCount() }}</span></label>
+    </div>
+    <div class="results" aria-live="polite">{{ filteredThreads().length }} messages</div>
+    @for (thread of filteredThreads(); track thread.id) {
+      <button type="button" class="thread" [class.selected]="selectedId() === thread.id" [attr.aria-pressed]="selectedId() === thread.id" (click)="selectThread(thread.id)">
+        <span class="thread-meta">{{ thread.repository }} @if (thread.unread) { <span class="unread-dot" aria-label="Unread"></span> }</span>
+        <strong>{{ thread.title }}</strong><span class="preview">{{ thread.messages[0].body }}</span>
+      </button>
+    } @empty {
+      <div class="empty"><h2>No messages found</h2><p>Try another search or turn off the unread filter.</p></div>
+    }
+  </section>
+  <section class="detail" aria-label="Message thread">
+    @if (selected(); as thread) {
+      <header class="detail-header"><p class="eyebrow">{{ thread.repository }}</p><h2>{{ thread.title }}</h2><a href="https://github.com/notifications" target="_blank" rel="noopener noreferrer">Open GitHub inbox ↗</a></header>
+      <div class="conversation">
+        @for (message of thread.messages; track $index) {
+          <article class="message"><div class="author">{{ message.author }} @if (message.local) { <span>Local demo reply</span> }</div><pre>{{ message.body }}</pre></article>
+        }
+      </div>
+      @if (thread.category !== 'system') {
+        <form class="composer" (ngSubmit)="saveReply()">
+          <label for="reply">Quick reply <span>· Demo only</span></label>
+          <textarea id="reply" name="reply" rows="5" maxlength="10000" placeholder="Write a reply or attach a code snippet…" [ngModel]="draft()" (ngModelChange)="updateDraft($event)"></textarea>
+          <div class="compose-actions"><label class="sr-only" for="snippet">Code snippet</label><select id="snippet" name="snippet" [ngModel]="snippetId()" (ngModelChange)="snippetId.set($event)"><option value="">Choose a snippet…</option>@for (snippet of snippets(); track snippet.id) { <option [value]="snippet.id">{{ snippet.title }}</option> }</select><button type="button" (click)="attachSnippet()" [disabled]="!snippetId()">Attach</button><button class="primary" type="submit" [disabled]="!draft().trim()">Add demo reply</button></div>
+          <p role="status">{{ feedback() }}</p>
+        </form>
+      } @else { <p class="system-note">System alerts are read-only.</p> }
+    } @else {
+      <div class="empty welcome"><p class="eyebrow">YOUR ENGINEERING INBOX</p><h2>Keep the conversation in context</h2><p>Select a message to view the thread and prepare a reply.</p></div>
+    }
+  </section>
+</div>

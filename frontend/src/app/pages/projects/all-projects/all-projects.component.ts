@@ -1,4 +1,4 @@
-import { Component, signal, computed } from '@angular/core';
+import { Component, signal, computed, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import {
   LucideAngularModule,
@@ -18,25 +18,9 @@ import {
   Sparkles,
   ShieldCheck
 } from 'lucide-angular';
-
-export interface ProjectItem {
-  id: number;
-  name: string;
-  repoName: string;
-  description: string;
-  language: string;
-  languageColor: string;
-  tags: string[];
-  branch: string;
-  lastCommit: string;
-  lastCommitTime: string;
-  deployStatus: 'production' | 'staging' | 'building';
-  deployUrl?: string;
-  githubUrl: string;
-  starsCount: number;
-  isStarred: boolean;
-  isBookmarked: boolean;
-}
+import { WorkspaceDataService } from '../../../core/services/workspace-data.service';
+import { ActivatedRoute } from '@angular/router';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 @Component({
   selector: 'app-all-projects',
@@ -46,6 +30,8 @@ export interface ProjectItem {
   styleUrl: './all-projects.component.css'
 })
 export class AllProjectsComponent {
+  private readonly workspace = inject(WorkspaceDataService);
+  private readonly route = inject(ActivatedRoute);
   // 1. Khai báo Lucide Icons
   readonly FolderGit2 = FolderGit2;
   readonly Search = Search;
@@ -72,113 +58,14 @@ export class AllProjectsComponent {
   techFilters: string[] = ['All', 'Angular', 'TypeScript', 'Go', 'PostgreSQL', 'Docker'];
 
   // 3. Danh sách Projects mẫu
-  projects = signal<ProjectItem[]>([
-    {
-      id: 1,
-      name: 'DevBoard Frontend',
-      repoName: 'payoo-devboard/frontend',
-      description: 'Developer workspace hub and GitHub telemetry client built with Angular 17 and Signals.',
-      language: 'TypeScript',
-      languageColor: '#38bdf8',
-      tags: ['Angular 17', 'Signals', 'Tailwind', 'SSR'],
-      branch: 'main',
-      lastCommit: 'feat(analytics): add commit velocity chart',
-      lastCommitTime: '15m ago',
-      deployStatus: 'production',
-      deployUrl: 'https://devboard.payoo.vn',
-      githubUrl: 'https://github.com',
-      starsCount: 128,
-      isStarred: true,
-      isBookmarked: true
-    },
-    {
-      id: 2,
-      name: 'Core API Gateway',
-      repoName: 'payoo-devboard/core-api',
-      description: 'High-throughput microservices gateway and GitHub webhook processor in Golang.',
-      language: 'Go',
-      languageColor: '#00add8',
-      tags: ['Go 1.22', 'Gin', 'gRPC', 'PostgreSQL'],
-      branch: 'main',
-      lastCommit: 'perf(webhook): optimize HMAC payload validation',
-      lastCommitTime: '1h ago',
-      deployStatus: 'production',
-      deployUrl: 'https://api-devboard.payoo.vn',
-      githubUrl: 'https://github.com',
-      starsCount: 94,
-      isStarred: true,
-      isBookmarked: false
-    },
-    {
-      id: 3,
-      name: 'Authentication Service',
-      repoName: 'payoo-devboard/auth-service',
-      description: 'OAuth2 / OIDC token exchange and GitHub SSO refresh cycle management service.',
-      language: 'TypeScript',
-      languageColor: '#38bdf8',
-      tags: ['NodeJS', 'OAuth2', 'JWT', 'Redis'],
-      branch: 'feature/oauth-refresh',
-      lastCommit: 'feat(auth): implement token rotation strategy',
-      lastCommitTime: '3h ago',
-      deployStatus: 'staging',
-      deployUrl: 'https://staging-auth.payoo.vn',
-      githubUrl: 'https://github.com',
-      starsCount: 45,
-      isStarred: false,
-      isBookmarked: true
-    },
-    {
-      id: 4,
-      name: 'Payment SDK & Webhook',
-      repoName: 'payoo-work/payment-sdk',
-      description: 'Universal payment integration SDK supporting QR-Code, e-wallet, and instant IPN callbacks.',
-      language: 'Go',
-      languageColor: '#00add8',
-      tags: ['Go', 'SDK', 'Fintech', 'HMAC-SHA256'],
-      branch: 'main',
-      lastCommit: 'refactor(sdk): simplify callback deserializer',
-      lastCommitTime: '1d ago',
-      deployStatus: 'production',
-      githubUrl: 'https://github.com',
-      starsCount: 210,
-      isStarred: true,
-      isBookmarked: true
-    },
-    {
-      id: 5,
-      name: 'Database Schema & Migrations',
-      repoName: 'payoo-devboard/db-schema',
-      description: 'PostgreSQL database DDL, schema migrations, and high-performance connection pool configs.',
-      language: 'PostgreSQL',
-      languageColor: '#a78bfa',
-      tags: ['PostgreSQL', 'Prisma', 'Liquibase', 'SQL'],
-      branch: 'main',
-      lastCommit: 'chore(db): add index on github_events table',
-      lastCommitTime: '2d ago',
-      deployStatus: 'production',
-      githubUrl: 'https://github.com',
-      starsCount: 32,
-      isStarred: false,
-      isBookmarked: false
-    },
-    {
-      id: 6,
-      name: 'DevOps & Kubernetes Runbook',
-      repoName: 'payoo-devboard/infra-k8s',
-      description: 'Helm charts, Terraform IaC, Dockerfiles, and GitHub Actions CI/CD pipeline automation.',
-      language: 'Docker',
-      languageColor: '#2496ed',
-      tags: ['Docker', 'Kubernetes', 'Helm', 'Terraform'],
-      branch: 'staging',
-      lastCommit: 'ci: update GitHub runner to ubuntu-latest',
-      lastCommitTime: '4d ago',
-      deployStatus: 'staging',
-      githubUrl: 'https://github.com',
-      starsCount: 67,
-      isStarred: false,
-      isBookmarked: false
-    }
-  ]);
+  projects = this.workspace.projects;
+
+  constructor() {
+    this.route.queryParamMap.pipe(takeUntilDestroyed()).subscribe(params => {
+      const project = this.projects().find(item => item.id === Number(params.get('project')));
+      if (project) { this.selectedTech.set('All'); this.searchQuery.set(project.name); }
+    });
+  }
 
   // Danh sách Project đã qua lọc tìm kiếm & Tech filter
   filteredProjects = computed(() => {

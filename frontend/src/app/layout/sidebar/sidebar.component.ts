@@ -27,6 +27,9 @@ import {
   ExternalLink
 } from 'lucide-angular';
 import { UserService } from '../../core/services/user.service';
+import { MessagesService } from '../../core/services/messages.service';
+import { CommandPaletteService } from '../../core/services/command-palette.service';
+import { WorkspaceDataService } from '../../core/services/workspace-data.service';
 
 export interface UserProfile {
   name: string;
@@ -38,7 +41,7 @@ export interface UserProfile {
 export interface SubMenuItem {
   label: string;
   path: string;
-  badge?: string;
+  badge?: string | (() => number);
   badgeClass?: string;
 }
 
@@ -46,7 +49,7 @@ export interface MenuItem {
   label: string;
   icon: any;
   path?: string;
-  badge?: string;
+  badge?: string | (() => number);
   badgeClass?: string;
   children?: SubMenuItem[];
 }
@@ -81,6 +84,9 @@ export class SidebarComponent {
   readonly ExternalLink = ExternalLink;
   readonly FolderGit2 = FolderGit2;
   readonly userService = inject(UserService);
+  readonly messagesService = inject(MessagesService);
+  readonly commandPalette = inject(CommandPaletteService);
+  private readonly workspace = inject(WorkspaceDataService);
 
   // Signal quản lý trạng thái thu gọn sidebar
   collapsed = signal(false);
@@ -113,32 +119,32 @@ export class SidebarComponent {
     {
       label: 'Projects',
       icon: Folder,
-      badge: '8',
+      badge: () => this.workspace.projects().length,
       path: '/app/projects',
       children: [
-        { label: 'All Projects', path: '/app/projects/all-projects', badge: '8' },
-        { label: 'Bookmarks', path: '/app/projects/bookmarks', badge: '3' },
-        { label: 'Starred', path: '/app/projects/starred', badge: '5' }
+        { label: 'All Projects', path: '/app/projects/all-projects', badge: () => this.workspace.projects().length },
+        { label: 'Bookmarks', path: '/app/projects/bookmarks', badge: () => this.workspace.projects().filter(project => project.isBookmarked).length },
+        { label: 'Starred', path: '/app/projects/starred', badge: () => this.workspace.projects().filter(project => project.isStarred).length }
       ]
     },
     {
       label: 'Notes',
       icon: NotebookPen,
-      badge: '19',
+      badge: () => this.workspace.notes().length,
       path: '/app/notes',
       children: [
-        { label: 'All Notes', path: '/app/notes/all-notes', badge: '19' },
+        { label: 'All Notes', path: '/app/notes/all-notes', badge: () => this.workspace.notes().length },
         { label: 'By Tags', path: '/app/notes/tags' }
       ]
     },
     {
       label: 'Snippets',
       icon: Code2,
-      badge: '64',
+      badge: () => this.workspace.snippets().length,
       path: '/app/snippets',
       children: [
-        { label: 'All Snippets', path: '/app/snippets/all-snippets', badge: '64' },
-        { label: 'Favorites', path: '/app/snippets/favorites', badge: '12' }
+        { label: 'All Snippets', path: '/app/snippets/all-snippets', badge: () => this.workspace.snippets().length },
+        { label: 'Favorites', path: '/app/snippets/favorites' }
       ]
     },
     {
@@ -158,13 +164,16 @@ export class SidebarComponent {
       label: 'Messages',
       icon: MessageSquare,
       path: '/app/messages',
-      badge: '3',
       badgeClass: 'badge-emerald'
     }
   ];
 
   toggleTheme() {
     this.themeService.toggleTheme();
+  }
+
+  badgeValue(badge: string | (() => number) | undefined) {
+    return typeof badge === 'function' ? badge() : badge;
   }
 
   toggleMain() {

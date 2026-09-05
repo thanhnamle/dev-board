@@ -41,18 +41,18 @@
   ====================================================== -->
 
   @if (!collapsed()) {
-    <div class="search-box">
+    <button type="button" class="search-box" (click)="commandPalette.open()" aria-label="Search DevBoard (Command K)">
       <lucide-icon [img]="Search" size="15" class="search-icon"> </lucide-icon>
 
-      <input type="text" placeholder="Search..." class="search-input" />
+      <span class="search-input">Search...</span>
 
       <div class="shortcut-keys">
         <span class="key-chip">⌘</span>
         <span class="key-chip">K</span>
       </div>
-    </div>
+    </button>
   } @else {
-    <button type="button" class="search-collapsed-btn" title="Search (⌘K)">
+    <button type="button" class="search-collapsed-btn" title="Search (⌘K)" (click)="commandPalette.open()">
       <lucide-icon [img]="Search" size="16"> </lucide-icon>
     </button>
   }
@@ -104,7 +104,7 @@
                 <!-- Counter Badge -->
                 @if (item.badge) {
                   <span class="nav-badge" [ngClass]="item.badgeClass || ''">
-                    {{ item.badge }}
+                    {{ badgeValue(item.badge) }}
                   </span>
                 }
 
@@ -147,7 +147,7 @@
 
                     @if (sub.badge) {
                       <span class="sub-badge" [ngClass]="sub.badgeClass || ''">
-                        {{ sub.badge }}
+                        {{ badgeValue(sub.badge) }}
                       </span>
                     }
                   </a>
@@ -195,9 +195,9 @@
                 {{ item.label }}
               </span>
 
-              @if (item.badge) {
+              @if (messagesService.unreadCount()) {
                 <span class="nav-badge" [ngClass]="item.badgeClass || ''">
-                  {{ item.badge }}
+                  {{ messagesService.unreadCount() }}
                 </span>
               }
             }
@@ -312,4 +312,3 @@
     </div>
   </div>
 </aside>
-

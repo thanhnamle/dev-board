@@ -1,6 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 
 import { AllSnippetsComponent } from './all-snippets.component';
+import { provideRouter } from '@angular/router';
 
 describe('AllSnippetsComponent', () => {
   let component: AllSnippetsComponent;
@@ -8,7 +9,8 @@ describe('AllSnippetsComponent', () => {
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [AllSnippetsComponent]
+      imports: [AllSnippetsComponent],
+      providers: [provideRouter([])]
     })
     .compileComponents();
     
