@@ -30,6 +30,7 @@ import { UserService } from '../../core/services/user.service';
 import { MessagesService } from '../../core/services/messages.service';
 import { CommandPaletteService } from '../../core/services/command-palette.service';
 import { WorkspaceDataService } from '../../core/services/workspace-data.service';
+import { GitHubApiService } from '../../core/services/github-api.service';
 
 export interface UserProfile {
   name: string;
@@ -86,6 +87,7 @@ export class SidebarComponent {
   readonly userService = inject(UserService);
   readonly messagesService = inject(MessagesService);
   readonly commandPalette = inject(CommandPaletteService);
+  readonly gitHubApiService = inject(GitHubApiService);
   private readonly workspace = inject(WorkspaceDataService);
 
   // Signal quản lý trạng thái thu gọn sidebar
@@ -153,7 +155,8 @@ export class SidebarComponent {
       path: '/app/github',
       children: [
         { label: 'Profile', path: '/app/github/profile' },
-        { label: 'Repositories', path: '/app/github/repositories', badge: '8' },
+        { label: 'Repositories', path: '/app/github/repositories', 
+          badge: () => this.gitHubApiService.repoCount() },
         { label: 'Activities', path: '/app/github/activities' }
       ]
     }
@@ -201,8 +204,9 @@ export class SidebarComponent {
     this.userMenuOpen.update(open => !open);
   }
 
-  logout() {
+  async logout() {
     this.userMenuOpen.set(false);
+    await this.gitHubApiService.logout();
 
     if (typeof window !== 'undefined') {
       localStorage.removeItem('github_token');

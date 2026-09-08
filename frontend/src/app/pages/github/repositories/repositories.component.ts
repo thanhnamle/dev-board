@@ -1,4 +1,4 @@
-import { Component, signal, computed } from '@angular/core';
+import { Component, signal, computed, inject, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import {
   LucideAngularModule,
@@ -20,6 +20,7 @@ import {
   BookOpen,
   Scale
 } from 'lucide-angular';
+import { GitHubApiService } from '../../../core/services/github-api.service';
 
 export interface RepositoryItem {
   id: number;
@@ -68,6 +69,13 @@ export class RepositoriesComponent {
   readonly Code2 = Code2;
   readonly BookOpen = BookOpen;
   readonly Scale = Scale;
+  readonly gitHubApiService = inject(GitHubApiService);
+
+  ngOnInit() {
+    if (this.gitHubApiService.repositories().length === 0) {
+      this.repositories.set(this.gitHubApiService.repositories());
+    }
+  }
 
   // 2. Signals quản lý bộ lọc và trạng thái hiển thị
   searchQuery = signal<string>('');
@@ -313,36 +321,13 @@ export class RepositoriesComponent {
   }
 
   // 9. Hàm làm mới dữ liệu (hỗ trợ gọi live GitHub API nếu muốn)
-  async syncRepositories() {
+    async syncRepositories() {
     this.loading.set(true);
     try {
-      const res = await fetch('https://api.github.com/users/thanhnamle/repos?sort=updated&per_page=30');
-      if (res.ok) {
-        const data = await res.json();
-        const mapped: RepositoryItem[] = data.map((r: any) => ({
-          id: r.id,
-          name: r.name,
-          fullName: r.full_name,
-          description: r.description || 'No description provided.',
-          language: r.language || 'Markdown',
-          languageColor: this.getLanguageColor(r.language),
-          starsCount: r.stargazers_count,
-          forksCount: r.forks_count,
-          openIssuesCount: r.open_issues_count,
-          isFork: r.fork,
-          isPrivate: r.private,
-          license: r.license?.spdx_id || 'MIT',
-          tags: r.topics?.length ? r.topics : ['repository', 'github'],
-          htmlUrl: r.html_url,
-          cloneUrl: r.clone_url,
-          updatedAt: r.updated_at,
-          updatedRelative: `Updated ${new Date(r.updated_at).toLocaleDateString()}`,
-          defaultBranch: r.default_branch
-        }));
-        this.repositories.set(mapped);
+      const realRepos = await this.gitHubApiService.fetchRepositories();
+      if (realRepos.length > 0) {
+        this.repositories.set(realRepos);
       }
-    } catch (err) {
-      console.warn('Using local repositories cache:', err);
     } finally {
       this.loading.set(false);
     }

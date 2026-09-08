@@ -1,4 +1,4 @@
-import { Component, signal, computed } from '@angular/core';
+import { Component, signal, computed, inject, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import {
   LucideAngularModule,
@@ -23,6 +23,7 @@ import {
   GitPullRequest,
   CheckCircle2
 } from 'lucide-angular';
+import { GitHubApiService } from '../../../core/services/github-api.service';
 
 // 1. Định nghĩa Interface cho dữ liệu GitHub Profile
 export interface GitHubProfile {
@@ -67,7 +68,7 @@ export interface LanguageStat {
   templateUrl: './profile.component.html',
   styleUrl: './profile.component.css'
 })
-export class ProfileComponent {
+export class ProfileComponent implements OnInit {
   // 2. Khai báo Lucide Icons
   readonly Github = Github;
   readonly MapPin = MapPin;
@@ -89,12 +90,51 @@ export class ProfileComponent {
   readonly Award = Award;
   readonly GitPullRequest = GitPullRequest;
   readonly CheckCircle2 = CheckCircle2;
+  readonly gitHubApiService = inject(GitHubApiService);
 
   // 3. State quản lý bằng Angular Signals
   loading = signal<boolean>(false);
   copied = signal<boolean>(false);
   searchQuery = signal<string>('thanhnamle');
   activeTab = signal<'overview' | 'repositories'>('overview');
+
+  ngOnInit() {
+    const user = this.gitHubApiService.currentUser();
+    if (user) {
+      // Cập nhật Profile thật từ tài khoản đăng nhập
+      this.profile.set({
+        login: user.login,
+        name: user.name || user.login,
+        avatar_url: user.avatar_url,
+        html_url: user.html_url,
+        bio: user.bio || 'Software developer passionate about code & design.',
+        company: user.company || null,
+        blog: user.blog || user.html_url,
+        location: user.location || 'Vietnam',
+        public_repos: user.public_repos,
+        public_gists: user.public_gists,
+        followers: user.followers,
+        following: user.following,
+        created_at: user.created_at
+      });
+      // Nếu đã có danh sách repos, lấy 4 repo mới nhất làm Pinned
+      const repos = this.gitHubApiService.repositories();
+      if (repos.length > 0) {
+        this.pinnedRepos.set(repos.slice(0, 4).map(r => ({
+          id: r.id,
+          name: r.name,
+          description: r.description,
+          language: r.language,
+          languageColor: r.languageColor,
+          stars: r.starsCount,
+          forks: r.forksCount,
+          url: r.htmlUrl,
+          isPrivate: r.isPrivate,
+          updatedAt: r.updatedRelative
+        })));
+      }
+    }
+  }
 
   // Dữ liệu Profile (Có sẵn dữ liệu khởi tạo mặc định để giao diện render ngay)
   profile = signal<GitHubProfile>({

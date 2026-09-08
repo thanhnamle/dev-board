@@ -1,4 +1,8 @@
-<aside class="sidebar" [class.collapsed]="collapsed()" [class.dark-theme]="themeService.isDarkMode()">
+<aside
+  class="sidebar"
+  [class.collapsed]="collapsed()"
+  [class.dark-theme]="themeService.isDarkMode()"
+>
   <!-- =====================================================
        TOGGLE BUTTON
   ====================================================== -->
@@ -41,7 +45,12 @@
   ====================================================== -->
 
   @if (!collapsed()) {
-    <button type="button" class="search-box" (click)="commandPalette.open()" aria-label="Search DevBoard (Command K)">
+    <button
+      type="button"
+      class="search-box"
+      (click)="commandPalette.open()"
+      aria-label="Search DevBoard (Command K)"
+    >
       <lucide-icon [img]="Search" size="15" class="search-icon"> </lucide-icon>
 
       <span class="search-input">Search...</span>
@@ -52,7 +61,12 @@
       </div>
     </button>
   } @else {
-    <button type="button" class="search-collapsed-btn" title="Search (⌘K)" (click)="commandPalette.open()">
+    <button
+      type="button"
+      class="search-collapsed-btn"
+      title="Search (⌘K)"
+      (click)="commandPalette.open()"
+    >
       <lucide-icon [img]="Search" size="16"> </lucide-icon>
     </button>
   }
@@ -215,61 +229,95 @@
     <!-- Switcher Theme -->
     <div class="theme-switcher-container">
       @if (!collapsed()) {
-        <div class="theme-segmented-bar" (click)="toggleTheme()" [title]="themeService.isDarkMode() ? 'Switch to Light Mode' : 'Switch to Dark Mode'">
+        <div
+          class="theme-segmented-bar"
+          (click)="toggleTheme()"
+          [title]="
+            themeService.isDarkMode()
+              ? 'Switch to Light Mode'
+              : 'Switch to Dark Mode'
+          "
+        >
           <div class="theme-opt" [class.active]="!themeService.isDarkMode()">
             <lucide-icon [img]="Sun" size="13" class="theme-icon"></lucide-icon>
             <span>Light</span>
           </div>
           <div class="theme-opt" [class.active]="themeService.isDarkMode()">
-            <lucide-icon [img]="Moon" size="13" class="theme-icon"></lucide-icon>
+            <lucide-icon
+              [img]="Moon"
+              size="13"
+              class="theme-icon"
+            ></lucide-icon>
             <span>Dark</span>
           </div>
         </div>
       } @else {
-        <button type="button" class="theme-icon-btn" (click)="toggleTheme()" [title]="themeService.isDarkMode() ? 'Switch to Light Mode' : 'Switch to Dark Mode'">
-          <lucide-icon [img]="themeService.isDarkMode() ? Moon : Sun" size="16"></lucide-icon>
+        <button
+          type="button"
+          class="theme-icon-btn"
+          (click)="toggleTheme()"
+          [title]="
+            themeService.isDarkMode()
+              ? 'Switch to Light Mode'
+              : 'Switch to Dark Mode'
+          "
+        >
+          <lucide-icon
+            [img]="themeService.isDarkMode() ? Moon : Sun"
+            size="16"
+          ></lucide-icon>
         </button>
       }
     </div>
 
     <!-- User Profile Card -->
-        <!-- User Profile Card Container -->
+    <!-- User Profile Card Container -->
     <div class="user-profile-container">
-      
       <!-- DROPDOWN MENU NỔI (HIỆN KHI USER BẤM VÀO CARD) -->
       @if (userMenuOpen() && !collapsed()) {
         <div class="user-dropdown-menu">
-          
           <!-- Header thông tin nhanh -->
           <div class="dropdown-header">
-            <span class="dropdown-user-name">{{ currentUser().name }}</span>
-            <span class="dropdown-user-handle">&#64;thanhnamle</span>
+            <span class="dropdown-user-name">{{
+              gitHubApiService.currentUser()?.name || currentUser().name
+            }}</span>
+            <span class="dropdown-user-handle"
+              >&#64;{{
+                gitHubApiService.currentUser()?.login || "thanhnamle"
+              }}</span
+            >
           </div>
 
           <div class="dropdown-divider"></div>
 
           <!-- Các nút hành động -->
-          <a 
-            routerLink="/app/github/profile" 
-            (click)="userMenuOpen.set(false)" 
-            class="dropdown-item">
+          <a
+            routerLink="/app/github/profile"
+            (click)="userMenuOpen.set(false)"
+            class="dropdown-item"
+          >
             <lucide-icon [img]="User" size="14"></lucide-icon>
             <span>View Profile</span>
           </a>
 
-          <a 
-            routerLink="/app/github/repositories" 
-            (click)="userMenuOpen.set(false)" 
-            class="dropdown-item">
+          <a
+            routerLink="/app/github/repositories"
+            (click)="userMenuOpen.set(false)"
+            class="dropdown-item"
+          >
             <lucide-icon [img]="FolderGit2" size="14"></lucide-icon>
             <span>Repositories</span>
           </a>
 
-          <a 
-            href="https://github.com/thanhnamle" 
-            target="_blank" 
-            (click)="userMenuOpen.set(false)" 
-            class="dropdown-item">
+          <a
+            [href]="
+              gitHubApiService.currentUser()?.html_url ||
+              'https://github.com/thanhnamle'
+            "
+            target="_blank"
+            (click)="userMenuOpen.set(false)"
+            class="dropdown-item"
+          >
             <lucide-icon [img]="ExternalLink" size="14"></lucide-icon>
             <span>Open GitHub</span>
           </a>
@@ -277,7 +325,11 @@
           <div class="dropdown-divider"></div>
 
           <!-- NÚT LOGOUT MÀU ĐỎ -->
-          <button type="button" class="dropdown-item logout-item" (click)="logout()">
+          <button
+            type="button"
+            class="dropdown-item logout-item"
+            (click)="logout()"
+          >
             <lucide-icon [img]="LogOut" size="14"></lucide-icon>
             <span>Log out</span>
           </button>
@@ -285,11 +337,17 @@
       }
 
       <!-- Nút User Pill bấm để bật/tắt Menu -->
-      <div class="user-pill" (click)="toggleUserMenu()" [class.menu-active]="userMenuOpen()">
+      <div
+        class="user-pill"
+        (click)="toggleUserMenu()"
+        [class.menu-active]="userMenuOpen()"
+      >
         <div class="user-avatar-box">
           <img
-            src="assets/Avatar.jpg"
-            [alt]="currentUser().name"
+            [src]="
+              gitHubApiService.currentUser()?.avatar_url || 'assets/Avatar.jpg'
+            "
+            [alt]="gitHubApiService.currentUser()?.name || currentUser().name"
             class="user-avatar-img"
           />
           <span class="user-online-dot" title="Online"></span>
@@ -297,18 +355,25 @@
 
         @if (!collapsed()) {
           <div class="user-text">
-            <span class="user-name">{{ userService.currentUser().name }}</span>
-            <span class="user-role">{{ userService.currentUser().role }}</span>
+            <span class="user-name">{{
+              gitHubApiService.currentUser()?.name ||
+                userService.currentUser().name
+            }}</span>
+            <span class="user-role">{{
+              gitHubApiService.currentUser()
+                ? "GitHub Developer"
+                : userService.currentUser().role
+            }}</span>
           </div>
 
-          <lucide-icon 
-            [img]="userMenuOpen() ? ChevronDown : ChevronUp" 
-            size="14" 
-            class="user-chevron">
+          <lucide-icon
+            [img]="userMenuOpen() ? ChevronDown : ChevronUp"
+            size="14"
+            class="user-chevron"
+          >
           </lucide-icon>
         }
       </div>
-
     </div>
   </div>
 </aside>
