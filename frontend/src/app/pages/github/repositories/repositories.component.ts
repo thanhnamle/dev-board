@@ -1,4 +1,4 @@
-import { Component, signal, computed, inject, OnInit } from '@angular/core';
+import { Component, signal, computed, inject, effect } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import {
   LucideAngularModule,
@@ -75,6 +75,15 @@ export class RepositoriesComponent {
     if (this.gitHubApiService.repositories().length === 0) {
       this.repositories.set(this.gitHubApiService.repositories());
     }
+  }
+
+  constructor() {
+    effect(() => {
+      const realRepos = this.gitHubApiService.repositories();
+      if (realRepos.length > 0) {
+        this.repositories.set(realRepos);
+      }
+    });
   }
 
   // 2. Signals quản lý bộ lọc và trạng thái hiển thị

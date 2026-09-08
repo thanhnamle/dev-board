@@ -1,5 +1,6 @@
 import { Injectable, signal, computed, inject, PLATFORM_ID } from '@angular/core';
 import { isPlatformBrowser } from '@angular/common';
+import { ActivityEvent } from '../../pages/github/activities/activities.component';
 
 // 1. Interface cho thông tin User GitHub
 export interface GitHubUser {
@@ -54,6 +55,7 @@ export class GitHubApiService {
   readonly currentUser = signal<GitHubUser | null>(null);
   readonly repositories = signal<GitHubRepoItem[]>([]);
   readonly loading = signal<boolean>(false);
+  readonly activities = signal<ActivityEvent[]>([]);
 
   // Computed Signal: tự động tính số lượng Repo thật để hiển thị badge ở Sidebar
   readonly repoCount = computed(() => {
@@ -93,7 +95,8 @@ export class GitHubApiService {
         // Khi đã đăng nhập, tải luôn Profile đầy đủ và Repositories thật
         await Promise.all([
           this.fetchProfile(),
-          this.fetchRepositories()
+          this.fetchRepositories(),
+          this.fetchActivities()
         ]);
         return true;
       } else {
@@ -192,6 +195,88 @@ export class GitHubApiService {
       this.currentUser.set(null);
       this.repositories.set([]);
     }
+  }
+
+  // Lấy dòng thời gian hoạt động thực tế từ GitHub
+  async fetchActivities(): Promise<any[]> {
+    if (!isPlatformBrowser(this.platformId)) return [];
+
+    try {
+      this.loading.set(true);
+      const res = await fetch(`${this.baseUrl}/github/activities`, {
+        method: 'GET',
+        credentials: 'include',
+      });
+
+      if (res.ok) {
+        const rawEvents = await res.json();
+        
+        // Ánh xạ các loại sự kiện GitHub thành định dạng giao diện dễ đọc
+        const mapped = rawEvents.map((event: any, index: number) => {
+          let type = 'commit';
+          let title = 'Activity on repository';
+          let branch = '';
+          let commitHash = '';
+          let prNumber: number | undefined;
+
+          switch (event.type) {
+            case 'PushEvent':
+              type = 'commit';
+              const commit = event.payload?.commits?.[0];
+              title = commit ? commit.message : `Pushed ${event.payload?.size || 1} commit(s)`;
+              commitHash = commit?.sha ? commit.sha.substring(0, 7) : '';
+              branch = event.payload?.ref ? event.payload.ref.replace('refs/heads/', '') : 'main';
+              break;
+
+            case 'PullRequestEvent':
+              type = 'pr';
+              const pr = event.payload?.pull_request;
+              title = `${event.payload?.action === 'closed' && pr?.merged ? 'Merged' : 'Opened'} PR #${pr?.number}: ${pr?.title || ''}`;
+              prNumber = pr?.number;
+              branch = pr?.head?.ref || '';
+              break;
+
+            case 'CreateEvent':
+              type = 'branch';
+              title = `Created ${event.payload?.ref_type || 'ref'} ${event.payload?.ref || ''}`;
+              branch = event.payload?.ref || '';
+              break;
+
+            case 'WatchEvent':
+              type = 'release';
+              title = `Starred repository ${event.repo?.name}`;
+              break;
+
+            default:
+              title = `${event.type.replace('Event', '')} on ${event.repo?.name}`;
+          }
+
+          const date = new Date(event.created_at);
+
+          return {
+            id: event.id || index + 1,
+            type,
+            repoName: event.repo?.name || 'unknown-repo',
+            repoUrl: `https://github.com/${event.repo?.name}`,
+            title,
+            branch,
+            commitHash,
+            prNumber,
+            timestamp: event.created_at,
+            timeAgo: date.toLocaleDateString('vi-VN', { hour: '2-digit', minute: '2-digit', day: '2-digit', month: '2-digit' }),
+            author: event.actor?.login || 'You'
+          };
+        });
+
+        this.activities.set(mapped);
+        return mapped;
+      }
+    } catch (err) {
+      console.error('[GitHubApiService] Lỗi lấy activities:', err);
+    } finally {
+      this.loading.set(false);
+    }
+    return [];
   }
 
   // Hàm tiện ích phân loại mã màu đại diện từng ngôn ngữ

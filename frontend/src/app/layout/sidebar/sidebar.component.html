@@ -337,40 +337,31 @@
       }
 
       <!-- Nút User Pill bấm để bật/tắt Menu -->
-      <div
-        class="user-pill"
-        (click)="toggleUserMenu()"
-        [class.menu-active]="userMenuOpen()"
-      >
+      <div class="user-pill" (click)="toggleUserMenu()" [class.menu-active]="userMenuOpen()">
         <div class="user-avatar-box">
+          <!-- Avatar thật từ GitHub (nếu chưa đăng nhập thì dùng ảnh mặc định) -->
           <img
-            [src]="
-              gitHubApiService.currentUser()?.avatar_url || 'assets/Avatar.jpg'
-            "
-            [alt]="gitHubApiService.currentUser()?.name || currentUser().name"
+            [src]="gitHubApiService.currentUser()?.avatar_url || 'assets/Avatar.jpg'"
+            [alt]="gitHubApiService.currentUser()?.name || userService.currentUser().name"
             class="user-avatar-img"
           />
           <span class="user-online-dot" title="Online"></span>
         </div>
-
         @if (!collapsed()) {
           <div class="user-text">
-            <span class="user-name">{{
-              gitHubApiService.currentUser()?.name ||
-                userService.currentUser().name
-            }}</span>
-            <span class="user-role">{{
-              gitHubApiService.currentUser()
-                ? "GitHub Developer"
-                : userService.currentUser().role
-            }}</span>
+            <!-- Tên thật từ GitHub -->
+            <span class="user-name">
+              {{ gitHubApiService.currentUser()?.name || userService.currentUser().name }}
+            </span>
+            <!-- Role do user nhập ở Landing Page! -->
+            <span class="user-role">
+              {{ userService.currentUser().role || 'GitHub Developer' }}
+            </span>
           </div>
-
           <lucide-icon
             [img]="userMenuOpen() ? ChevronDown : ChevronUp"
             size="14"
-            class="user-chevron"
-          >
+            class="user-chevron">
           </lucide-icon>
         }
       </div>

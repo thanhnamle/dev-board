@@ -1,4 +1,4 @@
-import { Component, signal, computed } from '@angular/core';
+import { Component, signal, computed, inject, effect } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import {
   LucideAngularModule,
@@ -21,6 +21,7 @@ import {
   Layers,
   Filter
 } from 'lucide-angular';
+import { GitHubApiService } from '../../../core/services/github-api.service';
 
 export type ActivityType = 'commit' | 'pr' | 'review' | 'release' | 'branch';
 
@@ -43,6 +44,7 @@ export interface HeatmapCell {
   day: number;
   level: 0 | 1 | 2 | 3 | 4;
   date: string;
+  fullDate: string;
   count: number;
 }
 
@@ -73,6 +75,8 @@ export class ActivitiesComponent {
   readonly Clock = Clock;
   readonly Layers = Layers;
   readonly Filter = Filter;
+  
+  readonly gitHubApiService = inject(GitHubApiService);
 
   // 2. Signals quản lý bộ lọc
   selectedType = signal<string>('all');
@@ -81,13 +85,33 @@ export class ActivitiesComponent {
   loading = signal<boolean>(false);
 
   // Danh sách Repository để filter
-  repoList = [
-    { label: 'All Repositories', value: 'all' },
-    { label: 'thanhnamle/dev-board', value: 'dev-board' },
-    { label: 'thanhnamle/payment-gateway-sdk', value: 'payment-gateway-sdk' },
-    { label: 'thanhnamle/angular-signals-recipe', value: 'angular-signals-recipe' },
-    { label: 'thanhnamle/docker-dev-environments', value: 'docker-dev-environments' }
-  ];
+  repoList = computed(() => {
+    const repos = this.gitHubApiService.repositories();
+    const list = [{ label: 'All Repositories', value: 'all' }];
+    repos.forEach(r => {
+      list.push({ label: r.fullName, value: r.name });
+    });
+    return list;
+  });
+
+  constructor() {
+    // Tự động gán activities thật từ service vào danh sách hiển thị
+    effect(() => {
+      const realActivities = this.gitHubApiService.activities();
+      if (realActivities.length > 0) {
+        this.activities.set(realActivities);
+      }
+    });
+  }
+
+  commitCount = computed(() => this.activities().filter(a => a.type === 'commit').length);
+  prCount = computed(() => this.activities().filter(a => a.type === 'pr').length);
+  branchReleaseCount = computed(() => this.activities().filter(a => a.type === 'branch' || a.type === 'release').length);
+  
+  activeDaysCount = computed(() => {
+    const dates = new Set(this.activities().map(a => new Date(a.timestamp).toDateString()));
+    return dates.size || 1;
+  });
 
   // 3. Danh sách các sự kiện Activity mẫu
   activities = signal<ActivityEvent[]>([
@@ -175,68 +199,111 @@ export class ActivitiesComponent {
   ]);
 
   // 4. Ma trận Contribution Heatmap (30 ngày gần nhất)
-  heatmapCells = signal<HeatmapCell[]>(this.generateHeatmapData());
+  heatmapCells = computed<HeatmapCell[]>(() => {
+  const list = this.activities();
+  const cells: HeatmapCell[] = [];
+  const today = new Date();
+
+  // Quét 35 ngày gần nhất
+  for (let i = 34; i >= 0; i--) {
+    const d = new Date();
+    d.setDate(today.getDate() - i);
+    const dateStr = d.toDateString();
+
+    const count = list.filter(a => new Date(a.timestamp).toDateString() === dateStr).length;
+
+    let level: 0 | 1 | 2 | 3 | 4 = 0;
+    if (count >= 5) level = 4;
+    else if (count >= 3) level = 3;
+    else if (count >= 2) level = 2;
+    else if (count >= 1) level = 1;
+
+    // 🗓️ Định dạng Thứ, Ngày/Tháng/Năm (VD: "Thứ Tư, 09/09/2026")
+    const fullDate = d.toLocaleDateString('vi-VN', {
+      weekday: 'short',
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric'
+    });
+
+    cells.push({
+      day: 35 - i,
+      level,
+      date: d.toLocaleDateString('vi-VN', { month: 'short', day: 'numeric' }),
+      fullDate, // <-- Lưu vào cell
+      count
+    });
+  }
+  return cells;
+});
 
   // 5. Thống kê tỷ lệ loại hành động
-  activityDistribution = [
-    { label: 'Commits', percentage: 65, color: '#8b5cf6' },
-    { label: 'Pull Requests', percentage: 20, color: '#10b981' },
-    { label: 'Code Reviews', percentage: 10, color: '#06b6d4' },
-    { label: 'Releases', percentage: 5, color: '#f59e0b' }
-  ];
+  activityDistribution = computed(() => {
+    const list = this.activities();
+    const total = list.length;
+    if (total === 0) {
+      return [
+        { label: 'Commits', percentage: 65, color: '#8b5cf6' },
+        { label: 'Pull Requests', percentage: 20, color: '#10b981' },
+        { label: 'Branches', percentage: 10, color: '#06b6d4' },
+        { label: 'Others', percentage: 5, color: '#f59e0b' }
+      ];
+    }
+    const commits = list.filter(a => a.type === 'commit').length;
+    const prs = list.filter(a => a.type === 'pr').length;
+    const branches = list.filter(a => a.type === 'branch').length;
+    const others = total - commits - prs - branches;
+    return [
+      { label: 'Commits', percentage: Math.round((commits / total) * 100), color: '#8b5cf6' },
+      { label: 'Pull Requests', percentage: Math.round((prs / total) * 100), color: '#10b981' },
+      { label: 'Branches', percentage: Math.round((branches / total) * 100), color: '#06b6d4' },
+      { label: 'Others', percentage: Math.round((others / total) * 100), color: '#f59e0b' }
+    ];
+  });
 
   // 6. Hiệu suất theo ngày trong tuần
-  weeklyProductivity = [
-    { day: 'Mon', commits: 28, height: 80 },
-    { day: 'Tue', commits: 34, height: 95 },
-    { day: 'Wed', commits: 22, height: 65 },
-    { day: 'Thu', commits: 31, height: 90 },
-    { day: 'Fri', commits: 19, height: 55 },
-    { day: 'Sat', commits: 12, height: 35 },
-    { day: 'Sun', commits: 8, height: 25 }
-  ];
+  weeklyProductivity = computed(() => {
+    const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+    const counts = [0, 0, 0, 0, 0, 0, 0];
+    this.activities().forEach(item => {
+      const d = new Date(item.timestamp).getDay(); // 0 = Sun, 1 = Mon...
+      const mappedIdx = d === 0 ? 6 : d - 1; // Map: Mon=0, Sun=6
+      counts[mappedIdx]++;
+    });
+    const max = Math.max(...counts, 1);
+    return days.map((day, idx) => ({
+      day,
+      commits: counts[idx],
+      height: Math.max(Math.round((counts[idx] / max) * 100), 12) // Giữ tối thiểu 12% để cột hiển thị thanh thoát
+    }));
+  });
 
   // 7. Computed Signal: Lọc activities theo search query, type và repo
   filteredActivities = computed(() => {
     const query = this.searchQuery().toLowerCase().trim();
     const type = this.selectedType();
     const repo = this.selectedRepo();
-
     return this.activities().filter(item => {
       const matchesQuery = !query ||
         item.title.toLowerCase().includes(query) ||
         (item.commitHash && item.commitHash.toLowerCase().includes(query)) ||
         item.repoName.toLowerCase().includes(query);
-
       const matchesType = type === 'all' || item.type === type;
       const matchesRepo = repo === 'all' || item.repoName.toLowerCase().includes(repo.toLowerCase());
-
       return matchesQuery && matchesType && matchesRepo;
     });
   });
 
-  // 8. Tạo dữ liệu ô ma trận heatmap đóng góp (5 tuần x 7 ngày = 35 ô)
-  private generateHeatmapData(): HeatmapCell[] {
-    const levels: (0 | 1 | 2 | 3 | 4)[] = [
-      0, 1, 3, 2, 4, 3, 1,
-      2, 4, 3, 4, 2, 0, 1,
-      3, 2, 4, 3, 4, 2, 0,
-      1, 3, 4, 2, 4, 3, 1,
-      2, 4, 3, 2, 4, 1, 3
-    ];
-    return levels.map((lvl, index) => ({
-      day: index + 1,
-      level: lvl,
-      date: `Day ${index + 1}`,
-      count: lvl * 3 + (lvl > 0 ? 1 : 0)
-    }));
-  }
-
   // 9. Giả lập làm mới dữ liệu
-  refreshActivities() {
+  async refreshActivities() {
     this.loading.set(true);
-    setTimeout(() => {
+    try {
+      const real = await this.gitHubApiService.fetchActivities();
+      if (real.length > 0) {
+        this.activities.set(real);
+      }
+    } finally {
       this.loading.set(false);
-    }, 600);
+    }
   }
 }

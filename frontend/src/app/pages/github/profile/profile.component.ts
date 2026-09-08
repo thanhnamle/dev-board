@@ -1,4 +1,4 @@
-import { Component, signal, computed, inject, OnInit } from '@angular/core';
+import { Component, signal, computed, inject, OnInit, effect } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import {
   LucideAngularModule,
@@ -97,6 +97,49 @@ export class ProfileComponent implements OnInit {
   copied = signal<boolean>(false);
   searchQuery = signal<string>('thanhnamle');
   activeTab = signal<'overview' | 'repositories'>('overview');
+
+  constructor() {
+    effect(() => {
+      const user = this.gitHubApiService.currentUser();
+      if (user) {
+        // Cập nhật Profile thật từ GitHub OAuth
+        this.profile.set({
+          login: user.login,
+          name: user.name || user.login,
+          avatar_url: user.avatar_url,
+          html_url: user.html_url,
+          bio: user.bio || 'Software engineer passionate about building high-performance systems.',
+          company: user.company || null,
+          blog: user.blog || user.html_url,
+          location: user.location || 'Vietnam',
+          public_repos: user.public_repos,
+          public_gists: user.public_gists,
+          followers: user.followers,
+          following: user.following,
+          created_at: user.created_at
+        });
+        this.searchQuery.set(user.login);
+      }
+      // Tự động map 4 repos mới nhất vào danh mục Pinned Repos
+      const repos = this.gitHubApiService.repositories();
+      if (repos.length > 0) {
+        this.pinnedRepos.set(
+          repos.slice(0, 4).map(r => ({
+            id: r.id,
+            name: r.name,
+            description: r.description,
+            language: r.language,
+            languageColor: r.languageColor,
+            stars: r.starsCount,
+            forks: r.forksCount,
+            url: r.htmlUrl,
+            isPrivate: r.isPrivate,
+            updatedAt: r.updatedRelative
+          }))
+        );
+      }
+    });
+  }
 
   ngOnInit() {
     const user = this.gitHubApiService.currentUser();

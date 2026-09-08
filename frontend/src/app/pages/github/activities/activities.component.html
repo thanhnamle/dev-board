@@ -55,66 +55,67 @@
         </div>
       </div>
       <div class="metric-value-row">
-        <span class="metric-value">842</span>
-        <span class="metric-pill pill-purple">This Year</span>
+        <!-- Số commit thật từ stream -->
+        <span class="metric-value">{{ commitCount() }}</span>
+        <span class="metric-pill pill-purple">Recent Stream</span>
       </div>
       <div class="metric-footer">
-        <span class="metric-trend text-purple">+18 commits</span>
-        <span class="metric-sub">in the last 7 days</span>
+        <span class="metric-trend text-purple">{{ commitCount() }} commits</span>
+        <span class="metric-sub">in activity history</span>
       </div>
     </div>
-
     <!-- Metric 2: Pull Requests -->
     <div class="metric-card">
       <div class="metric-top">
-        <span class="metric-label">PRs Merged</span>
+        <span class="metric-label">Pull Requests</span>
         <div class="metric-icon-box box-emerald">
           <lucide-icon [img]="GitPullRequest" class="metric-icon"></lucide-icon>
         </div>
       </div>
       <div class="metric-value-row">
-        <span class="metric-value">68</span>
-        <span class="metric-pill pill-emerald">98% Merged</span>
+        <!-- Số PR thật -->
+        <span class="metric-value">{{ prCount() }}</span>
+        <span class="metric-pill pill-emerald">Tracked PRs</span>
       </div>
       <div class="metric-footer">
-        <span class="metric-trend text-emerald">Zero conflicts</span>
-        <span class="metric-sub">clean rebases</span>
+        <span class="metric-trend text-emerald">{{ prCount() }} PR events</span>
+        <span class="metric-sub">merged & active</span>
       </div>
     </div>
-
-    <!-- Metric 3: Code Reviews -->
+    <!-- Metric 3: Branches & Ops -->
     <div class="metric-card">
       <div class="metric-top">
-        <span class="metric-label">Reviews Done</span>
+        <span class="metric-label">Branches & Ops</span>
         <div class="metric-icon-box box-cyan">
           <lucide-icon [img]="CheckCircle2" class="metric-icon"></lucide-icon>
         </div>
       </div>
       <div class="metric-value-row">
-        <span class="metric-value">114</span>
-        <span class="metric-pill pill-cyan">Architect</span>
+        <!-- Số branch / release ops -->
+        <span class="metric-value">{{ branchReleaseCount() }}</span>
+        <span class="metric-pill pill-cyan">DevOps</span>
       </div>
       <div class="metric-footer">
-        <span class="metric-trend text-blue">High Quality</span>
-        <span class="metric-sub">peer collaboration</span>
+        <span class="metric-trend text-blue">Branches & Tags</span>
+        <span class="metric-sub">created</span>
       </div>
     </div>
-
-    <!-- Metric 4: Active Streak -->
+    <!-- Metric 4: Total Events -->
     <div class="metric-card">
       <div class="metric-top">
-        <span class="metric-label">Active Streak</span>
+        <span class="metric-label">Live Event Stream</span>
         <div class="metric-icon-box box-amber">
           <lucide-icon [img]="Flame" class="metric-icon"></lucide-icon>
         </div>
       </div>
       <div class="metric-value-row">
-        <span class="metric-value">18 Days</span>
-        <span class="metric-pill pill-amber">🔥 On Fire</span>
+        <!-- Tổng số event và số ngày hoạt động thật -->
+        <span class="metric-value">{{ activities().length }}</span>
+        <span class="metric-pill pill-amber">🔥 Live</span>
       </div>
       <div class="metric-footer">
-        <span class="metric-trend text-amber">Record: 42 days</span>
-        <span class="metric-sub">keep momentum</span>
+        <span class="metric-trend text-amber">Active on {{ activeDaysCount() }} days</span>
+        <span class="metric-sub">recent events</span>
       </div>
     </div>
   </section>
@@ -148,8 +149,13 @@
           [class.lvl-1]="cell.level === 1"
           [class.lvl-2]="cell.level === 2"
           [class.lvl-3]="cell.level === 3"
-          [class.lvl-4]="cell.level === 4"
-          [title]="cell.count + ' contributions on ' + cell.date">
+          [class.lvl-4]="cell.level === 4">
+          
+          <!-- 🌟 Custom Tooltip nổi lên khi rê chuột -->
+          <div class="cell-tooltip">
+            <span class="tooltip-count">{{ cell.count }} contributions</span>
+            <span class="tooltip-date">{{ cell.fullDate }}</span>
+          </div>
         </div>
       }
     </div>
@@ -212,7 +218,7 @@
           class="custom-select" 
           [value]="selectedRepo()" 
           (change)="selectedRepo.set($any($event.target).value)">
-          @for (repo of repoList; track repo.value) {
+          @for (repo of repoList(); track repo.value) {
             <option [value]="repo.value">{{ repo.label }}</option>
           }
         </select>
@@ -313,7 +319,7 @@
         </div>
 
         <div class="distribution-bars">
-          @for (item of activityDistribution; track item.label) {
+          @for (item of activityDistribution(); track item.label) {
             <div class="dist-row">
               <div class="dist-labels">
                 <span class="dist-name">{{ item.label }}</span>
@@ -343,7 +349,7 @@
 
         <!-- Mini Bar Chart -->
         <div class="chart-container">
-          @for (bar of weeklyProductivity; track bar.day) {
+          @for (bar of weeklyProductivity(); track bar.day) {
             <div class="chart-bar-col">
               <div class="bar-wrapper">
                 <div 

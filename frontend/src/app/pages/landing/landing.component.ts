@@ -62,23 +62,20 @@ export class LandingComponent {
   userRole = signal<string>('');
 
   continueWithGitHub(): void {
+    if (this.userRole().trim()) {
+    this.userService.setUserRole(this.userRole().trim());
+  } else {
+    this.userService.setUserRole('Fullstack Engineer');
+  }
     window.location.href = 'http://localhost:3000/api/auth/github';
-    if (this.userRole()) {
-      this.userService.setUserRole(this.userRole());
-    }
-    this.router.navigate(['/app/dashboard/overview']);
   }
 
-  // Quản lý mục đang được chọn ở Sidebar (Home, Features, About Us, Docs)
   currentSection = signal<'home' | 'features' | 'about' | 'docs'>('home');
 
-  // Quản lý trạng thái Dark/Light mode
   isDarkMode = signal<boolean>(true);
 
-  // Tab đang chọn trong Code Snippet Preview (Bento Card lớn)
   activeTab = signal<'snippet' | 'config'>('snippet');
 
-  // Tab đang chọn trong Docs Section
   activeDocsTab = signal<'quickstart' | 'oauth' | 'shortcuts' | 'architecture'>('quickstart');
 
   setSection(section: 'home' | 'features' | 'about' | 'docs'): void {
