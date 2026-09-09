@@ -1,6 +1,8 @@
 import { Injectable, UnauthorizedException, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import crypto from 'crypto';
+import * as fs from 'fs';
+import * as path from 'path';
 
 export interface AuthUser {
   id: number;
@@ -21,10 +23,39 @@ export interface AuthUser {
 @Injectable()
 export class AuthService {
   private readonly logger = new Logger(AuthService.name);
-  // Lưu session trong bộ nhớ cho Phase 3 (sẵn sàng chuyển sang CSDL PostgreSQL ở Phase 4)
+  private readonly sessionFilePath = path.join(process.cwd(), '.sessions.json');
   private readonly sessions = new Map<string, AuthUser>();
 
-  constructor(private readonly config: ConfigService) {}
+  constructor(private readonly config: ConfigService) {
+    this.loadSessions();
+  }
+
+  private loadSessions() {
+    try {
+      if (fs.existsSync(this.sessionFilePath)) {
+        const raw = fs.readFileSync(this.sessionFilePath, 'utf-8');
+        const data = JSON.parse(raw);
+        for (const [k, v] of Object.entries(data)) {
+          this.sessions.set(k, v as AuthUser);
+        }
+        this.logger.log(`Loaded ${this.sessions.size} persisted sessions from .sessions.json`);
+      }
+    } catch (err: any) {
+      this.logger.warn(`Could not load persisted sessions: ${err.message}`);
+    }
+  }
+
+  private saveSessions() {
+    try {
+      const obj: Record<string, AuthUser> = {};
+      for (const [k, v] of this.sessions.entries()) {
+        obj[k] = v;
+      }
+      fs.writeFileSync(this.sessionFilePath, JSON.stringify(obj, null, 2), 'utf-8');
+    } catch (err: any) {
+      this.logger.warn(`Could not save sessions to file: ${err.message}`);
+    }
+  }
 
   getGitHubAuthUrl(): string {
     const clientId = this.config.get<string>('GITHUB_CLIENT_ID');
@@ -102,6 +133,7 @@ export class AuthService {
     // 4. Tạo mã Session ngẫu nhiên và lưu vào Store
     const sessionId = crypto.randomUUID();
     this.sessions.set(sessionId, user);
+    this.saveSessions();
 
     this.logger.log(`Successfully authenticated user: @${user.login} (Session ID: ${sessionId})`);
 
@@ -115,6 +147,8 @@ export class AuthService {
 
   revokeSession(sessionId: string): boolean {
     if (!sessionId) return false;
-    return this.sessions.delete(sessionId);
+    const res = this.sessions.delete(sessionId);
+    this.saveSessions();
+    return res;
   }
 }

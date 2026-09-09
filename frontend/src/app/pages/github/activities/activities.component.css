@@ -331,17 +331,17 @@
   visibility: hidden;
   pointer-events: none;
   background: #090d16;
-  border: 1px solid rgba(255, 255, 255, 0.15);
+  border: 1px solid rgba(255, 255, 255, 0.18);
   border-radius: 8px;
-  padding: 6px 10px;
+  padding: 6px 12px;
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 2px;
   white-space: nowrap;
-  box-shadow: 0 10px 25px -4px rgba(0, 0, 0, 0.6), 0 0 12px rgba(99, 102, 241, 0.2);
-  transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
-  z-index: 100;
+  box-shadow: 0 12px 28px -4px rgba(0, 0, 0, 0.7), 0 0 14px rgba(99, 102, 241, 0.25);
+  transition: all 0.18s cubic-bezier(0.34, 1.56, 0.64, 1);
+  z-index: 99999;
 }
 /* Mũi tên tam giác hướng xuống */
 .cell-tooltip::after {
@@ -354,6 +354,21 @@
   border-style: solid;
   border-color: #090d16 transparent transparent transparent;
 }
+:host-context(body.light-theme) .cell-tooltip {
+  background: #ffffff;
+  border: 1px solid rgba(0, 0, 0, 0.12);
+  box-shadow: 0 10px 25px -4px rgba(0, 0, 0, 0.15), 0 0 10px rgba(99, 102, 241, 0.15);
+}
+:host-context(body.light-theme) .cell-tooltip::after {
+  border-color: #ffffff transparent transparent transparent;
+}
+:host-context(body.light-theme) .tooltip-count {
+  color: #6366f1;
+}
+:host-context(body.light-theme) .tooltip-date {
+  color: #64748b;
+}
+
 .tooltip-count {
   font-size: 0.74rem;
   font-weight: 700;
@@ -370,27 +385,41 @@
   visibility: visible;
   transform: translateX(-50%) translateY(0);
 }
-/* Chống tràn viền màn hình cho các ô sát mép trái */
+
+/* Chống tràn viền màn hình cho các ô sát mép trái (3 cột đầu: 21 ô) */
+.heatmap-matrix-full > .heatmap-cell:nth-child(-n+21) .cell-tooltip,
+.heatmap-matrix-full.single-month > .heatmap-cell:nth-child(-n+5) .cell-tooltip,
 .heatmap-matrix > .heatmap-cell:nth-child(-n+4) .cell-tooltip {
   left: 0;
   transform: translateX(0) translateY(4px);
 }
+.heatmap-matrix-full > .heatmap-cell:nth-child(-n+21):hover .cell-tooltip,
+.heatmap-matrix-full.single-month > .heatmap-cell:nth-child(-n+5):hover .cell-tooltip,
 .heatmap-matrix > .heatmap-cell:nth-child(-n+4):hover .cell-tooltip {
   transform: translateX(0) translateY(0);
 }
+.heatmap-matrix-full > .heatmap-cell:nth-child(-n+21) .cell-tooltip::after,
+.heatmap-matrix-full.single-month > .heatmap-cell:nth-child(-n+5) .cell-tooltip::after,
 .heatmap-matrix > .heatmap-cell:nth-child(-n+4) .cell-tooltip::after {
   left: 10px;
   transform: none;
 }
-/* Chống tràn viền màn hình cho các ô sát mép phải */
+
+/* Chống tràn viền màn hình cho các ô sát mép phải (3 cột cuối: 21 ô) */
+.heatmap-matrix-full > .heatmap-cell:nth-last-child(-n+21) .cell-tooltip,
+.heatmap-matrix-full.single-month > .heatmap-cell:nth-last-child(-n+5) .cell-tooltip,
 .heatmap-matrix > .heatmap-cell:nth-last-child(-n+4) .cell-tooltip {
   left: auto;
   right: 0;
   transform: translateX(0) translateY(4px);
 }
+.heatmap-matrix-full > .heatmap-cell:nth-last-child(-n+21):hover .cell-tooltip,
+.heatmap-matrix-full.single-month > .heatmap-cell:nth-last-child(-n+5):hover .cell-tooltip,
 .heatmap-matrix > .heatmap-cell:nth-last-child(-n+4):hover .cell-tooltip {
   transform: translateX(0) translateY(0);
 }
+.heatmap-matrix-full > .heatmap-cell:nth-last-child(-n+21) .cell-tooltip::after,
+.heatmap-matrix-full.single-month > .heatmap-cell:nth-last-child(-n+5) .cell-tooltip::after,
 .heatmap-matrix > .heatmap-cell:nth-last-child(-n+4) .cell-tooltip::after {
   left: auto;
   right: 10px;
@@ -409,6 +438,493 @@
 :host-context(body.light-theme) .lvl-2 { background: #40c463; }
 :host-context(body.light-theme) .lvl-3 { background: #30a14e; }
 :host-context(body.light-theme) .lvl-4 { background: #216e39; }
+
+/* =========================================================
+   3. CADENCE CHART CARD (BAR CHART / LINE AREA MAP)
+========================================================= */
+.cadence-chart-card {
+  background: var(--card-bg);
+  border: 1px solid var(--card-border);
+  border-radius: 16px;
+  padding: 20px 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  box-shadow: var(--card-shadow);
+}
+.chart-header-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 14px;
+}
+.chart-title-group {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.chart-icon-box {
+  width: 34px;
+  height: 34px;
+  border-radius: 8px;
+  background: rgba(139, 92, 246, 0.12);
+  color: #8b5cf6;
+  border: 1px solid rgba(139, 92, 246, 0.25);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.chart-title {
+  font-size: 1rem;
+  font-weight: 800;
+  color: var(--text-title);
+  margin: 0;
+  letter-spacing: -0.01em;
+}
+.chart-sub {
+  font-size: 0.74rem;
+  color: var(--text-muted);
+}
+/* Nhóm chọn Năm & Tháng + Nút Toggle */
+.chart-controls-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.select-capsule {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--item-bg);
+  border: 1px solid var(--item-border);
+  border-radius: 8px;
+  padding: 4px 10px;
+}
+.capsule-label {
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: var(--text-muted);
+}
+.capsule-select {
+  background: transparent;
+  border: none;
+  color: var(--text-title);
+  font-size: 0.78rem;
+  font-weight: 600;
+  cursor: pointer;
+  outline: none;
+}
+.capsule-select option {
+  background: var(--card-bg);
+  color: var(--text-title);
+}
+/* Nút chuyển Bars / Line */
+.chart-toggle-pill {
+  display: flex;
+  background: var(--item-bg);
+  border: 1px solid var(--item-border);
+  border-radius: 8px;
+  padding: 2px;
+  gap: 2px;
+}
+.toggle-opt {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 10px;
+  border-radius: 6px;
+  border: none;
+  background: transparent;
+  color: var(--text-muted);
+  font-size: 0.74rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+.toggle-opt:hover {
+  color: var(--text-title);
+}
+.toggle-opt.active {
+  background: #6366f1;
+  color: #ffffff;
+  box-shadow: 0 1px 4px rgba(99, 102, 241, 0.4);
+}
+/* KHUNG HIỂN THỊ BIỂU ĐỒ */
+.chart-viewport {
+  min-height: 160px;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  padding-top: 20px;
+}
+/* =========================================================
+   A. MODERN BAR CHART VIEW
+========================================================= */
+.bar-chart-container {
+  display: flex;
+  align-items: flex-end;
+  gap: 8px;
+  height: 140px;
+  width: 100%;
+}
+.bar-item-col {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  height: 100%;
+}
+.bar-tube-wrapper {
+  position: relative;
+  width: 100%;
+  max-width: 24px;
+  height: 100%;
+  background: var(--item-bg);
+  border-radius: 6px;
+  display: flex;
+  align-items: flex-end;
+  cursor: pointer;
+}
+.bar-tube-fill {
+  width: 100%;
+  border-radius: 6px;
+  background: rgba(139, 92, 246, 0.25);
+  transition: height 0.35s cubic-bezier(0.34, 1.56, 0.64, 1), background 0.2s ease;
+}
+.bar-tube-fill.has-events {
+  background: linear-gradient(180deg, #a78bfa 0%, #6366f1 100%);
+  box-shadow: 0 0 12px rgba(99, 102, 241, 0.35);
+}
+.bar-tube-wrapper:hover .bar-tube-fill {
+  filter: brightness(1.2);
+  transform: scaleY(1.04);
+}
+.bar-axis-label {
+  font-size: 0.68rem;
+  font-weight: 600;
+  color: var(--text-subtle);
+}
+/* =========================================================
+   B. SMOOTH LINE AREA MAP VIEW
+========================================================= */
+.line-chart-container {
+  position: relative;
+  width: 100%;
+  height: 140px;
+}
+.line-svg {
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+.line-dots-layer {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+.line-dot-node {
+  position: absolute;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #6366f1;
+  border: 2px solid #ffffff;
+  transform: translate(-50%, -50%);
+  pointer-events: auto;
+  cursor: pointer;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+.line-dot-node:hover {
+  transform: translate(-50%, -50%) scale(1.6);
+  box-shadow: 0 0 12px #a78bfa;
+}
+.line-axis-labels {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 6px;
+}
+.line-label {
+  font-size: 0.66rem;
+  font-weight: 600;
+  color: var(--text-subtle);
+}
+
+/* =========================================================
+   C. HEATMAP VIEW IN CADENCE CARD
+========================================================= */
+
+/* =========================================================
+   C. HEATMAP DÀN ĐỀU 100% FULL CARD
+========================================================= */
+.heatmap-view-wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  width: 100%;
+  overflow: visible;
+  padding: 10px 0 6px 0;
+  animation: fadeIn 0.25s ease-out;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* Thanh nhãn 12 Tháng trên cùng: Canh lề chuẩn với lưới ô */
+.heatmap-months-header {
+  display: grid;
+  grid-template-columns: repeat(12, 1fr);
+  padding-left: 32px;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.hm-month-label {
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: var(--text-subtle);
+  text-align: left;
+}
+
+/* Bố cục: Cột Thứ bên trái + Lưới 52 tuần bên phải */
+.heatmap-grid-layout {
+  display: flex;
+  align-items: stretch;
+  gap: 8px;
+  width: 100%;
+  min-width: 0;
+}
+
+/* Cột nhãn Thứ (Mon, Wed, Fri, Sun) */
+.hm-day-labels {
+  display: grid;
+  grid-template-rows: repeat(7, 1fr);
+  width: 24px;
+  flex-shrink: 0;
+  font-size: 0.65rem;
+  font-weight: 600;
+  color: var(--text-subtle);
+  line-height: 1;
+  align-items: center;
+}
+
+/* 🌟 Ma trận 52 cột x 7 hàng DÀN ĐỀU 100% TOÀN BỘ CARD (Không overflow) */
+.heatmap-matrix-full {
+  display: grid;
+  grid-template-rows: repeat(7, 1fr);
+  grid-template-columns: repeat(52, minmax(0, 1fr));
+  grid-auto-flow: column;
+  gap: 3px;
+  width: 100%;
+  min-width: 0;
+}
+
+/* Khi chọn xem 1 tháng cụ thể */
+.heatmap-matrix-full.single-month {
+  grid-template-columns: repeat(auto-fill, minmax(32px, 1fr));
+  grid-template-rows: none;
+  grid-auto-flow: row;
+  gap: 6px;
+}
+
+/* Từng ô Heatmap tự co giãn theo tỷ lệ vuông 1:1 */
+.heatmap-cell {
+  position: relative;
+  aspect-ratio: 1 / 1;
+  width: 100%;
+  min-width: 0;
+  min-height: 0;
+  border-radius: 3px;
+  cursor: pointer;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.heatmap-cell:hover {
+  transform: scale(1.4);
+  z-index: 1000;
+  box-shadow: 0 0 10px rgba(99, 102, 241, 0.6);
+}
+
+/* Màu sắc các cấp độ: Thích ứng Dark & Light */
+.lvl-0 { background: #ebedf0; border: none; }
+.lvl-1 { background: #9be9a8; }
+.lvl-2 { background: #40c463; }
+.lvl-3 { background: #30a14e; }
+.lvl-4 { background: #216e39; }
+
+:host-context(body.dark-theme) .lvl-0 { background: var(--item-bg); border: 1px solid var(--item-border); }
+:host-context(body.dark-theme) .lvl-1 { background: #0e4429; border-color: rgba(14, 68, 41, 0.4); }
+:host-context(body.dark-theme) .lvl-2 { background: #006d32; border-color: rgba(0, 109, 50, 0.4); }
+:host-context(body.dark-theme) .lvl-3 { background: #26a641; border-color: rgba(38, 166, 65, 0.4); }
+:host-context(body.dark-theme) .lvl-4 { background: #39d353; border-color: rgba(57, 211, 83, 0.4); }
+
+/* Legend ở dưới */
+.heatmap-bottom-legend {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 5px;
+  padding-top: 6px;
+  width: 100%;
+}
+
+.heatmap-box {
+  width: 10px;
+  height: 10px;
+  border-radius: 2px;
+}
+
+.legend-text {
+  font-size: 0.68rem;
+  color: var(--text-subtle);
+}
+
+/* Mobile responsive cho heatmap */
+@media (max-width: 768px) {
+  .heatmap-view-wrapper {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    padding-bottom: 8px;
+  }
+  .heatmap-grid-layout:not(.is-single-month) {
+    min-width: 650px;
+  }
+  .heatmap-months-header {
+    min-width: 650px;
+  }
+}
+
+/* =========================================================
+   TOOLTIP NỔI BẬT DÙNG CHUNG (CHO CẢ BARS & LINE)
+========================================================= */
+.chart-tooltip {
+  position: absolute;
+  bottom: calc(100% + 10px);
+  left: 50%;
+  transform: translateX(-50%) translateY(4px);
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  background: #090d16;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: 8px;
+  padding: 6px 12px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  white-space: nowrap;
+  box-shadow: 0 12px 28px -4px rgba(0, 0, 0, 0.7), 0 0 14px rgba(99, 102, 241, 0.25);
+  transition: all 0.18s cubic-bezier(0.34, 1.56, 0.64, 1);
+  z-index: 99999;
+}
+.chart-tooltip::after {
+  content: '';
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  border-width: 5px;
+  border-style: solid;
+  border-color: #090d16 transparent transparent transparent;
+}
+:host-context(body.light-theme) .chart-tooltip {
+  background: #ffffff;
+  border: 1px solid rgba(0, 0, 0, 0.12);
+  box-shadow: 0 10px 25px -4px rgba(0, 0, 0, 0.15), 0 0 10px rgba(99, 102, 241, 0.15);
+}
+:host-context(body.light-theme) .chart-tooltip::after {
+  border-color: #ffffff transparent transparent transparent;
+}
+:host-context(body.light-theme) .tt-count {
+  color: #6366f1;
+}
+:host-context(body.light-theme) .tt-date {
+  color: #475569;
+}
+:host-context(body.light-theme) .tt-breakdown {
+  color: #64748b;
+}
+
+.tt-count {
+  font-size: 0.76rem;
+  font-weight: 700;
+  color: #a78bfa;
+}
+.tt-date {
+  font-size: 0.68rem;
+  font-weight: 500;
+  color: #cbd5e1;
+}
+.tt-breakdown {
+  font-size: 0.64rem;
+  color: #94a3b8;
+  margin-top: 2px;
+}
+.bar-tube-wrapper:hover .chart-tooltip,
+.line-dot-node:hover .chart-tooltip {
+  opacity: 1;
+  visibility: visible;
+  transform: translateX(-50%) translateY(0);
+}
+
+/* Chống tràn viền cho Line Chart dots */
+.line-dots-layer > .line-dot-node:nth-child(-n+2) .chart-tooltip {
+  left: 0;
+  transform: translateX(0) translateY(4px);
+}
+.line-dots-layer > .line-dot-node:nth-child(-n+2):hover .chart-tooltip {
+  transform: translateX(0) translateY(0);
+}
+.line-dots-layer > .line-dot-node:nth-child(-n+2) .chart-tooltip::after {
+  left: 10px;
+  transform: none;
+}
+
+.line-dots-layer > .line-dot-node:nth-last-child(-n+2) .chart-tooltip {
+  left: auto;
+  right: 0;
+  transform: translateX(0) translateY(4px);
+}
+.line-dots-layer > .line-dot-node:nth-last-child(-n+2):hover .chart-tooltip {
+  transform: translateX(0) translateY(0);
+}
+.line-dots-layer > .line-dot-node:nth-last-child(-n+2) .chart-tooltip::after {
+  left: auto;
+  right: 10px;
+  transform: none;
+}
+
+/* Chống tràn viền cho Bar Chart */
+.bar-chart-container > .bar-item-col:nth-child(-n+2) .chart-tooltip {
+  left: 0;
+  transform: translateX(0) translateY(4px);
+}
+.bar-chart-container > .bar-item-col:nth-child(-n+2) .bar-tube-wrapper:hover .chart-tooltip {
+  transform: translateX(0) translateY(0);
+}
+.bar-chart-container > .bar-item-col:nth-child(-n+2) .chart-tooltip::after {
+  left: 10px;
+  transform: none;
+}
+
+.bar-chart-container > .bar-item-col:nth-last-child(-n+2) .chart-tooltip {
+  left: auto;
+  right: 0;
+  transform: translateX(0) translateY(4px);
+}
+.bar-chart-container > .bar-item-col:nth-last-child(-n+2) .bar-tube-wrapper:hover .chart-tooltip {
+  transform: translateX(0) translateY(0);
+}
+.bar-chart-container > .bar-item-col:nth-last-child(-n+2) .chart-tooltip::after {
+  left: auto;
+  right: 10px;
+  transform: none;
+}
 
 /* =========================================================
    4. TOOLBAR (SEARCH & FILTERS)
@@ -533,7 +1049,59 @@
 }
 
 /* =========================================================
-   5. TWO-COLUMN LAYOUT (TIMELINE & SIDEBAR)
+   5. MONTHLY GROUPED TIMELINE CARDS
+========================================================= */
+.month-group-card {
+  background: var(--card-bg);
+  border: 1px solid var(--card-border);
+  border-radius: 16px;
+  padding: 18px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  box-shadow: var(--card-shadow);
+  margin-bottom: 16px;
+}
+.month-group-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--divider-color);
+}
+.month-badge-left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.month-heading {
+  font-size: 0.95rem;
+  font-weight: 800;
+  color: var(--text-title);
+  margin: 0;
+  letter-spacing: -0.01em;
+}
+.month-event-pill {
+  font-size: 0.72rem;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 6px;
+  background: var(--item-bg);
+  color: var(--text-muted);
+  border: 1px solid var(--item-border);
+}
+.empty-state-card {
+  background: var(--card-bg);
+  border: 1px dashed var(--card-border);
+  border-radius: 16px;
+  padding: 36px;
+  text-align: center;
+  color: var(--text-muted);
+  font-size: 0.88rem;
+}
+
+/* =========================================================
+   6. TWO-COLUMN LAYOUT (TIMELINE & SIDEBAR)
 ========================================================= */
 .activities-grid {
   display: grid;
@@ -753,46 +1321,246 @@
   transition: width 0.3s ease;
 }
 
-/* Weekly Cadence Bar Chart */
-.chart-container {
+/* =========================================================
+   WEEKLY CADENCE MODERN PILL-TUBE CHART
+========================================================= */
+.weekly-cadence-chart {
   display: flex;
   align-items: flex-end;
   justify-content: space-between;
-  height: 140px;
-  padding-top: 16px;
-  gap: 8px;
+  height: 160px;
+  padding: 24px 4px 6px 4px;
+  gap: 10px;
 }
 
-.chart-bar-col {
+.cadence-col {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 8px;
+  gap: 10px;
   flex: 1;
   height: 100%;
+  cursor: pointer;
+  position: relative;
 }
 
-.bar-wrapper {
+/* Ống rỗng nền (Pill Tube) */
+.cadence-tube {
   width: 100%;
+  max-width: 38px;
   height: 100%;
   display: flex;
   align-items: flex-end;
-  background: var(--item-border);
-  border-radius: 6px;
-  overflow: hidden;
+  background: rgba(148, 163, 184, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 999px;
+  padding: 3px;
+  position: relative;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-.bar-fill {
+:host-context(body.light-theme) .cadence-tube {
+  background: rgba(100, 116, 139, 0.07);
+  border: 1px solid rgba(0, 0, 0, 0.06);
+}
+
+.cadence-col:hover .cadence-tube {
+  background: rgba(99, 102, 241, 0.12);
+  border-color: rgba(99, 102, 241, 0.35);
+  box-shadow: 0 0 16px rgba(99, 102, 241, 0.18);
+  transform: translateY(-2px);
+}
+
+/* Cột màu gradient tăng dần */
+.cadence-fill {
   width: 100%;
-  background: linear-gradient(180deg, #6366f1, #3b82f6);
-  border-radius: 6px 6px 0 0;
-  transition: height 0.4s ease;
+  min-height: 8px;
+  background: linear-gradient(180deg, #818cf8 0%, #4f46e5 100%);
+  border-radius: 999px;
+  transition: height 0.5s cubic-bezier(0.34, 1.56, 0.64, 1), transform 0.25s ease, filter 0.25s ease;
+  position: relative;
+  box-shadow: 0 2px 10px rgba(79, 70, 229, 0.3);
 }
 
-.bar-label {
-  font-size: 0.72rem;
+:host-context(body.light-theme) .cadence-fill {
+  background: linear-gradient(180deg, #6366f1 0%, #4338ca 100%);
+  box-shadow: 0 2px 8px rgba(99, 102, 241, 0.22);
+}
+
+/* Cột Peak Day (Ngày cày cuốc cao nhất) */
+.cadence-col.is-peak .cadence-fill {
+  background: linear-gradient(180deg, #ec4899 0%, #8b5cf6 60%, #6366f1 100%);
+  box-shadow: 0 4px 16px rgba(236, 72, 153, 0.42), 0 0 12px rgba(139, 92, 246, 0.3);
+}
+
+.cadence-col.is-peak .cadence-tube {
+  border-color: rgba(236, 72, 153, 0.35);
+  background: rgba(236, 72, 153, 0.08);
+}
+
+.cadence-col:hover .cadence-fill {
+  filter: brightness(1.15);
+  transform: scaleY(1.02);
+}
+
+/* Floating Tooltip khi hover */
+.cadence-tooltip {
+  position: absolute;
+  bottom: calc(100% + 8px);
+  left: 50%;
+  transform: translateX(-50%) translateY(6px);
+  background: #0f172a;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 8px;
+  padding: 6px 10px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  white-space: nowrap;
+  box-shadow: 0 10px 25px -3px rgba(0, 0, 0, 0.6), 0 0 14px rgba(99, 102, 241, 0.25);
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  z-index: 100;
+}
+
+:host-context(body.light-theme) .cadence-tooltip {
+  background: #ffffff;
+  border: 1px solid rgba(0, 0, 0, 0.12);
+  box-shadow: 0 10px 25px -4px rgba(0, 0, 0, 0.15), 0 0 12px rgba(99, 102, 241, 0.14);
+}
+
+.cadence-tooltip::after {
+  content: '';
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  border-width: 5px;
+  border-style: solid;
+  border-color: #0f172a transparent transparent transparent;
+}
+
+:host-context(body.light-theme) .cadence-tooltip::after {
+  border-color: #ffffff transparent transparent transparent;
+}
+
+.cadence-col:hover .cadence-tooltip {
+  opacity: 1;
+  visibility: visible;
+  transform: translateX(-50%) translateY(0);
+}
+
+.ct-header {
+  display: flex;
+  align-items: baseline;
+  gap: 4px;
+}
+
+.ct-count {
+  font-size: 0.9rem;
+  font-weight: 800;
+  color: #a78bfa;
+}
+
+:host-context(body.light-theme) .ct-count {
+  color: #6366f1;
+}
+
+.ct-unit {
+  font-size: 0.68rem;
+  font-weight: 600;
+  color: #cbd5e1;
+}
+
+:host-context(body.light-theme) .ct-unit {
+  color: #64748b;
+}
+
+.ct-day {
+  font-size: 0.68rem;
+  font-weight: 500;
+  color: #94a3b8;
+}
+
+.ct-peak-tag {
+  font-size: 0.62rem;
+  font-weight: 700;
+  color: #f43f5e;
+  background: rgba(244, 63, 94, 0.12);
+  border: 1px solid rgba(244, 63, 94, 0.25);
+  padding: 1px 5px;
+  border-radius: 4px;
+  margin-top: 2px;
+}
+
+/* Nhãn Thứ dưới cột */
+.cadence-day-label {
+  font-size: 0.74rem;
   font-weight: 600;
   color: var(--text-subtle);
+  transition: all 0.2s ease;
+  letter-spacing: -0.01em;
+}
+
+.cadence-col:hover .cadence-day-label {
+  color: #818cf8;
+  font-weight: 700;
+}
+
+:host-context(body.light-theme) .cadence-col:hover .cadence-day-label {
+  color: #4f46e5;
+}
+
+.cadence-day-label.peak-label {
+  color: #ec4899;
+  font-weight: 800;
+}
+
+:host-context(body.light-theme) .cadence-day-label.peak-label {
+  color: #db2777;
+}
+
+/* Section Icons & Subtitles */
+.widget-icon-box {
+  width: 30px;
+  height: 30px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.widget-icon-box.box-cyan {
+  background: rgba(6, 182, 212, 0.12);
+  border: 1px solid rgba(6, 182, 212, 0.25);
+}
+
+.widget-icon-box.box-emerald {
+  background: rgba(16, 185, 129, 0.12);
+  border: 1px solid rgba(16, 185, 129, 0.25);
+}
+
+.section-sub {
+  display: block;
+  font-size: 0.7rem;
+  color: var(--text-subtle);
+  font-weight: 500;
+  margin-top: 1px;
+}
+
+.dist-count {
+  color: var(--text-title);
+  font-weight: 700;
+  margin-right: 3px;
+}
+
+.dist-pct {
+  color: var(--text-subtle);
+  font-weight: 500;
 }
 
 .empty-state {
@@ -826,4 +1594,24 @@
   .heatmap-matrix {
     grid-template-columns: repeat(18, 1fr);
   }
+}
+
+.repo-loading-bar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: var(--card-bg);
+  border: 1px solid var(--card-border);
+  border-radius: 12px;
+  padding: 12px 18px;
+  margin-bottom: 16px;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  box-shadow: var(--card-shadow);
+  animation: fadeIn 0.2s ease-out;
+}
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(-4px); }
+  to { opacity: 1; transform: translateY(0); }
 }

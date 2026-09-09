@@ -171,30 +171,32 @@
         </div>
       </div>
       <div class="metric-value-row">
-        <span class="metric-value">226</span>
-        <span class="metric-pill pill-amber">Top 10%</span>
+        <span class="metric-value">{{ totalStars() }}</span>
+        <span class="metric-pill pill-amber">{{ totalForks() }} Forks</span>
       </div>
       <div class="metric-footer">
-        <span class="metric-trend text-amber">62 Stars</span>
-        <span class="metric-sub">this quarter</span>
+        <span class="metric-trend text-amber">
+          {{ totalStars() > 0 ? (totalStars() + ' Stars') : (totalForks() + ' Forks') }}
+        </span>
+        <span class="metric-sub">across {{ allRepos().length || profile().public_repos }} repos</span>
       </div>
     </div>
 
-    <!-- Metric 4: Public Gists / Snippets -->
+    <!-- Metric 4: Year Contributions -->
     <div class="metric-card">
       <div class="metric-top">
-        <span class="metric-label">Public Gists</span>
+        <span class="metric-label">Contributions</span>
         <div class="metric-icon-box box-cyan">
-          <lucide-icon [img]="Code2" class="metric-icon"></lucide-icon>
+          <lucide-icon [img]="GitPullRequest" class="metric-icon"></lucide-icon>
         </div>
       </div>
       <div class="metric-value-row">
-        <span class="metric-value">{{ profile().public_gists }}</span>
-        <span class="metric-pill pill-cyan">Reusable</span>
+        <span class="metric-value">{{ totalContributions() }}</span>
+        <span class="metric-pill pill-cyan">Past Year</span>
       </div>
       <div class="metric-footer">
-        <span class="metric-trend text-blue">Integrated</span>
-        <span class="metric-sub">with Snippets tab</span>
+        <span class="metric-trend text-cyan">{{ profile().public_gists }} Gists</span>
+        <span class="metric-sub">· Public Activity</span>
       </div>
     </div>
   </section>
@@ -268,32 +270,40 @@
             <lucide-icon [img]="Code2" size="17" class="text-cyan"></lucide-icon>
             <h3 class="section-title">Top Languages</h3>
           </div>
+          <span class="section-counter">{{ languages().length }} Tracked</span>
         </div>
 
-        <!-- Progress bar tổng hợp -->
-        <div class="lang-progress-bar">
-          @for (lang of languages(); track lang.name) {
-            <span 
-              class="progress-segment" 
-              [style.width.%]="lang.percentage" 
-              [style.backgroundColor]="lang.color"
-              [title]="lang.name + ': ' + lang.percentage + '%'">
-            </span>
-          }
-        </div>
+        @if (languages().length > 0) {
+          <!-- Progress bar tổng hợp -->
+          <div class="lang-progress-bar">
+            @for (lang of languages(); track lang.name) {
+              <span 
+                class="progress-segment" 
+                [style.width.%]="lang.percentage" 
+                [style.backgroundColor]="lang.color"
+                [title]="lang.name + ': ' + lang.percentage + '% (' + lang.count + ' repos)'">
+              </span>
+            }
+          </div>
 
-        <!-- Danh sách % chi tiết -->
-        <div class="lang-list">
-          @for (lang of languages(); track lang.name) {
-            <div class="lang-list-item">
-              <div class="lang-item-left">
-                <span class="lang-dot" [style.backgroundColor]="lang.color"></span>
-                <span class="lang-title">{{ lang.name }}</span>
+          <!-- Danh sách % chi tiết -->
+          <div class="lang-list">
+            @for (lang of languages(); track lang.name) {
+              <div class="lang-list-item">
+                <div class="lang-item-left">
+                  <span class="lang-dot" [style.backgroundColor]="lang.color"></span>
+                  <span class="lang-title">{{ lang.name }}</span>
+                  <span class="lang-repo-count">{{ lang.count }} repo{{ lang.count > 1 ? 's' : '' }}</span>
+                </div>
+                <span class="lang-percent">{{ lang.percentage }}%</span>
               </div>
-              <span class="lang-percent">{{ lang.percentage }}%</span>
-            </div>
-          }
-        </div>
+            }
+          </div>
+        } @else {
+          <div class="empty-state">
+            <p>No repository language data available.</p>
+          </div>
+        }
       </div>
 
       <!-- Card 2: GitHub Achievements -->
@@ -303,17 +313,29 @@
             <lucide-icon [img]="Award" size="17" class="text-amber"></lucide-icon>
             <h3 class="section-title">Achievements</h3>
           </div>
-          <span class="section-counter">4 Unlocked</span>
+          <span class="section-counter">{{ unlockedAchievementsCount() }} / {{ achievements().length }} Unlocked</span>
         </div>
 
         <div class="achievements-list">
-          @for (item of achievements; track item.title) {
-            <div class="achievement-item">
-              <span class="achievement-emoji">{{ item.icon }}</span>
-              <div class="achievement-info">
-                <h4 class="achievement-name">{{ item.title }}</h4>
-                <p class="achievement-desc">{{ item.desc }}</p>
+          @for (item of achievements(); track item.title) {
+            <div class="achievement-item" [class.unlocked]="item.unlocked" [class.locked]="!item.unlocked">
+              <div class="achievement-left">
+                <span class="achievement-emoji">{{ item.icon }}</span>
+                <div class="achievement-info">
+                  <div class="achievement-title-row">
+                    <h4 class="achievement-name">{{ item.title }}</h4>
+                    <span class="achievement-badge" 
+                      [class.badge-gold]="item.badge === 'Gold'" 
+                      [class.badge-silver]="item.badge === 'Silver'" 
+                      [class.badge-unlocked]="item.badge === 'Unlocked' || item.badge.startsWith('x')" 
+                      [class.badge-locked]="item.badge === 'Locked' || item.badge === 'In Progress'">
+                      {{ item.badge }}
+                    </span>
+                  </div>
+                  <p class="achievement-desc">{{ item.desc }}</p>
+                </div>
               </div>
+              <span class="achievement-progress" [class.text-emerald]="item.unlocked">{{ item.progress }}</span>
             </div>
           }
         </div>

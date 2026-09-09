@@ -1,6 +1,6 @@
 import { Injectable, signal, computed, inject, PLATFORM_ID } from '@angular/core';
 import { isPlatformBrowser } from '@angular/common';
-import { ActivityEvent } from '../../pages/github/activities/activities.component';
+import { ActivityEvent, ActivityType } from '../../pages/github/activities/activities.component';
 
 // 1. Interface cho thông tin User GitHub
 export interface GitHubUser {
@@ -56,6 +56,8 @@ export class GitHubApiService {
   readonly repositories = signal<GitHubRepoItem[]>([]);
   readonly loading = signal<boolean>(false);
   readonly activities = signal<ActivityEvent[]>([]);
+  readonly contributions = signal<any | null>(null);
+  private readonly repoCommitsCache = new Map<string, ActivityEvent[]>();
 
   // Computed Signal: tự động tính số lượng Repo thật để hiển thị badge ở Sidebar
   readonly repoCount = computed(() => {
@@ -129,8 +131,38 @@ export class GitHubApiService {
         return profileData;
       }
     } catch (err) {
-      console.error('[GitHubApiService] Lỗi lấy profile:', err);
+      console.warn('[GitHubApiService] Backend profile fetch failed, will try public fallback', err);
     }
+
+    // Fallback: nếu chưa đăng nhập hoặc backend không trả về user, gọi public GitHub API
+    try {
+      const username = 'thanhnamle';
+      const directRes = await fetch(`https://api.github.com/users/${username}`);
+      if (directRes.ok) {
+        const u = await directRes.json();
+        const profileData: GitHubUser = {
+          id: u.id,
+          login: u.login,
+          name: u.name || u.login,
+          avatar_url: u.avatar_url,
+          bio: u.bio || 'Software engineer passionate about building high-performance systems.',
+          company: u.company || null,
+          blog: u.blog || u.html_url,
+          location: u.location || 'Vietnam',
+          public_repos: u.public_repos,
+          public_gists: u.public_gists,
+          followers: u.followers,
+          following: u.following,
+          created_at: u.created_at,
+          html_url: u.html_url,
+        };
+        this.currentUser.set(profileData);
+        return profileData;
+      }
+    } catch (fallbackErr) {
+      console.warn('[GitHubApiService] Direct profile fallback failed:', fallbackErr);
+    }
+
     return null;
   }
 
@@ -140,13 +172,41 @@ export class GitHubApiService {
 
     try {
       this.loading.set(true);
-      const res = await fetch(`${this.baseUrl}/github/repositories`, {
-        method: 'GET',
-        credentials: 'include',
-      });
+      let rawRepos: any[] = [];
 
-      if (res.ok) {
-        const rawRepos = await res.json();
+      // 1. Thử gọi backend API
+      try {
+        const res = await fetch(`${this.baseUrl}/github/repositories`, {
+          method: 'GET',
+          credentials: 'include',
+        });
+        if (res.ok) {
+          const data = await res.json();
+          if (Array.isArray(data) && data.length > 0) {
+            rawRepos = data;
+          }
+        }
+      } catch (e) {
+        console.warn('[GitHubApiService] Backend repositories fetch failed, will try public fallback', e);
+      }
+
+      // 2. Fallback trực tiếp GitHub API nếu backend chưa có dữ liệu
+      if (rawRepos.length === 0) {
+        const username = this.currentUser()?.login || 'thanhnamle';
+        try {
+          const directRes = await fetch(`https://api.github.com/users/${username}/repos?per_page=100&sort=updated`);
+          if (directRes.ok) {
+            const data = await directRes.json();
+            if (Array.isArray(data)) {
+              rawRepos = data;
+            }
+          }
+        } catch (err) {
+          console.error('[GitHubApiService] Direct repos fallback failed', err);
+        }
+      }
+
+      if (rawRepos.length > 0) {
         const mapped: GitHubRepoItem[] = rawRepos.map((r: any) => ({
           id: r.id,
           name: r.name,
@@ -165,7 +225,7 @@ export class GitHubApiService {
           cloneUrl: r.clone_url,
           updatedAt: r.updated_at,
           updatedRelative: `Updated ${new Date(r.updated_at).toLocaleDateString()}`,
-          defaultBranch: r.default_branch || 'main'
+          defaultBranch: r.default_branch || 'main',
         }));
 
         this.repositories.set(mapped);
@@ -203,43 +263,90 @@ export class GitHubApiService {
 
     try {
       this.loading.set(true);
-      const res = await fetch(`${this.baseUrl}/github/activities`, {
-        method: 'GET',
-        credentials: 'include',
-      });
+      let rawEvents: any[] = [];
 
-      if (res.ok) {
-        const rawEvents = await res.json();
-        
+      // 1. Thử gọi qua Backend API (kèm cookie devboard_session)
+      try {
+        const res = await fetch(`${this.baseUrl}/github/activities`, {
+          method: 'GET',
+          credentials: 'include',
+        });
+        if (res.ok) {
+          const data = await res.json();
+          if (Array.isArray(data) && data.length > 0) {
+            rawEvents = data;
+          }
+        }
+      } catch (e) {
+        console.warn('[GitHubApiService] Backend activities fetch failed, will try public fallback', e);
+      }
+
+      // 2. Fallback: Nếu Backend trả về rỗng hoặc chưa đăng nhập, gọi trực tiếp public events của GitHub
+      if (rawEvents.length === 0) {
+        const username = this.currentUser()?.login || 'thanhnamle';
+        try {
+          const directRes = await fetch(`https://api.github.com/users/${username}/events?per_page=100`, {
+            headers: {
+              Accept: 'application/vnd.github.v3+json',
+            },
+          });
+          if (directRes.ok) {
+            const data = await directRes.json();
+            if (Array.isArray(data)) {
+              rawEvents = data;
+            }
+          }
+        } catch (err) {
+          console.error('[GitHubApiService] Direct GitHub events fallback failed', err);
+        }
+      }
+
+      if (rawEvents.length > 0) {
         // Ánh xạ các loại sự kiện GitHub thành định dạng giao diện dễ đọc
-        const mapped = rawEvents.map((event: any, index: number) => {
-          let type = 'commit';
+        const mapped: ActivityEvent[] = rawEvents.map((event: any, index: number) => {
+          let type: ActivityType = 'commit';
           let title = 'Activity on repository';
           let branch = '';
           let commitHash = '';
           let prNumber: number | undefined;
 
           switch (event.type) {
-            case 'PushEvent':
+            case 'PushEvent': {
               type = 'commit';
-              const commit = event.payload?.commits?.[0];
-              title = commit ? commit.message : `Pushed ${event.payload?.size || 1} commit(s)`;
-              commitHash = commit?.sha ? commit.sha.substring(0, 7) : '';
               branch = event.payload?.ref ? event.payload.ref.replace('refs/heads/', '') : 'main';
+              const commit = event.payload?.commits?.[0];
+              if (commit?.message) {
+                title = commit.message;
+              } else if (event.payload?.size) {
+                title = `Pushed ${event.payload.size} commit(s) to ${branch}`;
+              } else {
+                title = `Pushed updates to ${branch}`;
+              }
+              commitHash = commit?.sha
+                ? commit.sha.substring(0, 7)
+                : (event.payload?.head ? event.payload.head.substring(0, 7) : '');
               break;
+            }
 
-            case 'PullRequestEvent':
+            case 'PullRequestEvent': {
               type = 'pr';
               const pr = event.payload?.pull_request;
-              title = `${event.payload?.action === 'closed' && pr?.merged ? 'Merged' : 'Opened'} PR #${pr?.number}: ${pr?.title || ''}`;
+              title = `${event.payload?.action === 'closed' && pr?.merged ? 'Merged' : 'Opened'} PR #${pr?.number || ''}: ${pr?.title || ''}`;
               prNumber = pr?.number;
               branch = pr?.head?.ref || '';
               break;
+            }
 
             case 'CreateEvent':
               type = 'branch';
-              title = `Created ${event.payload?.ref_type || 'ref'} ${event.payload?.ref || ''}`;
               branch = event.payload?.ref || '';
+              title = `Created ${event.payload?.ref_type || 'repository'} ${branch || event.repo?.name || ''}`;
+              break;
+
+            case 'DeleteEvent':
+              type = 'branch';
+              branch = event.payload?.ref || '';
+              title = `Deleted ${event.payload?.ref_type || 'branch'} ${branch}`;
               break;
 
             case 'WatchEvent':
@@ -248,23 +355,23 @@ export class GitHubApiService {
               break;
 
             default:
-              title = `${event.type.replace('Event', '')} on ${event.repo?.name}`;
+              title = `${event.type.replace('Event', '')} on ${event.repo?.name || 'repository'}`;
           }
 
           const date = new Date(event.created_at);
 
           return {
-            id: event.id || index + 1,
+            id: typeof event.id === 'number' ? event.id : (parseInt(event.id, 10) || index + 1),
             type,
             repoName: event.repo?.name || 'unknown-repo',
-            repoUrl: `https://github.com/${event.repo?.name}`,
+            repoUrl: `https://github.com/${event.repo?.name || ''}`,
             title,
             branch,
             commitHash,
             prNumber,
             timestamp: event.created_at,
             timeAgo: date.toLocaleDateString('vi-VN', { hour: '2-digit', minute: '2-digit', day: '2-digit', month: '2-digit' }),
-            author: event.actor?.login || 'You'
+            author: event.actor?.login || 'thanhnamle',
           };
         });
 
@@ -275,6 +382,121 @@ export class GitHubApiService {
       console.error('[GitHubApiService] Lỗi lấy activities:', err);
     } finally {
       this.loading.set(false);
+    }
+    return [];
+  }
+
+  // Lấy full contribution calendar 1 năm từ GitHub GraphQL thông qua Backend
+  async fetchContributions(year?: number): Promise<any> {
+    if (!isPlatformBrowser(this.platformId)) return null;
+
+    try {
+      this.loading.set(true);
+      const url = year ? `${this.baseUrl}/github/contributions?year=${year}` : `${this.baseUrl}/github/contributions`;
+      const res = await fetch(url, {
+        method: 'GET',
+        credentials: 'include',
+      });
+
+      if (res.ok) {
+        const data = await res.json();
+        this.contributions.set(data);
+        return data;
+      }
+    } catch (err) {
+      console.error('[GitHubApiService] Lỗi lấy contributions calendar:', err);
+    } finally {
+      this.loading.set(false);
+    }
+    return null;
+  }
+
+  // 6. Lấy danh sách commits của một repository cụ thể
+  async fetchRepoCommits(repoName: string): Promise<ActivityEvent[]> {
+    if (!isPlatformBrowser(this.platformId) || !repoName || repoName === 'all') return [];
+
+    const cacheKey = repoName.toLowerCase();
+    if (this.repoCommitsCache.has(cacheKey)) {
+      return this.repoCommitsCache.get(cacheKey)!;
+    }
+
+    try {
+      let rawCommits: any[] = [];
+      const owner = repoName.includes('/') ? repoName.split('/')[0] : (this.currentUser()?.login || 'thanhnamle');
+      const name = repoName.includes('/') ? repoName.split('/')[1] : repoName;
+
+      // 1. Thử gọi backend API
+      try {
+        const res = await fetch(`${this.baseUrl}/github/commits?repo=${encodeURIComponent(repoName)}`, {
+          method: 'GET',
+          credentials: 'include',
+        });
+        if (res.ok) {
+          const data = await res.json();
+          if (Array.isArray(data) && data.length > 0) {
+            rawCommits = data;
+          }
+        }
+      } catch (e) {
+        console.warn(`[GitHubApiService] Backend commits fetch failed for ${repoName}`, e);
+      }
+
+      // 2. Fallback trực tiếp GitHub API
+      if (rawCommits.length === 0) {
+        try {
+          const directRes = await fetch(`https://api.github.com/repos/${owner}/${name}/commits?per_page=50`, {
+            headers: {
+              Accept: 'application/vnd.github.v3+json',
+            },
+          });
+          if (directRes.ok) {
+            const data = await directRes.json();
+            if (Array.isArray(data)) {
+              rawCommits = data;
+            }
+          }
+        } catch (err) {
+          console.error(`[GitHubApiService] Direct commits fetch failed for ${repoName}:`, err);
+        }
+      }
+
+      if (rawCommits.length > 0) {
+        const repoFullName = repoName.includes('/') ? repoName : `${owner}/${name}`;
+        const mapped: ActivityEvent[] = rawCommits.map((item: any, index: number) => {
+          const sha = item.sha || '';
+          const shortHash = sha.substring(0, 7);
+          const fullMsg = item.commit?.message || 'Update repository';
+          const title = fullMsg.split('\n')[0];
+          const description = fullMsg.split('\n').slice(1).join('\n').trim();
+          const dateStr = item.commit?.author?.date || item.commit?.committer?.date || new Date().toISOString();
+          const d = new Date(dateStr);
+          const timeAgo = d.toLocaleDateString('vi-VN', {
+            hour: '2-digit',
+            minute: '2-digit',
+            day: '2-digit',
+            month: '2-digit',
+            year: 'numeric',
+          });
+
+          return {
+            id: index + 10000,
+            type: 'commit' as ActivityType,
+            repoName: repoFullName,
+            repoUrl: item.html_url || `https://github.com/${repoFullName}/commit/${sha}`,
+            title,
+            description: description || undefined,
+            commitHash: shortHash,
+            timestamp: dateStr,
+            timeAgo,
+            author: item.author?.login || item.commit?.author?.name || 'thanhnamle',
+          };
+        });
+
+        this.repoCommitsCache.set(cacheKey, mapped);
+        return mapped;
+      }
+    } catch (err) {
+      console.error(`[GitHubApiService] Lỗi lấy commits cho repo ${repoName}:`, err);
     }
     return [];
   }

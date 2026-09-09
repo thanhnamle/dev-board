@@ -13,12 +13,11 @@
         </span>
       </div>
       <p class="activities-subtitle">
-        Real-time audit log of commits, pull requests, code reviews, and deployments across all repositories
+        Real-time developer cadence, commit cadence, and engineering milestones
       </p>
     </div>
 
     <div class="header-actions">
-      <!-- Nút làm mới -->
       <button 
         type="button" 
         class="action-btn btn-secondary" 
@@ -26,12 +25,11 @@
         [disabled]="loading()"
         title="Refresh activity feed">
         <lucide-icon [img]="RefreshCw" size="14" [class.spin]="loading()"></lucide-icon>
-        <span>{{ loading() ? 'Refreshing...' : 'Refresh Feed' }}</span>
+        <span>{{ loading() ? 'Refreshing...' : 'Refresh' }}</span>
       </button>
 
-      <!-- Mở trang GitHub Activity -->
       <a 
-        href="https://github.com/thanhnamle" 
+        [href]="gitHubApiService.currentUser()?.html_url || 'https://github.com/thanhnamle'" 
         target="_blank" 
         class="action-btn btn-primary" 
         title="View profile feed on GitHub">
@@ -43,10 +41,9 @@
   </header>
 
   <!-- =========================================================
-       2. TOP 4 METRICS RIBBON (DUAL THEME)
+       2. TOP 4 METRICS RIBBON
   ========================================================= -->
   <section class="metrics-grid">
-    <!-- Metric 1: Commits -->
     <div class="metric-card">
       <div class="metric-top">
         <span class="metric-label">Commits Pushed</span>
@@ -55,16 +52,15 @@
         </div>
       </div>
       <div class="metric-value-row">
-        <!-- Số commit thật từ stream -->
         <span class="metric-value">{{ commitCount() }}</span>
-        <span class="metric-pill pill-purple">Recent Stream</span>
+        <span class="metric-pill pill-purple">Pushed</span>
       </div>
       <div class="metric-footer">
         <span class="metric-trend text-purple">{{ commitCount() }} commits</span>
-        <span class="metric-sub">in activity history</span>
+        <span class="metric-sub">in live stream</span>
       </div>
     </div>
-    <!-- Metric 2: Pull Requests -->
+
     <div class="metric-card">
       <div class="metric-top">
         <span class="metric-label">Pull Requests</span>
@@ -73,16 +69,15 @@
         </div>
       </div>
       <div class="metric-value-row">
-        <!-- Số PR thật -->
         <span class="metric-value">{{ prCount() }}</span>
-        <span class="metric-pill pill-emerald">Tracked PRs</span>
+        <span class="metric-pill pill-emerald">Tracked</span>
       </div>
       <div class="metric-footer">
         <span class="metric-trend text-emerald">{{ prCount() }} PR events</span>
         <span class="metric-sub">merged & active</span>
       </div>
     </div>
-    <!-- Metric 3: Branches & Ops -->
+
     <div class="metric-card">
       <div class="metric-top">
         <span class="metric-label">Branches & Ops</span>
@@ -91,7 +86,6 @@
         </div>
       </div>
       <div class="metric-value-row">
-        <!-- Số branch / release ops -->
         <span class="metric-value">{{ branchReleaseCount() }}</span>
         <span class="metric-pill pill-cyan">DevOps</span>
       </div>
@@ -100,65 +94,253 @@
         <span class="metric-sub">created</span>
       </div>
     </div>
-    <!-- Metric 4: Total Events -->
+
     <div class="metric-card">
       <div class="metric-top">
-        <span class="metric-label">Live Event Stream</span>
+        <span class="metric-label">Active Days</span>
         <div class="metric-icon-box box-amber">
           <lucide-icon [img]="Flame" class="metric-icon"></lucide-icon>
         </div>
       </div>
       <div class="metric-value-row">
-        <!-- Tổng số event và số ngày hoạt động thật -->
-        <span class="metric-value">{{ activities().length }}</span>
-        <span class="metric-pill pill-amber">🔥 Live</span>
+        <span class="metric-value">{{ activeDaysCount() }}</span>
+        <span class="metric-pill pill-amber">Days Active</span>
       </div>
       <div class="metric-footer">
-        <span class="metric-trend text-amber">Active on {{ activeDaysCount() }} days</span>
-        <span class="metric-sub">recent events</span>
+        <span class="metric-trend text-amber">Streak verified</span>
+        <span class="metric-sub">across repositories</span>
       </div>
     </div>
   </section>
 
   <!-- =========================================================
-       3. COMMIT HEATMAP BOARD
+       3. 🌟 ACTIVITY CADENCE CHART (BAR CHART / LINE MAP / HEATMAP )
   ========================================================= -->
-  <section class="heatmap-card">
-    <div class="heatmap-header">
-      <div class="heatmap-title-group">
-        <lucide-icon [img]="Calendar" size="16" class="text-purple"></lucide-icon>
-        <h3 class="heatmap-title">30-Day Contribution Heatmap</h3>
+  <section class="cadence-chart-card">
+    
+    <!-- Header: Bộ chọn Năm & Tháng + Nút Toggle Bar/Line -->
+    <div class="chart-header-row">
+      <div class="chart-title-group">
+        <div class="chart-icon-box">
+          <lucide-icon [img]="chartViewMode() === 'bar' ? BarChart2 : TrendingUp" size="16"></lucide-icon>
+        </div>
+        <div>
+          <h3 class="chart-title">Activity Cadence Stream</h3>
+          <span class="chart-sub">{{ totalSelectedContributions() }} activities recorded</span>
+        </div>
       </div>
-      <div class="heatmap-legend">
-        <span class="legend-text">Less</span>
-        <span class="heatmap-box lvl-0"></span>
-        <span class="heatmap-box lvl-1"></span>
-        <span class="heatmap-box lvl-2"></span>
-        <span class="heatmap-box lvl-3"></span>
-        <span class="heatmap-box lvl-4"></span>
-        <span class="legend-text">More</span>
+
+      <!-- Controls: Chọn Năm + Chọn Tháng + Toggle Bar/Line -->
+      <div class="chart-controls-group">
+        
+        <!-- Chọn Năm (Từ năm tạo tài khoản đến nay) -->
+        <div class="select-capsule">
+          <span class="capsule-label">Year:</span>
+          <select 
+            class="capsule-select" 
+            [value]="selectedYear()" 
+            (change)="selectedYear.set(+$any($event.target).value)">
+            @for (y of availableYears(); track y) {
+              <option [value]="y">{{ y }}</option>
+            }
+          </select>
+        </div>
+
+        <!-- Chọn Tháng -->
+        <div class="select-capsule">
+          <span class="capsule-label">Month:</span>
+          <select 
+            class="capsule-select" 
+            [value]="selectedMonth()" 
+            (change)="selectedMonth.set($any($event.target).value)">
+            @for (m of monthsList; track m.value) {
+              <option [value]="m.value">{{ m.label }}</option>
+            }
+          </select>
+        </div>
+
+        <!-- Nút chuyển đổi Bar Chart / Line Map / Heatmap -->
+        <div class="chart-toggle-pill">
+          <button 
+            type="button" 
+            class="toggle-opt" 
+            [class.active]="chartViewMode() === 'bar'"
+            (click)="chartViewMode.set('bar')"
+            title="Bar Chart View">
+            <lucide-icon [img]="BarChart2" size="13"></lucide-icon>
+            <span>Bars</span>
+          </button>
+          <button 
+            type="button" 
+            class="toggle-opt" 
+            [class.active]="chartViewMode() === 'line'"
+            (click)="chartViewMode.set('line')"
+            title="Line Area Map View">
+            <lucide-icon [img]="TrendingUp" size="13"></lucide-icon>
+            <span>Line</span>
+          </button>
+          <button 
+            type="button" 
+            class="toggle-opt" 
+            [class.active]="chartViewMode() === 'heatmap'"
+            (click)="chartViewMode.set('heatmap')"
+            title="Heatmap View">
+            <lucide-icon [img]="Calendar" size="13"></lucide-icon>
+            <span>Heatmap</span>
+          </button>
+        </div>
+
       </div>
     </div>
 
-    <!-- Heatmap Grid Cells -->
-    <div class="heatmap-matrix">
-      @for (cell of heatmapCells(); track cell.day) {
-        <div 
-          class="heatmap-cell" 
-          [class.lvl-0]="cell.level === 0"
-          [class.lvl-1]="cell.level === 1"
-          [class.lvl-2]="cell.level === 2"
-          [class.lvl-3]="cell.level === 3"
-          [class.lvl-4]="cell.level === 4">
-          
-          <!-- 🌟 Custom Tooltip nổi lên khi rê chuột -->
-          <div class="cell-tooltip">
-            <span class="tooltip-count">{{ cell.count }} contributions</span>
-            <span class="tooltip-date">{{ cell.fullDate }}</span>
+    <!-- KHUNG VẼ BIỂU ĐỒ -->
+    <div class="chart-viewport">
+      
+      <!-- KIỂU 1: MODERN BAR CHART -->
+      @if (chartViewMode() === 'bar') {
+        <div class="bar-chart-container">
+          @for (bar of chartData(); track bar.label) {
+            <div class="bar-item-col">
+              
+              <div class="bar-tube-wrapper">
+                <div 
+                  class="bar-tube-fill" 
+                  [style.height.%]="bar.height"
+                  [class.has-events]="bar.count > 0">
+                </div>
+
+                <!-- Custom Floating Tooltip khi hover -->
+                <div class="chart-tooltip">
+                  <span class="tt-count">{{ bar.count }} Activities</span>
+                  <span class="tt-date">{{ bar.fullDateText }}</span>
+                  @if (bar.count > 0) {
+                    <div class="tt-breakdown">
+                      <span>{{ bar.commits }} commits</span> • <span>{{ bar.prs }} PRs</span>
+                    </div>
+                  }
+                </div>
+              </div>
+
+              <span class="bar-axis-label">{{ bar.label }}</span>
+            </div>
+          }
+        </div>
+      }
+
+      <!-- KIỂU 2: SMOOTH LINE AREA MAP (SVG) -->
+      @if (chartViewMode() === 'line') {
+        <div class="line-chart-container">
+          <svg class="line-svg" viewBox="0 0 840 140" preserveAspectRatio="none">
+            <defs>
+              <linearGradient id="areaGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+                <stop offset="0%" stop-color="#8b5cf6" stop-opacity="0.45"/>
+                <stop offset="100%" stop-color="#8b5cf6" stop-opacity="0.0"/>
+              </linearGradient>
+            </defs>
+            
+            <!-- Vùng phủ mờ dưới đường line -->
+            <path [attr.d]="lineChartPoints().area" fill="url(#areaGradient)"/>
+            
+            <!-- Đường cong Line phản ứng -->
+            <path [attr.d]="lineChartPoints().path" fill="none" stroke="#a78bfa" stroke-width="2.5" stroke-linecap="round"/>
+          </svg>
+
+          <!-- Các điểm chấm tương tác trên đường Line -->
+          <div class="line-dots-layer">
+            @for (dot of lineChartPoints().dots; track dot.point.label) {
+              <div 
+                class="line-dot-node" 
+                [style.left.%]="dot.percentX" 
+                [style.top.%]="dot.percentY" 
+                [class.has-events]="dot.point.count > 0">
+                
+                <!-- Tooltip tương tác -->
+                <div class="chart-tooltip">
+                  <span class="tt-count">{{ dot.point.count }} Activities</span>
+                  <span class="tt-date">{{ dot.point.fullDateText }}</span>
+                  @if (dot.point.count > 0) {
+                    <div class="tt-breakdown">
+                      <span>{{ dot.point.commits }} commits</span> • <span>{{ dot.point.prs }} PRs</span>
+                    </div>
+                  }
+                </div>
+
+              </div>
+            }
+          </div>
+
+          <!-- Nhãn trục X dưới đường Line -->
+          <div class="line-axis-labels">
+            @for (item of chartData(); track item.label) {
+              <span class="line-label">{{ item.label }}</span>
+            }
           </div>
         </div>
       }
+
+      <!-- KIỂU 3: FULL YEAR CONTRIBUTION HEATMAP (52 TUẦN x 7 HÀNG) -->
+      @if (chartViewMode() === 'heatmap') {
+        <div class="heatmap-view-wrapper">
+          
+          <!-- Nhãn 12 Tháng (Chỉ hiện khi xem toàn bộ năm) -->
+          @if (selectedMonth() === 'all') {
+            <div class="heatmap-months-header">
+              @for (m of monthsList.slice(1); track m.value) {
+                <span class="hm-month-label">{{ m.label }}</span>
+              }
+            </div>
+          }
+
+          <div class="heatmap-grid-layout" [class.is-single-month]="selectedMonth() !== 'all'">
+            <!-- Cột Thứ bên trái (Chỉ hiện khi xem cả năm 52 tuần) -->
+            @if (selectedMonth() === 'all') {
+              <div class="hm-day-labels">
+                <span>Mon</span>
+                <span></span>
+                <span>Wed</span>
+                <span></span>
+                <span>Fri</span>
+                <span></span>
+                <span>Sun</span>
+              </div>
+            }
+
+            <!-- Ma trận 52 Cột x 7 Hàng -->
+            <div class="heatmap-matrix-full" [class.single-month]="selectedMonth() !== 'all'">
+              @for (cell of heatmapCells(); track cell.day) {
+                <div 
+                  class="heatmap-cell" 
+                  [class.lvl-0]="cell.level === 0"
+                  [class.lvl-1]="cell.level === 1"
+                  [class.lvl-2]="cell.level === 2"
+                  [class.lvl-3]="cell.level === 3"
+                  [class.lvl-4]="cell.level === 4">
+
+                  <div class="cell-tooltip">
+                    <span class="tooltip-count">{{ cell.count }} contributions</span>
+                    <span class="tooltip-date">{{ cell.fullDate }}</span>
+                  </div>
+                </div>
+              }
+            </div>
+          </div>
+
+          <!-- Chú thích Less -> More -->
+          <div class="heatmap-bottom-legend">
+            <span class="legend-text">Less</span>
+            <span class="heatmap-box lvl-0"></span>
+            <span class="heatmap-box lvl-1"></span>
+            <span class="heatmap-box lvl-2"></span>
+            <span class="heatmap-box lvl-3"></span>
+            <span class="heatmap-box lvl-4"></span>
+            <span class="legend-text">More</span>
+          </div>
+
+        </div>
+      }
+
     </div>
+
   </section>
 
   <!-- =========================================================
@@ -166,7 +348,6 @@
   ========================================================= -->
   <div class="toolbar-card">
     <div class="toolbar-left">
-      <!-- Search Input -->
       <div class="search-box">
         <lucide-icon [img]="Search" size="14" class="search-icon"></lucide-icon>
         <input 
@@ -178,46 +359,20 @@
         />
       </div>
 
-      <!-- Type Filter Pills -->
       <div class="filter-pills">
-        <button 
-          type="button" 
-          class="pill-btn" 
-          [class.active]="selectedType() === 'all'"
-          (click)="selectedType.set('all')">
-          All
-        </button>
-        <button 
-          type="button" 
-          class="pill-btn" 
-          [class.active]="selectedType() === 'commit'"
-          (click)="selectedType.set('commit')">
-          Commits
-        </button>
-        <button 
-          type="button" 
-          class="pill-btn" 
-          [class.active]="selectedType() === 'pr'"
-          (click)="selectedType.set('pr')">
-          Pull Requests
-        </button>
-        <button 
-          type="button" 
-          class="pill-btn" 
-          [class.active]="selectedType() === 'review'"
-          (click)="selectedType.set('review')">
-          Reviews
-        </button>
+        <button type="button" class="pill-btn" [class.active]="selectedType() === 'all'" (click)="selectedType.set('all')">All</button>
+        <button type="button" class="pill-btn" [class.active]="selectedType() === 'commit'" (click)="selectedType.set('commit')">Commits</button>
+        <button type="button" class="pill-btn" [class.active]="selectedType() === 'pr'" (click)="selectedType.set('pr')">PRs</button>
+        <button type="button" class="pill-btn" [class.active]="selectedType() === 'branch'" (click)="selectedType.set('branch')">Branches</button>
       </div>
     </div>
 
     <div class="toolbar-right">
-      <!-- Repo Filter Dropdown -->
       <div class="select-wrapper">
         <select 
           class="custom-select" 
           [value]="selectedRepo()" 
-          (change)="selectedRepo.set($any($event.target).value)">
+          (change)="onRepoChange($any($event.target).value)">
           @for (repo of repoList(); track repo.value) {
             <option [value]="repo.value">{{ repo.label }}</option>
           }
@@ -227,94 +382,105 @@
   </div>
 
   <!-- =========================================================
-       5. MAIN CONTENT: TIMELINE & SIDEBAR METRICS
+       5. ACTIVITIES GOM NHÓM THEO THÁNG & NĂNG SUẤT TUẦN
   ========================================================= -->
   <div class="activities-grid">
 
-    <!-- CỘT TRÁI: DÒNG THỜI GIAN TIMELINE -->
+    <!-- CỘT TRÁI: DÒNG THỜI GIAN GOM THEO TỪNG THÁNG -->
     <div class="timeline-column">
-      <div class="section-card">
-        <div class="section-header">
-          <div class="section-header-left">
-            <lucide-icon [img]="Clock" size="17" class="text-purple"></lucide-icon>
-            <h3 class="section-title">Activity Stream</h3>
-          </div>
-          <span class="section-counter">{{ filteredActivities().length }} Events</span>
+      
+      @if (loadingRepo()) {
+        <div class="repo-loading-bar">
+          <lucide-icon [img]="RefreshCw" size="14" class="spin text-purple"></lucide-icon>
+          <span>Fetching commit history for {{ selectedRepo() }}...</span>
         </div>
+      }
 
-        <div class="timeline-list">
-          @for (item of filteredActivities(); track item.id) {
-            <div class="timeline-item">
-              
-              <!-- Timeline Marker Icon -->
-              <div class="timeline-icon-box" [ngClass]="'icon-' + item.type">
-                @if (item.type === 'commit') {
-                  <lucide-icon [img]="GitCommit" size="15"></lucide-icon>
-                } @else if (item.type === 'pr') {
-                  <lucide-icon [img]="GitPullRequest" size="15"></lucide-icon>
-                } @else if (item.type === 'review') {
-                  <lucide-icon [img]="CheckCircle2" size="15"></lucide-icon>
-                } @else if (item.type === 'release') {
-                  <lucide-icon [img]="Tag" size="15"></lucide-icon>
-                } @else {
-                  <lucide-icon [img]="GitBranch" size="15"></lucide-icon>
-                }
-              </div>
+      @for (group of groupedActivities(); track group.monthLabel) {
+        <div class="month-group-card">
+          <!-- Header Tháng -->
+          <div class="month-group-header">
+            <div class="month-badge-left">
+              <lucide-icon [img]="Calendar" size="14" class="text-purple"></lucide-icon>
+              <h3 class="month-heading">{{ group.monthLabel }}</h3>
+            </div>
+            <span class="month-event-pill">{{ group.events.length }} events</span>
+          </div>
 
-              <!-- Content Body -->
-              <div class="timeline-content">
-                <div class="timeline-header-row">
-                  <div class="timeline-meta-left">
-                    <a [href]="item.repoUrl" target="_blank" class="repo-badge">
-                      <lucide-icon [img]="FolderGit2" size="12"></lucide-icon>
-                      <span>{{ item.repoName }}</span>
-                    </a>
-
-                    @if (item.branch) {
-                      <span class="branch-badge">
-                        <lucide-icon [img]="GitBranch" size="11"></lucide-icon>
-                        <span>{{ item.branch }}</span>
-                      </span>
-                    }
-
-                    @if (item.commitHash) {
-                      <span class="hash-pill">#{{ item.commitHash }}</span>
-                    }
-
-                    @if (item.prNumber) {
-                      <span class="pr-pill">PR #{{ item.prNumber }}</span>
-                    }
-                  </div>
-
-                  <span class="timeline-time">{{ item.timeAgo }}</span>
+          <!-- Danh sách các sự kiện trong tháng đó -->
+          <div class="timeline-list">
+            @for (item of group.events; track item.id) {
+              <div class="timeline-item">
+                <div class="timeline-icon-box" [ngClass]="'icon-' + item.type">
+                  @if (item.type === 'commit') {
+                    <lucide-icon [img]="GitCommit" size="15"></lucide-icon>
+                  } @else if (item.type === 'pr') {
+                    <lucide-icon [img]="GitPullRequest" size="15"></lucide-icon>
+                  } @else if (item.type === 'review') {
+                    <lucide-icon [img]="CheckCircle2" size="15"></lucide-icon>
+                  } @else if (item.type === 'release') {
+                    <lucide-icon [img]="Tag" size="15"></lucide-icon>
+                  } @else {
+                    <lucide-icon [img]="GitBranch" size="15"></lucide-icon>
+                  }
                 </div>
 
-                <p class="timeline-title">{{ item.title }}</p>
+                <div class="timeline-content">
+                  <div class="timeline-header-row">
+                    <div class="timeline-meta-left">
+                      <a [href]="item.repoUrl" target="_blank" class="repo-badge">
+                        <lucide-icon [img]="FolderGit2" size="12"></lucide-icon>
+                        <span>{{ item.repoName }}</span>
+                      </a>
 
-                @if (item.description) {
-                  <p class="timeline-desc">{{ item.description }}</p>
-                }
+                      @if (item.branch) {
+                        <span class="branch-badge">
+                          <lucide-icon [img]="GitBranch" size="11"></lucide-icon>
+                          <span>{{ item.branch }}</span>
+                        </span>
+                      }
+
+                      @if (item.commitHash) {
+                        <span class="hash-pill">#{{ item.commitHash }}</span>
+                      }
+
+                      @if (item.prNumber) {
+                        <span class="pr-pill">PR #{{ item.prNumber }}</span>
+                      }
+                    </div>
+
+                    <span class="timeline-time">{{ item.timeAgo }}</span>
+                  </div>
+
+                  <p class="timeline-title">{{ item.title }}</p>
+                  @if (item.description) {
+                    <p class="timeline-desc">{{ item.description }}</p>
+                  }
+                </div>
               </div>
-
-            </div>
-          } @empty {
-            <div class="empty-state">
-              <p>No activity records match your current filters.</p>
-            </div>
-          }
+            }
+          </div>
         </div>
-      </div>
+      } @empty {
+        <div class="empty-state-card">
+          <p>No activity records found for the selected year and month.</p>
+        </div>
+      }
+
     </div>
 
-    <!-- CỘT PHẢI: PHÂN BỔ HOẠT ĐỘNG & NĂNG SUẤT TUẦN -->
+    <!-- CỘT PHẢI: ACTION VELOCITY & WEEKLY CADENCE -->
     <aside class="sidebar-column">
-
-      <!-- Card 1: Phân bổ loại hoạt động -->
-      <div class="section-card">
+      <div class="section-card action-velocity-card">
         <div class="section-header">
           <div class="section-header-left">
-            <lucide-icon [img]="Layers" size="17" class="text-cyan"></lucide-icon>
-            <h3 class="section-title">Action Velocity</h3>
+            <div class="widget-icon-box box-cyan">
+              <lucide-icon [img]="Layers" size="15" class="text-cyan"></lucide-icon>
+            </div>
+            <div>
+              <h3 class="section-title">Action Velocity</h3>
+              <span class="section-sub">Activity breakdown</span>
+            </div>
           </div>
         </div>
 
@@ -323,47 +489,66 @@
             <div class="dist-row">
               <div class="dist-labels">
                 <span class="dist-name">{{ item.label }}</span>
-                <span class="dist-percent">{{ item.percentage }}%</span>
+                <span class="dist-percent">
+                  <strong class="dist-count">{{ item.count }}</strong>
+                  <span class="dist-pct">({{ item.percentage }}%)</span>
+                </span>
               </div>
               <div class="dist-track">
-                <div 
-                  class="dist-fill" 
-                  [style.width.%]="item.percentage" 
-                  [style.backgroundColor]="item.color">
-                </div>
+                <div class="dist-fill" [style.width.%]="item.percentage" [style.backgroundColor]="item.color"></div>
               </div>
             </div>
           }
         </div>
       </div>
 
-      <!-- Card 2: Thống kê năng suất ngày trong tuần -->
-      <div class="section-card">
+      <div class="section-card weekly-cadence-card">
         <div class="section-header">
           <div class="section-header-left">
-            <lucide-icon [img]="TrendingUp" size="17" class="text-emerald"></lucide-icon>
-            <h3 class="section-title">Weekly Cadence</h3>
+            <div class="widget-icon-box box-emerald">
+              <lucide-icon [img]="TrendingUp" size="15" class="text-emerald"></lucide-icon>
+            </div>
+            <div>
+              <h3 class="section-title">Weekly Cadence</h3>
+              <span class="section-sub">Productivity by day</span>
+            </div>
           </div>
-          <span class="section-counter">Mon - Sun</span>
+          <span class="section-counter">Mon – Sun</span>
         </div>
 
-        <!-- Mini Bar Chart -->
-        <div class="chart-container">
+        <div class="weekly-cadence-chart">
           @for (bar of weeklyProductivity(); track bar.day) {
-            <div class="chart-bar-col">
-              <div class="bar-wrapper">
+            <div class="cadence-col" [class.is-peak]="bar.isPeak">
+              
+              <!-- Ống đo nhịp độ (Pill Tube) -->
+              <div class="cadence-tube">
                 <div 
-                  class="bar-fill" 
-                  [style.height.%]="bar.height" 
-                  [title]="bar.commits + ' commits on ' + bar.day">
+                  class="cadence-fill" 
+                  [style.height.%]="bar.height"
+                  [class.peak-fill]="bar.isPeak">
+                </div>
+
+                <!-- Tooltip tương tác hiển thị mượt mà khi rê chuột -->
+                <div class="cadence-tooltip">
+                  <div class="ct-header">
+                    <span class="ct-count">{{ bar.commits }}</span>
+                    <span class="ct-unit">{{ bar.commits === 1 ? 'event' : 'events' }}</span>
+                  </div>
+                  <span class="ct-day">{{ bar.day }}</span>
+                  @if (bar.isPeak) {
+                    <span class="ct-peak-tag">Peak Day 🔥</span>
+                  }
                 </div>
               </div>
-              <span class="bar-label">{{ bar.day }}</span>
+
+              <!-- Nhãn ngày trong tuần -->
+              <span class="cadence-day-label" [class.peak-label]="bar.isPeak">
+                {{ bar.day }}
+              </span>
             </div>
           }
         </div>
       </div>
-
     </aside>
 
   </div>

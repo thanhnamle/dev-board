@@ -662,6 +662,12 @@
   color: var(--text-muted);
 }
 
+.lang-repo-count {
+  font-size: 0.72rem;
+  color: var(--text-subtle);
+  margin-left: 2px;
+}
+
 /* Achievements */
 .achievements-list {
   display: flex;
@@ -672,27 +678,56 @@
 .achievement-item {
   display: flex;
   align-items: center;
+  justify-content: space-between;
   gap: 12px;
-  padding: 10px 12px;
+  padding: 10px 14px;
   background: var(--item-bg);
   border: 1px solid var(--item-border);
-  border-radius: 10px;
-  transition: background 0.2s ease;
+  border-radius: 12px;
+  transition: all 0.2s ease;
+}
+
+.achievement-item.unlocked {
+  border-color: rgba(99, 102, 241, 0.25);
+  background: linear-gradient(135deg, var(--item-bg), rgba(99, 102, 241, 0.04));
+}
+
+.achievement-item.locked {
+  opacity: 0.65;
+  filter: grayscale(35%);
 }
 
 .achievement-item:hover {
   background: var(--item-hover-bg);
+  border-color: rgba(99, 102, 241, 0.4);
+  transform: translateY(-1px);
+}
+
+.achievement-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
 }
 
 .achievement-emoji {
-  font-size: 1.3rem;
+  font-size: 1.35rem;
   line-height: 1;
+  flex-shrink: 0;
 }
 
 .achievement-info {
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: 3px;
+  min-width: 0;
+}
+
+.achievement-title-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
 }
 
 .achievement-name {
@@ -702,10 +737,54 @@
   margin: 0;
 }
 
+.achievement-badge {
+  font-size: 0.62rem;
+  font-weight: 700;
+  padding: 1px 7px;
+  border-radius: 999px;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  display: inline-flex;
+  align-items: center;
+}
+
+.badge-gold {
+  background: rgba(245, 158, 11, 0.15);
+  color: #f59e0b;
+  border: 1px solid rgba(245, 158, 11, 0.35);
+}
+
+.badge-silver {
+  background: rgba(148, 163, 184, 0.15);
+  color: #94a3b8;
+  border: 1px solid rgba(148, 163, 184, 0.35);
+}
+
+.badge-unlocked {
+  background: rgba(16, 185, 129, 0.15);
+  color: #10b981;
+  border: 1px solid rgba(16, 185, 129, 0.35);
+}
+
+.badge-locked {
+  background: var(--item-border);
+  color: var(--text-subtle);
+  border: 1px solid var(--item-border);
+}
+
 .achievement-desc {
-  font-size: 0.74rem;
+  font-size: 0.73rem;
   color: var(--text-muted);
   margin: 0;
+  line-height: 1.35;
+}
+
+.achievement-progress {
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--text-subtle);
+  white-space: nowrap;
+  flex-shrink: 0;
 }
 
 .empty-state {
