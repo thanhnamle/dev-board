@@ -1,70 +1,89 @@
 # 📘 Tài Liệu Kỹ Thuật Dự Án DevBoard (Project Documentation)
 
-> **Tên dự án:** DevBoard (Developer Workspace & Internal Tooling)  
-> **Khách hàng / Phạm vi:** Công cụ nội bộ (Internal Tools) dành cho lập trình viên  
-> **Nền tảng chính:** Angular 17+ (Standalone Components, SSR, Signals)  
+> **Tên dự án:** DevBoard (Developer Workspace & Engineering Tooling)  
+> **Khách hàng / Phạm vi:** Nền tảng quản trị và không gian làm việc tập trung dành cho kỹ sư phần mềm  
+> **Frontend Stack:** Angular 17.3+ (Standalone Components, SSR, Signals, Modern Control Flow, Lucide Icons)  
+> **Backend Stack:** NestJS 10, TypeScript, Express, Cookie-parser, GitHub REST API OAuth 2.0  
+> **Kiến trúc bảo mật:** HttpOnly Session Cookie (`devboard_session`), SameSite Lax, CORS Credentials  
 > **Ngày cập nhật:** Tháng 09/2026  
 
 ---
 
 ## 1. 🎯 Tổng Quan Dự Án (Project Overview)
 
-**DevBoard** là nền tảng không gian làm việc tập trung (All-in-one Developer Dashboard & Workspace) được thiết kế đặc thù cho các kỹ sư phần mềm. Dự án giải quyết bài toán phân mảnh công cụ hàng ngày bằng cách tích hợp quản lý mã nguồn, ghi chú kỹ thuật, kho lưu trữ code mẫu (snippets) và theo dõi tiến độ dự án vào một giao diện trực quan, tối giản và hiện đại.
+**DevBoard** là nền tảng không gian làm việc tập trung (All-in-one Developer Dashboard & Workspace) được thiết kế đặc thù cho các kỹ sư phần mềm. Dự án giải quyết bài toán phân mảnh công cụ hàng ngày bằng cách tích hợp quản lý mã nguồn GitHub thật, ghi chú kỹ thuật, kho lưu trữ code mẫu (snippets), thảo luận kỹ thuật và theo dõi tiến độ dự án vào một giao diện trực quan, tối giản theo ngôn ngữ thiết kế **Linear & Obsidian**.
 
 ### Mục tiêu cốt lõi:
-* **Tích hợp hệ sinh thái GitHub:** Đồng bộ trực tiếp repositories, commits, branches, và issues.
-* **Quản lý dự án cá nhân & nhóm (Projects Hub):** Theo dõi danh sách dự án, bookmark và đánh dấu sao (starred) các repository quan trọng.
+* **Tích hợp hệ sinh thái GitHub thật:** Xác thực bảo mật OAuth 2.0, đồng bộ trực tiếp 21 repositories cá nhân, commit history, và đồ thị đóng góp 201 contributions/năm.
+* **Quản lý dự án cá nhân (Projects Hub):**
+  - Danh mục toàn bộ kho mã nguồn (`All Repositories`).
+  - **Kệ Bookmarks độc quyền của DevBoard:** Tính năng lưu trữ độc lập trên ứng dụng web giúp lập trình viên ghim nhanh các dự án trọng tâm vào kệ làm việc cá nhân (Personal Focus Shelf).
+  - **Starred Repositories:** Danh sách các kho mã nguồn được đánh dấu sao yêu thích.
+* **Thảo luận kỹ thuật & Thông báo (Discussions & Inbox):** Theo dõi mentions, yêu cầu review code PR và thông báo hệ thống với giao diện chat thread và phản hồi nhanh đính kèm code snippet.
 * **Ghi chú & Tài liệu hóa (Developer Notes):** Hỗ trợ viết ghi chú kỹ thuật dạng Markdown gắn liền với từng tag và dự án.
-* **Kho lưu trữ Code Snippets:** Lưu và tái sử dụng các đoạn code chuẩn (best practices, regex, helper functions).
-* **Đăng nhập một chạm (Single Sign-On):** Tối ưu hóa cho internal tools thông qua GitHub OAuth Authentication.
+* **Kho lưu trữ Code Snippets:** Lưu và tái sử dụng các đoạn code chuẩn với tính năng 1-Click Copy vào clipboard.
+* **Spotlight Command Palette (⌘K):** Tra cứu và điều hướng siêu tốc tới mọi ngóc ngách của ứng dụng.
 
 ---
 
 ## 2. 🏛️ Kiến Trúc Kỹ Thuật (Architecture & Tech Stack)
 
-Hệ thống được thiết kế theo mô hình tách biệt Frontend và Backend (Decoupled Client-Server), sẵn sàng mở rộng thành Monorepo hoặc Microservices.
+Hệ thống được thiết kế theo mô hình tách biệt Frontend và Backend (Decoupled Client-Server) với tính năng bảo mật Session Cookie HttpOnly.
 
 ```mermaid
 graph TD
-    User([Người dùng / Lập trình viên]) -->|Truy cập HTTP/HTTPS| Client[Frontend: Angular 17 SSR]
+    User([Người dùng / Kỹ sư]) -->|Truy cập HTTP/HTTPS :4200| Frontend[Frontend: Angular 17 SSR]
     
-    subgraph Frontend [Angular 17 Client Workspace]
+    subgraph FrontendApp [Angular 17 Client Workspace]
         Router[Angular Router]
         Router --> PublicFlow[Public Route: Landing & Auth Card]
         Router --> AuthFlow[Authenticated App Flow: /app]
         
-        AuthFlow --> Layout[Main Layout & Collapsible Sidebar]
+        AuthFlow --> Layout[Main Layout & Obsidian Sidebar]
         Layout --> DashModule[Dashboard: Overview / Analytics]
         Layout --> ProjModule[Projects: All / Bookmarks / Starred]
+        Layout --> DiscModule[Discussions & Inbox Hub]
         Layout --> NoteModule[Notes: All Notes / Tags]
         Layout --> SnipModule[Snippets: All Snippets / Favorites]
+        Layout --> GHModule[GitHub: Profile / Activities]
+        
+        Services[Angular Signals State Layer]
+        Services --> GitHubApiService
+        Services --> WorkspaceDataService
+        Services --> MessagesService
+        Services --> ThemeService
+        Services --> CommandPaletteService
     end
 
-    subgraph External [Dịch vụ bên ngoài]
-        GitHubOAuth[GitHub OAuth 2.0 API]
+    subgraph BackendApp [Backend: NestJS 10 API :3000]
+        AuthModule[AuthModule: OAuth 2.0 Flow]
+        GitHubModule[GitHubModule: Proxy & Transform API]
+        SessionStore[(RAM / Redis Session Cache)]
+        AuthModule --- SessionStore
     end
 
-    PublicFlow -.->|Authenticate| GitHubOAuth
-    GitHubOAuth -.->|Redirect Token| AuthFlow
-    
-    subgraph Backend [Backend Service (Đang mở rộng)]
-        BackendAPI[REST / GraphQL Services]
-        Database[(Database: Postgres / Mongo)]
-        BackendAPI --- Database
+    subgraph ExternalServices [Dịch vụ bên ngoài]
+        GitHubAPI[GitHub REST API v3]
     end
 
-    AuthFlow -.->|REST API Calls| BackendAPI
+    PublicFlow -->|Redirect login| AuthModule
+    AuthModule -->|OAuth Handshake| GitHubAPI
+    GitHubAPI -->|Authorization Code| AuthModule
+    AuthModule -->|Set-Cookie HttpOnly devboard_session| Frontend
+    GitHubApiService -->|Credentials: include| BackendApp
+    BackendApp -->|Bearer Token Request| GitHubAPI
 ```
 
 ### Chi tiết Tech Stack:
 | Thành phần | Công nghệ / Thư viện | Vai trò & Đặc điểm |
 | :--- | :--- | :--- |
-| **Frontend Framework** | `Angular 17.3+` | Standalone Components, cú pháp Control Flow mới (`@if`, `@for`), Angular Signals |
-| **Server-Side Rendering**| `@angular/ssr` + `Express` | Hỗ trợ SSR và Prerendering, tăng tốc độ tải trang ban đầu và tối ưu SEO |
-| **UI Iconography** | `lucide-angular` | Bộ icon SVG tối giản, hiện đại và đồng bộ phong cách thiết kế |
-| **Typography & Styling**| `Inter Font` + Modern CSS | Hỗ trợ Flexbox, CSS Grid, Glassmorphism, hiệu ứng chuyển động mượt mà |
-| **Quản lý trạng thái** | `Angular Signals` (`signal`) | Quản lý state phản ứng (reactive), không phụ thuộc vào `BehaviorSubject` cồng kềnh |
-| **Backend (Target)** | RESTful API / Node.js / .NET | Đang sẵn sàng thư mục `backend/` để kết nối cơ sở dữ liệu và xử lý nghiệp vụ |
+| **Frontend Framework** | `Angular 17.3+` | Standalone Components, Signals (`signal`, `computed`, `effect`), cú pháp `@if`, `@for` |
+| **Server-Side Rendering**| `@angular/ssr` + `Express` | SSR và Prerendering 14 static routes, tối ưu tốc độ FCP |
+| **Backend Framework** | `NestJS 10.x` | TypeScript, Modular Architecture (`AuthModule`, `GitHubModule`), `cookie-parser` |
+| **Bảo mật Session** | HttpOnly Cookie | Cookie `devboard_session`, `SameSite: Lax`, bảo vệ chống tấn công XSS/CSRF |
+| **Data Persistence** | `Local-First` + `localStorage` | Lưu trữ trạng thái Bookmarks & Starred dự án phản ứng tức thì không phụ thuộc network lag |
+| **UI Design System** | `Linear Obsidian` | Dark/Light Dual Theme, glassmorphism, glowing borders, active accent pills |
+| **UI Iconography** | `lucide-angular` | Bộ icon SVG hiện đại, tinh gọn và đồng bộ |
 
 ---
 
@@ -72,125 +91,170 @@ graph TD
 
 ```text
 AngularProject/
-├── PROJECT_DOCUMENTATION.md         # Tài liệu kỹ thuật dự án (File hiện tại)
-├── backend/                         # Thư mục chứa mã nguồn Backend (chuẩn bị kết nối API)
-└── frontend/                        # Mã nguồn Frontend (Angular 17)
-    ├── package.json                 # Quản lý dependencies và scripts
-    ├── angular.json                 # Cấu hình Angular workspace & build
-    ├── tsconfig.json                # Cấu hình TypeScript compiler
-    ├── server.ts                    # Entry-point cho Express SSR Server
+├── PROJECT_CONTEXT.md               # Báo cáo tiến độ (Đã làm, Đang làm, Sẽ làm)
+├── PROJECT_DOCUMENTATION.md         # Tài liệu kỹ thuật chi tiết (File hiện tại)
+├── DEVELOPMENT_PLAN.md              # Kế hoạch phát triển tổng thể
+│
+├── backend/                         # MÃ NGUỒN BACKEND (NESTJS 10)
+│   ├── package.json
+│   ├── tsconfig.json
+│   └── src/
+│       ├── main.ts                  # Bootstrap NestJS server (CORS credentials, cookie-parser, port 3000)
+│       ├── app.module.ts            # Root module kết nối AuthModule & GitHubModule
+│       ├── auth/                    # Module xác thực GitHub OAuth 2.0
+│       │   ├── auth.controller.ts   # /api/auth/github, /callback, /me, /logout
+│       │   ├── auth.service.ts      # Trao đổi code lấy access token, quản lý session
+│       │   └── auth.guard.ts        # Guard bảo vệ endpoint yêu cầu đăng nhập
+│       └── github/                  # Module tích hợp GitHub API
+│           ├── github.controller.ts # /api/github/user, /repos, /activities, /contributions
+│           └── github.service.ts    # Fetch dữ liệu thật từ GitHub REST API
+│
+└── frontend/                        # MÃ NGUỒN FRONTEND (ANGULAR 17)
+    ├── package.json                 # Quản lý dependencies (lucide-angular, @angular/ssr)
+    ├── angular.json                 # Cấu hình workspace & budget limits (styles 80kb)
+    ├── tsconfig.json                # TypeScript strict configuration
+    ├── server.ts                    # Express SSR entrypoint
     └── src/
-        ├── index.html               # Trang HTML gốc của ứng dụng
-        ├── styles.css               # Global styles (CSS reset, font Inter, nền chung)
-        ├── main.ts                  # Bootstrap ứng dụng Angular Client
-        ├── main.server.ts           # Bootstrap ứng dụng Server SSR
-        ├── assets/                  # Tài nguyên tĩnh (Hình ảnh, logo devboard_logo.jpg)
+        ├── index.html
+        ├── styles.css               # Global theme variables, reset, Obsidian canvas
+        ├── main.ts / main.server.ts
+        ├── assets/                  # devboard_logo.jpg, Avatar.jpg
         └── app/
-            ├── app.component.*      # Root component (`<router-outlet></router-outlet>`)
-            ├── app.routes.ts        # Quản trị định tuyến (Routing Configuration)
-            ├── app.config.ts        # Application providers (Router, SSR Client Hydration)
+            ├── app.component.*
+            ├── app.routes.ts        # Định tuyến: /app/discussions, /app/projects/*,...
+            ├── app.config.ts        # Providers (Router, Client Hydration)
             │
-            ├── layout/              # Khung giao diện dùng chung
-            │   ├── main-layout/     # Khung chính cho các trang bên trong (`sidebar` + `content`)
-            │   └── sidebar/         # Thanh menu bên trái (collapsible, submenus, profile)
+            ├── core/                # Dịch vụ lõi & State Signals
+            │   ├── services/
+            │   │   ├── github-api.service.ts       # Kết nối Backend NestJS, live user/repos
+            │   │   ├── workspace-data.service.ts   # Quản trị Projects, Bookmarks, Starred
+            │   │   ├── messages.service.ts         # Discussions state, unread badges
+            │   │   ├── theme.service.ts            # Dark/Light theme toggle
+            │   │   ├── command-palette.service.ts  # Tìm kiếm ⌘K toàn hệ thống
+            │   │   └── user.service.ts             # Thông tin profile cục bộ
+            │   └── data/                           # Mock fallback data (notes, snippets)
+            │
+            ├── layout/              # Khung hiển thị dùng chung
+            │   ├── main-layout/     # Khung chính: Sidebar cố định + Content Router Outlet
+            │   ├── sidebar/         # Linear Obsidian Sidebar đa năng
+            │   │   ├── sidebar.component.ts        # Signals collapsed, menus, bookmarks
+            │   │   ├── sidebar.component.html      # Brand lockup, nav, pinned shelf, telemetry
+            │   │   └── sidebar.component.css       # Obsidian gradient, active pills, pulse
+            │   └── command-palette/ # Modal tìm kiếm nhanh ⌘K
             │
             └── pages/               # Các trang giao diện chức năng
-                ├── landing/         # Trang Landing Page kết hợp Login Auth Card
-                ├── dashboard/       # Bảng điều khiển
-                │   ├── overview/    # Tổng quan dự án và hoạt động
-                │   └── analytics/   # Thống kê chi tiết, biểu đồ hiệu suất
-                ├── projects/        # Quản lý repositories
-                │   ├── all-projects/# Tất cả dự án đang tham gia
-                │   ├── bookmarks/   # Dự án đã đánh dấu
-                │   └── starred/     # Dự án được gắn sao
-                ├── notes/           # Quản lý ghi chú cá nhân & kỹ thuật
-                │   ├── all-notes/   # Danh sách toàn bộ ghi chú
-                │   └── tags/        # Phân loại ghi chú theo chuyên mục/tag
-                └── snippets/        # Quản lý mã nguồn mẫu
-                    └── all-snippets/# Kho snippet tái sử dụng
+                ├── landing/         # Landing page & GitHub OAuth Login Card
+                ├── dashboard/       # Dashboard Overview & Analytics
+                ├── projects/        # All-projects, Bookmarks, Starred
+                ├── messages/        # Discussions & Inbox (route: /app/discussions)
+                ├── notes/           # All-notes, Tags
+                ├── snippets/        # All-snippets, Favorites
+                └── github/          # Profile, Activities
 ```
 
 ---
 
 ## 4. 🧭 Hệ Thống Định Tuyến (Routing & Navigation)
 
-Hệ thống điều hướng được cấu hình tại [frontend/src/app/app.routes.ts](file:///d:/Coding/Computer%20Science/Personal%20Project/PayooWork/AngularProject/frontend/src/app/app.routes.ts), chia thành 2 luồng truy cập:
-
-### 4.1. Bảng Ánh Xạ Đường Dẫn (Route Mapping)
+Hệ thống điều hướng được quản trị tại [frontend/src/app/app.routes.ts](file:///d:/Coding/Computer%20Science/Personal%20Project/PayooWork/AngularProject/frontend/src/app/app.routes.ts):
 
 | Đường dẫn (URL Path) | Component đảm nhiệm | Chế độ | Chức năng chính |
 | :--- | :--- | :---: | :--- |
-| `/` | `LandingComponent` | Public | Giới thiệu dự án, tính năng GitHub Integration và Card Đăng nhập |
-| `/login` | *Redirect về `/`* | Public | Chuyển hướng về trang đăng nhập thống nhất |
-| `/app` | `MainLayoutComponent` | Auth | Khung layout chính (Tự chuyển hướng mặc định về `dashboard/overview`) |
-| `/app/dashboard/overview` | `OverviewComponent` | Auth | Trang tổng quan chỉ số, hoạt động gần đây, daily engineering tasks |
-| `/app/dashboard/analytics`| `AnalyticsComponent`| Auth | Báo cáo phân tích tốc độ phát triển (velocity, review health) |
-| `/app/projects/all-projects`| `AllProjectsComponent`| Auth | Danh mục toàn bộ các repository và dịch vụ kỹ thuật |
-| `/app/projects/bookmarks`| `BookmarksComponent` | Auth | Các dự án được bookmark để truy cập nhanh |
-| `/app/projects/starred` | `StarredComponent`   | Auth | Các kho mã nguồn ưa thích |
-| `/app/notes/all-notes`   | `AllNotesComponent`  | Auth | Trình soạn thảo và danh sách ghi chú dev |
-| `/app/notes/tags`        | `TagsComponent`      | Auth | Lọc và quản lý ghi chú theo nhãn chuyên môn |
-| `/app/snippets/all-snippets`| `AllSnippetsComponent`| Auth | Thư viện 64 code snippets theo 6 ngôn ngữ lập trình |
+| `/` | `LandingComponent` | Public | Giới thiệu DevBoard, nút đăng nhập GitHub OAuth an toàn |
+| `/login` | *Redirect về `/`* | Public | Chuẩn hóa đường dẫn đăng nhập |
+| `/app` | `MainLayoutComponent` | Auth | Khung layout chính (Redirect mặc định về `dashboard/overview`) |
+| `/app/dashboard/overview` | `OverviewComponent` | Auth | Bảng chỉ số tổng quan, task trong ngày, PRs và CI/CD pipelines |
+| `/app/dashboard/analytics`| `AnalyticsComponent`| Auth | Phân tích vận tốc code, phân bổ kích thước PR, biểu đồ commit |
+| `/app/projects/all-projects`| `AllProjectsComponent`| Auth | Danh mục 21 repositories thật từ tài khoản GitHub, bộ lọc tag/ngôn ngữ |
+| `/app/projects/bookmarks`| `BookmarksComponent` | Auth | **Kệ dự án lưu riêng của DevBoard**: Quản lý các repository được ghim |
+| `/app/projects/starred` | `StarredComponent`   | Auth | Danh sách các kho mã nguồn ưa thích |
+| `/app/discussions`       | `MessagesComponent`  | Auth | **Discussions & Inbox Hub**: Quản lý trao đổi code review, mentions |
+| `/app/messages`          | *Redirect về `discussions`* | Auth | Tương thích ngược với liên kết cũ |
+| `/app/notes/all-notes`   | `AllNotesComponent`  | Auth | Trình soạn thảo và danh sách ghi chú kỹ thuật |
+| `/app/notes/tags`        | `TagsComponent`      | Auth | Phân loại ghi chú theo nhãn chuyên môn |
+| `/app/snippets/all-snippets`| `AllSnippetsComponent`| Auth | Thư viện code snippets đa ngôn ngữ |
 | `/app/snippets/favorites`| `FavoritesComponent`| Auth | Kho lưu trữ code snippets ưu tiên |
-| `/app/github/profile`    | `ProfileComponent`   | Auth | Hồ sơ lập trình viên, metrics ribbon, pinned repos, tech stack |
-| `/app/github/repositories`| `RepositoriesComponent`| Auth | Quản lý 8 kho GitHub, Dual View Grid/List, 1-Click `git clone` |
-| `/app/github/activities` | `ActivitiesComponent`| Auth | Dòng thời gian commit/PR/review, ma trận heatmap 30 ngày |
-| `/app/messages`          | *Đang phát triển*    | Auth | Trung tâm thông báo GitHub & Team Discussion |
+| `/app/github/profile`    | `ProfileComponent`   | Auth | Hồ sơ GitHub lập trình viên, đồ thị 201 contributions hàng năm |
+| `/app/github/activities` | `ActivitiesComponent`| Auth | Dòng thời gian commit/PR thật, ma trận heatmap hoạt động |
 | `**` (Wildcard)          | *Redirect về `/`*    | - | Bắt lỗi 404 và quay về trang chủ |
 
 ---
 
-## 5. 🧩 Chi Tiết Các Thành Phần Chính (Core Components)
+## 5. 🧩 Chi Tiết Các Tính Năng & Thành Phần Cốt Lõi
 
-### 5.1. Trang Landing & Authentication (`LandingComponent`)
-* **Đặc điểm:** Tối giản, tập trung vào trải nghiệm internal tool.
-* **Cấu trúc:**
-  1. **Sidebar Mini (Bên trái):** Logo DEV BOARD, Menu điều hướng, Footer liên kết GitHub.
-  2. **Hero Section (Nội dung chính):** Tiêu đề GitHub Integration, giải thích lợi ích công cụ nội bộ.
-  3. **Auth Card (Khối đăng nhập bên phải):** Card trắng, Avatar GitHub Mascot, nút bấm **Continue with GitHub** chuyển hướng thẳng vào `/app`.
+### 5.1. Đại Tu Thanh Điều Hướng Sidebar (`SidebarComponent`)
+* **Ngôn ngữ thiết kế Linear Obsidian:**
+  - Nền gradient sâu thẳm `radial-gradient` kết hợp viền sáng mờ `rgba(255, 255, 255, 0.08)`.
+  - Typography thương hiệu: `DEV` in đậm sắc nét kết hợp `BOARD` với dải gradient công nghệ (`#818cf8` ➔ `#c084fc` ➔ `#f472b6`) và nhãn phụ `WORKSPACE`.
+  - **Active Accent Pill:** Vạch dạ quang tím ở mép trái (`::before`) định vị trực quan mục menu đang mở.
+  - Cây thư mục con (`tree-node`, `tree-curve`) có hiệu ứng glow sáng neon khi sub-item được chọn.
+* **Cố định nút Toggle Sidebar:**
+  - Nút tròn toggle cố định tại góc trên (`top: 27px; right: -13px`) cả khi mở và khi thu gọn, loại bỏ hiện tượng nút nhảy xuống đáy.
+* **Giải quyết triệt để khoảng trống (Eliminating Dead Space):**
+  - Đưa `Discussions` vào chung khối điều hướng liền mạch ngay dưới `Main`.
+  - **Kệ "Pinned Repos" (Bookmarks Shelf):** Hiển thị danh sách các repo đã bookmark kèm chấm màu ngôn ngữ lập trình tương ứng, hỗ trợ truy cập 1-click tức thì.
+  - **Thẻ Telemetry "DevBoard Sync":** Nằm phía trên Footer, hiển thị trạng thái `Connected Live`, tổng số Repositories (21), Pinned repos và GitHub Commits (201).
+* **Profile Card & Status Dot:**
+  - Avatar người dùng GitHub thật kèm chấm online xanh lá có hiệu ứng nhịp đập (`pulsing dot`).
+  - Dropdown menu nổi hỗ trợ mở Profile, Repositories, GitHub và nút **Log out**.
 
-### 5.2. Thanh Điều Hướng Đa Năng (`SidebarComponent`)
-* **Đặc điểm:** 
-  * Quản lý trạng thái thu gọn/mở rộng bằng Signal (`collapsed = signal(false)`).
-  * Hỗ trợ Accordion menu lồng nhau (Submenu cho Dashboard, Projects, Notes, Snippets, GitHub).
-  * Chuyển đổi giao diện sáng/tối toàn cục thông qua `ThemeService`.
-  * **User Profile Floating Dropdown Menu:** Tích hợp menu nổi phía trên hiển thị thông tin Lead Architect, liên kết Profile, Repositories, mở GitHub và nút **Log out** điều hướng về `/`.
+### 5.2. Chuyển Đổi Hoàn Toàn Sang "Discussions"
+* Thay thế khái niệm "Messages" bằng **Discussions & Inbox** phù hợp với môi trường kỹ thuật phần mềm.
+* Điều hướng chính thức tại `/app/discussions`, tự động redirect `/app/messages`.
+* Hỗ trợ tìm kiếm, lọc theo danh mục (`Mentions`, `Review requests`, `System alerts`), xem luồng hội thoại và gửi phản hồi kèm code snippet.
 
-### 5.3. Khung Ứng Dụng Chính (`MainLayoutComponent`)
-* **Đặc điểm:** Sử dụng thẻ `<app-sidebar>` cố định bên trái và vùng hiển thị linh hoạt `<main class="main-content"><router-outlet></router-outlet></main>` giúp chuyển đổi giữa các module mà không cần tải lại toàn trang.
+### 5.3. Projects Hub & Cơ Chế Bookmarks Độc Quyền
+* Thay vì phụ thuộc vào GitHub (vốn không có tính năng Bookmarks), DevBoard xây dựng **Bookmarks** như một tính năng độc quyền dành riêng cho web app:
+  - Cho phép lập trình viên ghim riêng các repository yêu thích vào kệ làm việc cá nhân.
+  - Trạng thái `isBookmarked` và `isStarred` được lưu trữ Local-First qua `localStorage`, đồng bộ lập tức qua Angular Signals trong `WorkspaceDataService`.
+* Loại bỏ toàn bộ mock repos rác, đồng bộ 100% 21 repositories thật từ GitHub của người dùng.
 
-### 5.4. Nhóm Module GitHub Explorer (`Profile`, `Repositories`, `Activities`)
-* **ProfileComponent:** Thẻ Hero cá nhân, 4 chỉ số thống kê, danh sách Pinned Repos, tỷ lệ % ngôn ngữ và huy hiệu GitHub Achievements. Hỗ trợ gọi live GitHub API công khai.
-* **RepositoriesComponent:** Danh mục 8 repo phong phú với chế độ Grid/List view, bộ lọc đa năng (Sources/Forks/Ngôn ngữ), nút 1-Click sao chép lệnh `git clone`.
-* **ActivitiesComponent:** Dòng thời gian sự kiện kỹ thuật (Commit, PR, Review, Release), ma trận đóng góp (Contribution Heatmap) 30 ngày, phân bổ vận tốc code và biểu đồ tuần.
+### 5.4. Tích Hợp GitHub API Real-Time
+* `GitHubApiService` kết nối NestJS Backend lấy dữ liệu thật:
+  - Tên, avatar, bio, số followers, public repos.
+  - Lịch sử commits thật hiển thị trên dòng thời gian `ActivitiesComponent`.
+  - Đồ thị 201 contributions hàng năm được tính toán chính xác theo từng tuần và từng ngày.
+
+### 5.5. Spotlight Command Palette (⌘K)
+* Mở bằng phím tắt `⌘K` (Mac) hoặc `Ctrl+K` (Windows/Linux) hoặc bấm vào thanh tìm kiếm ở Sidebar.
+* Hỗ trợ tìm kiếm tức thì theo từ khóa qua tất cả các trang, dự án, ghi chú và đoạn code mẫu.
 
 ---
 
 ## 6. 🚀 Hướng Dẫn Cài Đặt & Vận Hành (Getting Started)
 
 ### 6.1. Yêu cầu môi trường
-* **Node.js:** Phiên bản `>= 18.13.0` hoặc `>= 20.9.0`
-* **npm:** Phiên bản `>= 9.x`
-* **Angular CLI:** Phiên bản 17.x
+* **Node.js:** `>= 18.18.0` hoặc `>= 20.9.0`
+* **npm:** `>= 9.x`
+* **Angular CLI:** `17.x`
 
-### 6.2. Cài đặt thư viện dependencies
+### 6.2. Cấu hình & Khởi chạy Backend (NestJS)
+```bash
+cd backend
+npm install
+# Cấu hình biến môi trường trong file .env:
+# GITHUB_CLIENT_ID=your_client_id
+# GITHUB_CLIENT_SECRET=your_client_secret
+# SESSION_SECRET=your_session_secret
+# FRONTEND_URL=http://localhost:4200
+npm run start:dev
+```
+* Backend API hoạt động tại: `http://localhost:3000/api`
+
+### 6.3. Cấu hình & Khởi chạy Frontend (Angular 17)
 ```bash
 cd frontend
 npm install
-```
-
-### 6.3. Khởi chạy môi trường phát triển (Development Server)
-```bash
 npm start
-# Hoặc chạy thông qua Angular CLI:
-ng serve
+# Hoặc: ng serve
 ```
-* Mở trình duyệt và truy cập: `http://localhost:4200/`
-* Hot Reload sẽ tự động cập nhật ngay khi lưu file.
+* Truy cập ứng dụng tại: `http://localhost:4200`
 
-### 6.4. Đóng gói bản phát hành (Production Build)
+### 6.4. Đóng gói kiểm tra Production (Build Verification)
 ```bash
-npm run build
+cd frontend
+npx tsc --noEmit    # Kiểm tra 0 lỗi TypeScript
+npm run build       # Biên dịch toàn bộ SSR bundle và 14 static routes
 ```
 
 ---
@@ -198,27 +262,21 @@ npm run build
 ## 7. 📋 Kế Hoạch Phát Triển Tiếp Theo (Roadmap)
 
 ### Đã hoàn thành (Completed):
-- [x] Thiết lập khung xương dự án Monorepo (`frontend` & `backend`).
-- [x] Xây dựng hệ thống routing 2 luồng (Public Landing & Authenticated App).
-- [x] Hoàn thiện Sidebar điều hướng thu gọn/mở rộng, Theme Switcher và User Card Floating Dropdown Menu (Logout).
-- [x] Thiết kế giao diện Landing Page kết hợp Login Auth Card.
-- [x] Module Dashboard (`OverviewComponent`, `AnalyticsComponent`).
-- [x] Module Projects (`AllProjectsComponent`, `BookmarksComponent`, `StarredComponent`).
-- [x] Module Notes (`AllNotesComponent`, `TagsComponent`).
-- [x] Module Snippets (`AllSnippetsComponent`, `FavoritesComponent`).
-- [x] Nhánh GitHub Explorer (`ProfileComponent`, `RepositoriesComponent`, `ActivitiesComponent`).
+- [x] Monorepo kiến trúc hoàn chỉnh: Frontend (Angular 17 SSR) & Backend (NestJS 10 OAuth 2.0).
+- [x] Tích hợp 100% dữ liệu GitHub thật (21 repos, 201 contributions, activities timeline).
+- [x] Hệ thống Bookmarks độc quyền và Starred repos (Local-First Signal state).
+- [x] Chuyển đổi toàn diện từ Messages sang Discussions (`/app/discussions`).
+- [x] Đại tu giao diện Sidebar (Linear Obsidian, Active Pill, Pinned Repos shelf, Telemetry Sync card).
+- [x] Spotlight Command Palette (⌘K) tra cứu nhanh toàn ứng dụng.
+- [x] Khắc phục triệt để các lỗi template compiler và budget limit trong Angular 17.
 
 ### Kế hoạch tiếp theo (Upcoming):
-- [ ] **Giai đoạn 1 (Hoàn thiện UI còn lại):**
-  - Xây dựng module `Messages Hub` (`/app/messages`) theo hướng **GitHub Notifications & PR Mentions Hub**.
-  - Xây dựng Global Command Palette Modal (`Cmd + K`) tìm kiếm nhanh xuyên suốt dự án.
-- [ ] **Giai đoạn 2 (Authentication Thật & Security):**
-  - Cấu hình GitHub OAuth App trên GitHub Developer Settings để lấy `Client ID` & `Client Secret`.
-  - Triển khai `AuthGuard` bảo vệ các route `/app/*`.
-- [ ] **Giai đoạn 3 (Backend API & Database):**
-  - Khởi tạo REST API service tại `backend/` (Node.js/NestJS hoặc Go).
-  - Thiết kế CSDL PostgreSQL (Prisma ORM) để lưu trữ Notes, Snippets và Bookmarks cá nhân.
-  - Xây dựng chức năng CRUD (Create, Edit, Delete) cho Notes và Snippets.
-- [ ] **Giai đoạn 4 (DevOps & Production):**
-  - Docker hóa Monorepo (Docker Compose cho Frontend SSR, Backend API và PostgreSQL).
-  - Thiết lập CI/CD tự động bằng GitHub Actions.
+- [ ] **Hoàn thiện nghiệp vụ người dùng cho Notes & Snippets:**
+  - Xây dựng modal/trình soạn thảo Markdown để người dùng tạo mới, sửa, xóa ghi chú cá nhân.
+  - Cho phép người dùng lưu thêm các snippet mới với syntax highlighter.
+- [ ] **Giai đoạn 4: Database Persistence (Production Ready):**
+  - Tích hợp PostgreSQL + Prisma ORM vào NestJS Backend để lưu session vĩnh viễn (chống mất session khi restart).
+  - Lưu trữ Notes, Snippets và Bookmarks lên Cloud Database.
+- [ ] **DevOps & Triển khai:**
+  - Thiết lập Docker Compose chạy trọn gói Angular SSR, NestJS Backend và PostgreSQL.
+
