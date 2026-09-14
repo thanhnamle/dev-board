@@ -27,8 +27,27 @@
         />
       </div>
 
+      <!-- Nút Sync Repositories từ GitHub -->
+      <button 
+        type="button" 
+        class="action-btn btn-secondary" 
+        (click)="syncRepositories()" 
+        [disabled]="isSyncing()"
+        title="Sync repositories from GitHub API">
+        <lucide-icon 
+          [img]="RefreshCw" 
+          size="14" 
+          [class.spinning]="isSyncing()">
+        </lucide-icon>
+        <span>Sync</span>
+      </button>
+
       <!-- Nút tạo Bookmark mới -->
-      <button type="button" class="action-btn btn-primary" title="Add new bookmark">
+      <button 
+        type="button" 
+        class="action-btn btn-primary" 
+        (click)="openAddModal()" 
+        title="Add new bookmark">
         <lucide-icon [img]="Plus" size="15"></lucide-icon>
         <span>+ Add Bookmark</span>
       </button>
@@ -47,12 +66,12 @@
         </div>
       </div>
       <div class="metric-value-row">
-        <span class="metric-value">{{ bookmarksList().length }}</span>
-        <span class="metric-pill pill-purple">8 Pinned</span>
+        <span class="metric-value">{{ allBookmarks().length }}</span>
+        <span class="metric-pill pill-purple">{{ pinnedCount() }} Pinned</span>
       </div>
       <div class="metric-footer">
-        <span class="metric-trend text-purple">4 Repos • 5 Specs</span>
-        <span class="metric-sub">• 3 Cloud Tools</span>
+        <span class="metric-trend text-purple">{{ reposCount() }} Repos • {{ specsCount() }} Specs</span>
+        <span class="metric-sub">• {{ toolsCount() }} Tools</span>
       </div>
     </div>
 
@@ -69,7 +88,7 @@
       </div>
       <div class="metric-footer">
         <span class="metric-trend text-emerald">Shortcuts Synced</span>
-        <span class="metric-sub">with Command Palette</span>
+        <span class="metric-sub">with DevBoard</span>
       </div>
     </div>
 
@@ -100,28 +119,28 @@
       class="cat-tab" 
       [class.active]="selectedCategory() === 'all'"
       (click)="setCategory('all')">
-      All Resources
+      All Resources ({{ allBookmarks().length }})
     </button>
     <button 
       type="button" 
       class="cat-tab" 
       [class.active]="selectedCategory() === 'repos'"
       (click)="setCategory('repos')">
-      Repositories (3)
+      Repositories ({{ reposCount() }})
     </button>
     <button 
       type="button" 
       class="cat-tab" 
       [class.active]="selectedCategory() === 'specs'"
       (click)="setCategory('specs')">
-      Technical Specs (3)
+      Technical Specs ({{ specsCount() }})
     </button>
     <button 
       type="button" 
       class="cat-tab" 
       [class.active]="selectedCategory() === 'tools'"
       (click)="setCategory('tools')">
-      Dev Tools & Cloud (2)
+      Dev Tools & Cloud ({{ toolsCount() }})
     </button>
   </div>
 
@@ -149,34 +168,34 @@
               class="icon-action-btn" 
               [class.pinned]="item.pinned"
               (click)="togglePin(item.id)"
-              title="Pin to top">
+              title="Pin Bookmark">
               <lucide-icon [img]="Star" size="13"></lucide-icon>
             </button>
+
             <!-- External Link Button -->
             <a 
               [href]="item.url" 
               target="_blank" 
               class="icon-action-btn" 
-              title="Open link in new tab">
+              title="Open External Resource">
               <lucide-icon [img]="ExternalLink" size="13"></lucide-icon>
             </a>
-            <!-- Delete Bookmark Button -->
+
+            <!-- Delete Bookmark -->
             <button 
               type="button" 
-              class="icon-action-btn btn-danger" 
+              class="icon-action-btn btn-delete" 
               (click)="removeBookmark(item.id)"
-              title="Remove bookmark">
+              title="Remove Bookmark">
               <lucide-icon [img]="Trash2" size="13"></lucide-icon>
             </button>
           </div>
         </div>
 
-        <!-- Title & URL -->
-        <div class="title-section">
+        <!-- Title & URL Subtitle -->
+        <div class="bookmark-title-group">
           <h3 class="bookmark-title">
-            <a [href]="item.url" target="_blank" class="title-link">
-              {{ item.title }}
-            </a>
+            <a [href]="item.url" target="_blank" class="title-link">{{ item.title }}</a>
           </h3>
           <span class="bookmark-url" [title]="item.url">{{ item.url }}</span>
         </div>
@@ -200,7 +219,147 @@
         </div>
 
       </div>
+    } @empty {
+      <div class="empty-bookmarks-state">
+        <div class="empty-bookmark-icon">
+          <lucide-icon [img]="Bookmark" size="28"></lucide-icon>
+        </div>
+        @if (allBookmarks().length === 0) {
+          <h3 class="empty-title">No Bookmarks Saved</h3>
+          <p class="empty-desc">
+            You haven't saved any bookmarks yet. You can bookmark repos from All Projects or add technical specifications and tools directly!
+          </p>
+          <div class="empty-actions-row">
+            <button type="button" class="browse-projects-btn" (click)="openAddModal()">
+              <lucide-icon [img]="Plus" size="15"></lucide-icon>
+              <span>+ Add First Bookmark</span>
+            </button>
+            <a routerLink="/app/projects/all-projects" class="browse-projects-btn btn-outline">
+              <lucide-icon [img]="FolderGit2" size="15"></lucide-icon>
+              <span>Browse All Projects</span>
+            </a>
+          </div>
+        } @else {
+          <h3 class="empty-title">No Resources Match Your Filter</h3>
+          <p class="empty-desc">
+            No bookmarks found matching your query or selected category.
+          </p>
+          <button type="button" class="browse-projects-btn" (click)="searchQuery.set(''); selectedCategory.set('all')">
+            <lucide-icon [img]="RefreshCw" size="14"></lucide-icon>
+            <span>Clear Filters</span>
+          </button>
+        }
+      </div>
     }
   </div>
+
+  <!-- =========================================================
+       5. MODAL: ADD NEW BOOKMARK
+  ========================================================= -->
+  @if (isAddModalOpen()) {
+    <div class="modal-backdrop" (click)="closeAddModal()">
+      <div class="modal-card" (click)="$event.stopPropagation()">
+        
+        <div class="modal-header">
+          <div class="modal-title-group">
+            <div class="modal-icon-badge">
+              <lucide-icon [img]="Bookmark" size="16"></lucide-icon>
+            </div>
+            <h2 class="modal-title">Add New Bookmark</h2>
+          </div>
+          <button type="button" class="modal-close-btn" (click)="closeAddModal()" title="Close">
+            <lucide-icon [img]="X" size="16"></lucide-icon>
+          </button>
+        </div>
+
+        <form (submit)="$event.preventDefault(); submitAddBookmark()">
+          <div class="modal-body">
+            <!-- Resource Title -->
+            <div class="form-group">
+              <label class="form-label" for="bm-title">Resource Title *</label>
+              <input 
+                id="bm-title"
+                type="text" 
+                class="form-input" 
+                placeholder="e.g. Angular Signals Guide"
+                [value]="newTitle()"
+                (input)="newTitle.set($any($event.target).value)"
+                required
+              />
+            </div>
+
+            <!-- URL & Category Row -->
+            <div class="form-row-2">
+              <div class="form-group">
+                <label class="form-label" for="bm-url">URL / Endpoint *</label>
+                <input 
+                  id="bm-url"
+                  type="text" 
+                  class="form-input" 
+                  placeholder="https://angular.dev/..."
+                  [value]="newUrl()"
+                  (input)="newUrl.set($any($event.target).value)"
+                  required
+                />
+              </div>
+
+              <div class="form-group">
+                <label class="form-label" for="bm-cat">Category *</label>
+                <select 
+                  id="bm-cat"
+                  class="form-select"
+                  [value]="newCategory()"
+                  (change)="newCategory.set($any($event.target).value)">
+                  <option value="specs">Technical Spec (Docs, RFC)</option>
+                  <option value="tools">Dev Tool & Cloud</option>
+                  <option value="repos">Repository Link</option>
+                </select>
+              </div>
+            </div>
+
+            <!-- Description -->
+            <div class="form-group">
+              <label class="form-label" for="bm-desc">Description</label>
+              <textarea 
+                id="bm-desc"
+                class="form-textarea" 
+                rows="2"
+                placeholder="Brief summary of why this resource is useful..."
+                [value]="newDescription()"
+                (input)="newDescription.set($any($event.target).value)">
+              </textarea>
+            </div>
+
+            <!-- Tags -->
+            <div class="form-group">
+              <label class="form-label" for="bm-tags">Tags (comma separated)</label>
+              <input 
+                id="bm-tags"
+                type="text" 
+                class="form-input" 
+                placeholder="e.g. Angular, Signals, TypeScript"
+                [value]="newTags()"
+                (input)="newTags.set($any($event.target).value)"
+              />
+            </div>
+          </div>
+
+          <div class="modal-footer">
+            <button type="button" class="action-btn btn-secondary" (click)="closeAddModal()">
+              Cancel
+            </button>
+            <button 
+              type="submit" 
+              class="action-btn btn-primary" 
+              [disabled]="!newTitle().trim() || !newUrl().trim()">
+              <lucide-icon [img]="Check" size="14"></lucide-icon>
+              <span>Save Bookmark</span>
+            </button>
+          </div>
+        </form>
+
+      </div>
+    </div>
+  }
 
 </div>

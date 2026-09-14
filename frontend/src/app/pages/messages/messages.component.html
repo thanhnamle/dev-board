@@ -1,31 +1,31 @@
 <header class="page-header">
-  <div><p class="eyebrow">WORKSPACE / INBOX</p><h1>Messages Hub</h1><p>Mentions, review requests and engineering updates.</p></div>
+  <div><p class="eyebrow">WORKSPACE / DISCUSSIONS</p><h1>Discussions & Inbox</h1><p>Community discussions, mentions, PR reviews and engineering updates.</p></div>
   <button type="button" (click)="inbox.markAllRead()" [disabled]="!inbox.unreadCount()">Mark all as read</button>
 </header>
-<p class="demo-notice">Demo workspace · Sample notifications. Replies and read status stay in memory until you reload. GitHub is not connected.</p>
+<p class="demo-notice">Demo workspace · Sample notifications & discussions. Replies and read status stay in memory until you reload. GitHub is not connected.</p>
 <div class="inbox">
-  <section class="thread-list" aria-label="Notifications">
+  <section class="thread-list" aria-label="Discussions and Notifications">
     <div class="filters">
-      <label for="message-search">Search messages</label>
-      <input id="message-search" type="search" placeholder="Search title, repository or message…" [ngModel]="query()" (ngModelChange)="query.set($event)" />
-      <div class="categories" aria-label="Message category">
+      <label for="message-search">Search discussions</label>
+      <input id="message-search" type="search" placeholder="Search discussions, title, or repository…" [ngModel]="query()" (ngModelChange)="query.set($event)" />
+      <div class="categories" aria-label="Discussion category">
         @for (item of categories; track item.id) {
           <button type="button" [class.active]="category() === item.id" [attr.aria-pressed]="category() === item.id" (click)="category.set(item.id)">{{ item.label }}</button>
         }
       </div>
       <label class="unread-filter"><input type="checkbox" [ngModel]="unreadOnly()" (ngModelChange)="unreadOnly.set($event)" /> Unread only <span>{{ inbox.unreadCount() }}</span></label>
     </div>
-    <div class="results" aria-live="polite">{{ filteredThreads().length }} messages</div>
+    <div class="results" aria-live="polite">{{ filteredThreads().length }} discussions</div>
     @for (thread of filteredThreads(); track thread.id) {
       <button type="button" class="thread" [class.selected]="selectedId() === thread.id" [attr.aria-pressed]="selectedId() === thread.id" (click)="selectThread(thread.id)">
         <span class="thread-meta">{{ thread.repository }} @if (thread.unread) { <span class="unread-dot" aria-label="Unread"></span> }</span>
         <strong>{{ thread.title }}</strong><span class="preview">{{ thread.messages[0].body }}</span>
       </button>
     } @empty {
-      <div class="empty"><h2>No messages found</h2><p>Try another search or turn off the unread filter.</p></div>
+      <div class="empty"><h2>No discussions found</h2><p>Try another search or turn off the unread filter.</p></div>
     }
   </section>
-  <section class="detail" aria-label="Message thread">
+  <section class="detail" aria-label="Discussion thread">
     @if (selected(); as thread) {
       <header class="detail-header"><p class="eyebrow">{{ thread.repository }}</p><h2>{{ thread.title }}</h2><a href="https://github.com/notifications" target="_blank" rel="noopener noreferrer">Open GitHub inbox ↗</a></header>
       <div class="conversation">
@@ -42,7 +42,7 @@
         </form>
       } @else { <p class="system-note">System alerts are read-only.</p> }
     } @else {
-      <div class="empty welcome"><p class="eyebrow">YOUR ENGINEERING INBOX</p><h2>Keep the conversation in context</h2><p>Select a message to view the thread and prepare a reply.</p></div>
+      <div class="empty welcome"><p class="eyebrow">YOUR ENGINEERING INBOX</p><h2>Keep the discussion in context</h2><p>Select a discussion thread to view replies and join the conversation.</p></div>
     }
   </section>
 </div>

@@ -44,11 +44,26 @@
           🕒 Recently Updated
         </button>
       </div>
+
+      <!-- Nút Sync Repositories từ GitHub -->
+      <button 
+        type="button" 
+        class="action-btn btn-secondary" 
+        (click)="syncRepositories()" 
+        [disabled]="isSyncing()"
+        title="Sync repositories from GitHub API">
+        <lucide-icon 
+          [img]="RefreshCw" 
+          size="14" 
+          [class.spinning]="isSyncing()">
+        </lucide-icon>
+        <span>Sync</span>
+      </button>
     </div>
   </header>
 
   <!-- =========================================================
-       2. TOP 3 METRICS RIBBON
+       2. TOP 3 METRICS RIBBON (100% REAL GITHUB DATA)
   ========================================================= -->
   <section class="metrics-grid">
     <div class="metric-card">
@@ -63,8 +78,8 @@
         <span class="metric-pill pill-amber">All Pinned</span>
       </div>
       <div class="metric-footer">
-        <span class="metric-trend text-amber">3 Internal Repos</span>
-        <span class="metric-sub">• 2 Libraries</span>
+        <span class="metric-trend text-amber">Active Starred</span>
+        <span class="metric-sub">• {{ totalStarsCount() }} total stars</span>
       </div>
     </div>
 
@@ -76,35 +91,52 @@
         </div>
       </div>
       <div class="metric-value-row">
-        <span class="metric-value">642</span>
-        <span class="metric-pill pill-purple">Top Rated</span>
+        <span class="metric-value">{{ totalStarsCount() }}</span>
+        <span class="metric-pill pill-purple">Stars</span>
       </div>
       <div class="metric-footer">
-        <span class="metric-trend text-purple">High Community</span>
-        <span class="metric-sub">engagement</span>
+        <span class="metric-trend text-purple">GitHub Starred</span>
+        <span class="metric-sub">accumulated</span>
       </div>
     </div>
 
     <div class="metric-card">
       <div class="metric-top">
-        <span class="metric-label">Release Track</span>
+        <span class="metric-label">Language Diversity</span>
         <div class="metric-icon-box box-emerald">
           <lucide-icon [img]="CheckCircle2" class="metric-icon"></lucide-icon>
         </div>
       </div>
       <div class="metric-value-row">
-        <span class="metric-value">100%</span>
-        <span class="metric-pill pill-emerald">Up to Date</span>
+        <span class="metric-value">{{ uniqueLanguagesCount() }}</span>
+        <span class="metric-pill pill-emerald">Tech Stacks</span>
       </div>
       <div class="metric-footer">
-        <span class="metric-trend text-emerald">SemVer Tracked</span>
-        <span class="metric-sub">across all branches</span>
+        <span class="metric-trend text-emerald">Multi-Stack</span>
+        <span class="metric-sub">across starred repos</span>
       </div>
     </div>
   </section>
 
   <!-- =========================================================
-       3. STARRED CARDS GRID
+       3. TECH STACK FILTER PILLS
+  ========================================================= -->
+  @if (langFilters().length > 1) {
+    <div class="filter-pills-row">
+      @for (tech of langFilters(); track tech) {
+        <button 
+          type="button" 
+          class="tech-pill" 
+          [class.active]="selectedLang() === tech"
+          (click)="selectedLang.set(tech)">
+          {{ tech }}
+        </button>
+      }
+    </div>
+  }
+
+  <!-- =========================================================
+       4. STARRED CARDS GRID
   ========================================================= -->
   <div class="starred-grid">
     @for (item of filteredList(); track item.id) {
@@ -117,7 +149,15 @@
               <span class="lang-circle" [style.background-color]="item.languageColor"></span>
             </div>
             <div class="title-details">
-              <h3 class="starred-name">{{ item.name }}</h3>
+              <div class="title-with-badge">
+                <h3 class="starred-name">{{ item.name }}</h3>
+                @if (item.isPrivate) {
+                  <span class="private-badge" title="Private Repository">
+                    <lucide-icon [img]="Lock" size="10"></lucide-icon>
+                    <span>Private</span>
+                  </span>
+                }
+              </div>
               <a [href]="item.githubUrl" target="_blank" class="repo-owner-link">
                 {{ item.repoOwner }}/{{ item.repoName }}
               </a>
@@ -173,6 +213,31 @@
           <span class="last-updated">Updated {{ item.lastUpdated }}</span>
         </div>
 
+      </div>
+    } @empty {
+      <div class="empty-starred-state">
+        <div class="empty-star-icon">
+          <lucide-icon [img]="Star" size="28"></lucide-icon>
+        </div>
+        @if (starredList().length === 0) {
+          <h3 class="empty-title">No Starred Repositories</h3>
+          <p class="empty-desc">
+            You haven't starred any repositories yet. Navigate to All Projects and click the star icon on any repo to keep it handy here!
+          </p>
+          <a routerLink="/app/projects/all-projects" class="browse-projects-btn">
+            <lucide-icon [img]="FolderGit2" size="15"></lucide-icon>
+            <span>Browse All Projects</span>
+          </a>
+        } @else {
+          <h3 class="empty-title">No Matching Repositories</h3>
+          <p class="empty-desc">
+            No starred repositories match your search query or language filter.
+          </p>
+          <button type="button" class="browse-projects-btn" (click)="searchQuery.set(''); selectedLang.set('All')">
+            <lucide-icon [img]="RefreshCw" size="14"></lucide-icon>
+            <span>Clear Filters</span>
+          </button>
+        }
       </div>
     }
   </div>

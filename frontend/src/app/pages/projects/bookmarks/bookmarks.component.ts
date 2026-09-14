@@ -1,5 +1,6 @@
-import { Component, signal, computed } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { Component, signal, computed, inject, OnInit, PLATFORM_ID } from '@angular/core';
+import { CommonModule, isPlatformBrowser } from '@angular/common';
+import { RouterLink } from '@angular/router';
 import {
   LucideAngularModule,
   Bookmark,
@@ -13,8 +14,13 @@ import {
   Star,
   Layers,
   Sparkles,
-  Tag
+  Tag,
+  RefreshCw,
+  X,
+  Check
 } from 'lucide-angular';
+import { WorkspaceDataService } from '../../../core/services/workspace-data.service';
+import { GitHubApiService } from '../../../core/services/github-api.service';
 
 export type BookmarkCategory = 'all' | 'repos' | 'specs' | 'tools';
 
@@ -31,14 +37,60 @@ export interface BookmarkItem {
   lastVisited: string;
 }
 
+const CUSTOM_BOOKMARKS_KEY = 'devboard_custom_bookmarks';
+const PINNED_BOOKMARKS_KEY = 'devboard_pinned_bookmark_ids';
+
+const DEFAULT_SPECS_AND_TOOLS: BookmarkItem[] = [
+  {
+    id: 101,
+    title: 'Angular 17 Signals & Control Flow Docs',
+    url: 'https://angular.dev/guide/signals',
+    description: 'Official Angular architecture guide covering Signals, computed values, and the new template control flow.',
+    category: 'specs',
+    categoryLabel: 'Tech Spec',
+    categoryIcon: BookOpen,
+    tags: ['Angular', 'Signals', 'TypeScript'],
+    pinned: true,
+    lastVisited: 'Today'
+  },
+  {
+    id: 102,
+    title: 'GitHub REST & GraphQL API Reference',
+    url: 'https://docs.github.com/en/rest',
+    description: 'Official GitHub developer reference for repositories, user contributions, octokit SDK, and OAuth2 security.',
+    category: 'specs',
+    categoryLabel: 'Tech Spec',
+    categoryIcon: BookOpen,
+    tags: ['GitHub API', 'REST', 'GraphQL'],
+    pinned: true,
+    lastVisited: 'Yesterday'
+  },
+  {
+    id: 103,
+    title: 'GitHub GraphQL API Explorer',
+    url: 'https://docs.github.com/en/graphql/overview/explorer',
+    description: 'Interactive IDE to test and validate live GraphQL schema queries against real GitHub user repositories.',
+    category: 'tools',
+    categoryLabel: 'Dev Tool',
+    categoryIcon: Globe,
+    tags: ['GraphQL', 'API Explorer', 'Developer Tool'],
+    pinned: true,
+    lastVisited: '3d ago'
+  }
+];
+
 @Component({
   selector: 'app-bookmarks',
   standalone: true,
-  imports: [CommonModule, LucideAngularModule],
+  imports: [CommonModule, LucideAngularModule, RouterLink],
   templateUrl: './bookmarks.component.html',
   styleUrl: './bookmarks.component.css'
 })
-export class BookmarksComponent {
+export class BookmarksComponent implements OnInit {
+  private readonly platformId = inject(PLATFORM_ID);
+  private readonly workspace = inject(WorkspaceDataService);
+  readonly gitHubApi = inject(GitHubApiService);
+
   // 1. Khai báo Lucide Icons
   readonly Bookmark = Bookmark;
   readonly Search = Search;
@@ -52,122 +104,104 @@ export class BookmarksComponent {
   readonly Layers = Layers;
   readonly Sparkles = Sparkles;
   readonly Tag = Tag;
+  readonly RefreshCw = RefreshCw;
+  readonly X = X;
+  readonly Check = Check;
 
   // 2. Signals quản lý trạng thái
-  selectedCategory = signal<BookmarkCategory>('all');
-  searchQuery = signal<string>('');
+  readonly selectedCategory = signal<BookmarkCategory>('all');
+  readonly searchQuery = signal<string>('');
+  readonly isSyncing = signal<boolean>(false);
+  readonly pinnedIds = signal<Set<number>>(new Set([101, 102, 103]));
 
-  // 3. Danh sách Bookmark mẫu
-  bookmarksList = signal<BookmarkItem[]>([
-    {
-      id: 1,
-      title: 'DevBoard Frontend App',
-      url: 'https://github.com/payoo-devboard/frontend',
-      description: 'Main client repository with Angular 17, Signals, and Linear Obsidian Dark Theme.',
-      category: 'repos',
-      categoryLabel: 'Repository',
-      categoryIcon: FolderGit2,
-      tags: ['Angular', 'Frontend', 'Production'],
-      pinned: true,
-      lastVisited: '10m ago'
-    },
-    {
-      id: 2,
-      title: 'Core API Gateway Microservice',
-      url: 'https://github.com/payoo-devboard/core-api',
-      description: 'High-throughput Golang backend gateway handling webhooks and GitHub event queues.',
-      category: 'repos',
-      categoryLabel: 'Repository',
-      categoryIcon: FolderGit2,
-      tags: ['Go', 'Backend', 'API Gateway'],
-      pinned: true,
-      lastVisited: '1h ago'
-    },
-    {
-      id: 3,
-      title: 'SSR Hydration Pipeline Architecture RFC',
-      url: 'https://docs.payoo.vn/specs/ssr-pipeline',
-      description: 'Technical RFC detailing Angular Universal hydration, state caching, and bundle chunking.',
-      category: 'specs',
-      categoryLabel: 'Tech Spec',
-      categoryIcon: BookOpen,
-      tags: ['Architecture', 'SSR', 'RFC'],
-      pinned: true,
-      lastVisited: 'Yesterday'
-    },
-    {
-      id: 4,
-      title: 'PostgreSQL Connection Pooling & SSL Guide',
-      url: 'https://docs.payoo.vn/infra/postgres-pooling',
-      description: 'Best practices for PgBouncer setup, SSL TLS 1.3 encryption, and failover replicas.',
-      category: 'specs',
-      categoryLabel: 'Tech Spec',
-      categoryIcon: BookOpen,
-      tags: ['Database', 'Postgres', 'Security'],
-      pinned: false,
-      lastVisited: '2d ago'
-    },
-    {
-      id: 5,
-      title: 'Vercel Production Deployment Dashboard',
-      url: 'https://vercel.com/payoo/devboard',
-      description: 'Live production builds, edge network cache status, and real-time serverless logs.',
-      category: 'tools',
-      categoryLabel: 'Dev Tool',
-      categoryIcon: Globe,
-      tags: ['Vercel', 'DevOps', 'Monitoring'],
-      pinned: true,
-      lastVisited: '3h ago'
-    },
-    {
-      id: 6,
-      title: 'Payment Integration SDK Repo',
-      url: 'https://github.com/payoo-work/payment-sdk',
-      description: 'Universal QR & IPN webhook signature validator SDK for fintech integrations.',
-      category: 'repos',
-      categoryLabel: 'Repository',
-      categoryIcon: FolderGit2,
-      tags: ['SDK', 'Fintech', 'Go'],
-      pinned: false,
-      lastVisited: '3d ago'
-    },
-    {
-      id: 7,
-      title: 'GitHub SSO Token Refresh Strategy Spec',
-      url: 'https://docs.payoo.vn/security/github-sso',
-      description: 'OAuth2.0 token rotation RFC with sliding sessions and encrypted cookie caching.',
-      category: 'specs',
-      categoryLabel: 'Tech Spec',
-      categoryIcon: BookOpen,
-      tags: ['Auth', 'OAuth2', 'Security'],
-      pinned: false,
-      lastVisited: '4d ago'
-    },
-    {
-      id: 8,
-      title: 'Figma DevBoard Design Tokens & UI Kit',
-      url: 'https://figma.com/@payoo/devboard-ui',
-      description: 'Design system tokens, Linear Dark Theme specs, and SVG iconography assets.',
-      category: 'tools',
-      categoryLabel: 'Dev Tool',
-      categoryIcon: Globe,
-      tags: ['Design', 'Figma', 'UI/UX'],
-      pinned: false,
-      lastVisited: '5d ago'
+  // Modal thêm Bookmark mới
+  readonly isAddModalOpen = signal<boolean>(false);
+  readonly newTitle = signal<string>('');
+  readonly newUrl = signal<string>('');
+  readonly newCategory = signal<'specs' | 'tools' | 'repos'>('specs');
+  readonly newDescription = signal<string>('');
+  readonly newTags = signal<string>('');
+
+  // 3. Custom Bookmarks (Specs, Tools, External Docs)
+  readonly customBookmarks = signal<BookmarkItem[]>(DEFAULT_SPECS_AND_TOOLS);
+
+  ngOnInit(): void {
+    if (isPlatformBrowser(this.platformId)) {
+      this.loadStoredBookmarks();
     }
-  ]);
 
-  // 4. Danh sách Bookmark lọc theo Tìm kiếm và Danh mục
-  filteredBookmarks = computed(() => {
+    if (this.gitHubApi.repositories().length === 0) {
+      this.gitHubApi.fetchRepositories();
+    }
+  }
+
+  private loadStoredBookmarks(): void {
+    try {
+      const rawPinned = localStorage.getItem(PINNED_BOOKMARKS_KEY);
+      if (rawPinned) {
+        this.pinnedIds.set(new Set(JSON.parse(rawPinned)));
+      }
+
+      const rawCustom = localStorage.getItem(CUSTOM_BOOKMARKS_KEY);
+      if (rawCustom) {
+        const parsed = JSON.parse(rawCustom);
+        const restored = parsed.map((item: any) => ({
+          ...item,
+          categoryIcon: item.category === 'repos' ? FolderGit2 : (item.category === 'specs' ? BookOpen : Globe)
+        }));
+        this.customBookmarks.set(restored);
+      }
+    } catch {}
+  }
+
+  // 4. Danh sách Bookmarks từ Repositories thật được bookmark bởi user
+  readonly bookmarkedProjects = computed<BookmarkItem[]>(() => {
+    const pinned = this.pinnedIds();
+    return this.workspace.projects()
+      .filter(p => p.isBookmarked)
+      .map(p => ({
+        id: p.id,
+        title: p.name,
+        url: p.githubUrl,
+        description: p.description,
+        category: 'repos' as const,
+        categoryLabel: 'Repository',
+        categoryIcon: FolderGit2,
+        tags: p.tags && p.tags.length ? p.tags : [p.language || 'Code', p.isPrivate ? 'Private' : 'Public'],
+        pinned: pinned.has(p.id),
+        lastVisited: p.lastCommitTime || 'Recently'
+      }));
+  });
+
+  // Toàn bộ Bookmarks tổng hợp
+  readonly allBookmarks = computed<BookmarkItem[]>(() => {
+    const pinned = this.pinnedIds();
+    const custom = this.customBookmarks().map(b => ({
+      ...b,
+      pinned: pinned.has(b.id)
+    }));
+
+    return [...this.bookmarkedProjects(), ...custom];
+  });
+
+  // Số lượng theo từng Category
+  readonly reposCount = computed(() => this.bookmarkedProjects().length);
+  readonly specsCount = computed(() => this.customBookmarks().filter(b => b.category === 'specs').length);
+  readonly toolsCount = computed(() => this.customBookmarks().filter(b => b.category === 'tools').length);
+  readonly pinnedCount = computed(() => this.allBookmarks().filter(b => b.pinned).length);
+
+  // 5. Danh sách Bookmark lọc theo Tìm kiếm và Danh mục
+  readonly filteredBookmarks = computed(() => {
     const q = this.searchQuery().toLowerCase().trim();
     const cat = this.selectedCategory();
 
-    return this.bookmarksList().filter(item => {
+    return this.allBookmarks().filter(item => {
       const matchCat = cat === 'all' || item.category === cat;
       const matchQuery =
         !q ||
         item.title.toLowerCase().includes(q) ||
         item.description.toLowerCase().includes(q) ||
+        item.url.toLowerCase().includes(q) ||
         item.tags.some(t => t.toLowerCase().includes(q));
 
       return matchCat && matchQuery;
@@ -181,13 +215,125 @@ export class BookmarksComponent {
 
   // Toggle Pinned
   togglePin(id: number) {
-    this.bookmarksList.update(list =>
-      list.map(b => (b.id === id ? { ...b, pinned: !b.pinned } : b))
-    );
+    const current = new Set(this.pinnedIds());
+    if (current.has(id)) {
+      current.delete(id);
+    } else {
+      current.add(id);
+    }
+    this.pinnedIds.set(current);
+
+    if (isPlatformBrowser(this.platformId)) {
+      try {
+        localStorage.setItem(PINNED_BOOKMARKS_KEY, JSON.stringify(Array.from(current)));
+      } catch {}
+    }
   }
 
   // Xóa bookmark
   removeBookmark(id: number) {
-    this.bookmarksList.update(list => list.filter(b => b.id !== id));
+    const isRepo = this.workspace.projects().some(p => p.id === id);
+    if (isRepo) {
+      this.workspace.toggleBookmark(id);
+    } else {
+      this.customBookmarks.update(list => {
+        const nextList = list.filter(b => b.id !== id);
+        if (isPlatformBrowser(this.platformId)) {
+          try {
+            localStorage.setItem(CUSTOM_BOOKMARKS_KEY, JSON.stringify(nextList));
+          } catch {}
+        }
+        return nextList;
+      });
+    }
+
+    // Gỡ khỏi pinned nếu có
+    if (this.pinnedIds().has(id)) {
+      const current = new Set(this.pinnedIds());
+      current.delete(id);
+      this.pinnedIds.set(current);
+      if (isPlatformBrowser(this.platformId)) {
+        try {
+          localStorage.setItem(PINNED_BOOKMARKS_KEY, JSON.stringify(Array.from(current)));
+        } catch {}
+      }
+    }
+  }
+
+  // Modal methods
+  openAddModal() {
+    this.newTitle.set('');
+    this.newUrl.set('');
+    this.newCategory.set('specs');
+    this.newDescription.set('');
+    this.newTags.set('');
+    this.isAddModalOpen.set(true);
+  }
+
+  closeAddModal() {
+    this.isAddModalOpen.set(false);
+  }
+
+  submitAddBookmark() {
+    let title = this.newTitle().trim();
+    let url = this.newUrl().trim();
+    if (!title || !url) return;
+
+    if (!url.startsWith('http://') && !url.startsWith('https://')) {
+      url = 'https://' + url;
+    }
+
+    const cat = this.newCategory();
+    const categoryLabels = {
+      repos: 'Repository',
+      specs: 'Tech Spec',
+      tools: 'Dev Tool'
+    };
+    const categoryIcons = {
+      repos: FolderGit2,
+      specs: BookOpen,
+      tools: Globe
+    };
+
+    const newItem: BookmarkItem = {
+      id: Date.now(),
+      title,
+      url,
+      description: this.newDescription().trim() || 'Saved developer bookmark.',
+      category: cat,
+      categoryLabel: categoryLabels[cat],
+      categoryIcon: categoryIcons[cat],
+      tags: this.newTags().split(',').map(t => t.trim()).filter(Boolean),
+      pinned: true,
+      lastVisited: 'Just now'
+    };
+
+    // Tự động ghim bookmark mới
+    const currentPinned = new Set(this.pinnedIds());
+    currentPinned.add(newItem.id);
+    this.pinnedIds.set(currentPinned);
+
+    this.customBookmarks.update(list => {
+      const next = [newItem, ...list];
+      if (isPlatformBrowser(this.platformId)) {
+        try {
+          localStorage.setItem(CUSTOM_BOOKMARKS_KEY, JSON.stringify(next));
+          localStorage.setItem(PINNED_BOOKMARKS_KEY, JSON.stringify(Array.from(currentPinned)));
+        } catch {}
+      }
+      return next;
+    });
+
+    this.closeAddModal();
+  }
+
+  // Sync lại dữ liệu từ GitHub
+  async syncRepositories(): Promise<void> {
+    this.isSyncing.set(true);
+    try {
+      await this.gitHubApi.fetchRepositories();
+    } finally {
+      this.isSyncing.set(false);
+    }
   }
 }

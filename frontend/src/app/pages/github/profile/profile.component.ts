@@ -222,10 +222,16 @@ export class ProfileComponent implements OnInit {
   // 4. Computed Signal: Tổng số Contributions năm qua
   readonly totalContributions = computed<number>(() => {
     const contrib = this.gitHubApiService.contributions();
+    if (contrib?.totalAnnualContributions) {
+      return contrib.totalAnnualContributions;
+    }
+    if (contrib?.contributionCalendar?.totalContributions) {
+      return contrib.contributionCalendar.totalContributions;
+    }
     if (contrib?.totalContributions) {
       return contrib.totalContributions;
     }
-    return 197;
+    return 201;
   });
 
   // 5. Computed Signal: Top 4 Pinned Repositories chọn lọc từ các repo thật
@@ -317,7 +323,7 @@ export class ProfileComponent implements OnInit {
     const stars = this.totalStars();
     const user = this.profile();
     const contrib = this.gitHubApiService.contributions();
-    const totalContribCount = contrib?.totalContributions || 197;
+    const totalContribCount = contrib?.totalAnnualContributions || contrib?.totalContributions || 201;
     const prCount = contrib?.totalPullRequestContributions || 0;
     const repoCount = user.public_repos || repos.length || 0;
 

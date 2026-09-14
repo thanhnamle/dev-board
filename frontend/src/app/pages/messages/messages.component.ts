@@ -14,7 +14,7 @@ export class MessagesComponent {
   readonly inbox = inject(MessagesService);
   private readonly workspace = inject(WorkspaceDataService);
   readonly categories: { id: MessageCategory | 'all'; label: string }[] = [
-    { id: 'all', label: 'All messages' }, { id: 'mentions', label: 'Mentions' },
+    { id: 'all', label: 'All discussions' }, { id: 'mentions', label: 'Mentions' },
     { id: 'reviews', label: 'Review requests' }, { id: 'system', label: 'System alerts' }
   ];
   readonly category = signal<MessageCategory | 'all'>('all');

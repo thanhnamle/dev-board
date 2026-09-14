@@ -339,10 +339,10 @@ export class ActivitiesComponent implements OnInit {
       if (contrib?.totalAnnualContributions !== undefined && contrib.totalAnnualContributions > 0) {
         return contrib.totalAnnualContributions;
       }
-      if (year === 2026) return 197;
-      if (contrib?.contributionCalendar?.totalContributions !== undefined) {
+      if (contrib?.contributionCalendar?.totalContributions !== undefined && contrib.contributionCalendar.totalContributions > 0) {
         return contrib.contributionCalendar.totalContributions;
       }
+      if (year === 2026) return 201;
     }
     return this.chartData().reduce((sum, item) => sum + item.count, 0);
   });

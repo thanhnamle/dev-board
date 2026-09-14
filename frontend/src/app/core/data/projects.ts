@@ -15,6 +15,9 @@ export interface ProjectItem {
   starsCount: number;
   isStarred: boolean;
   isBookmarked: boolean;
+  isPrivate?: boolean;
+  forksCount?: number;
+  updatedAt?: string;
 }
 
 export const DEMO_PROJECTS: ProjectItem[] = [

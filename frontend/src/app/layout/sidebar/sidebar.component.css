@@ -33,10 +33,10 @@
    LINEAR OBSIDIAN DARK TECH THEME (OPTION 1)
 ========================================================= */
 .sidebar.dark-theme {
-  background: linear-gradient(180deg, #090d16 0%, #0d1322 100%);
+  background: radial-gradient(120% 80% at 50% 0%, rgba(30, 41, 59, 0.4) 0%, rgba(9, 13, 22, 0.96) 50%, #080c14 100%);
   border: 1px solid rgba(255, 255, 255, 0.08);
   box-shadow: 0 20px 50px -10px rgba(0, 0, 0, 0.7), 
-              inset 0 1px 0 rgba(255, 255, 255, 0.08);
+              inset 0 1px 0 rgba(255, 255, 255, 0.1);
   color: #f1f5f9;
 }
 
@@ -67,17 +67,18 @@
   justify-content: center;
   flex-shrink: 0;
   background: #000000;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  transition: transform 0.25s ease, box-shadow 0.25s ease;
 }
 
 .sidebar.dark-theme .logo-badge {
   border: 1px solid rgba(255, 255, 255, 0.15);
-  box-shadow: 0 0 20px rgba(99, 102, 241, 0.2);
+  box-shadow: 0 0 24px rgba(99, 102, 241, 0.25), inset 0 1px 1px rgba(255, 255, 255, 0.2);
 }
 
 .logo-badge:hover {
-  transform: scale(1.04);
+  transform: scale(1.05);
 }
 
 .logo-img {
@@ -91,7 +92,53 @@
 .brand-text {
   display: flex;
   flex-direction: column;
-  line-height: 1.05;
+  gap: 2px;
+}
+
+.brand-title {
+  display: flex;
+  align-items: baseline;
+  gap: 4px;
+  line-height: 1;
+}
+
+.brand-dev {
+  font-size: 17px;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  color: #0f172a;
+  transition: color 0.3s ease;
+}
+
+.brand-board {
+  font-size: 17px;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 50%, #ec4899 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.sidebar.dark-theme .brand-dev {
+  color: #f8fafc;
+}
+
+.sidebar.dark-theme .brand-board {
+  background: linear-gradient(135deg, #818cf8 0%, #c084fc 50%, #f472b6 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.brand-tag {
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  color: #94a3b8;
+  text-transform: uppercase;
+}
+
+.sidebar.dark-theme .brand-tag {
+  color: #64748b;
 }
 
 .brand-line {
@@ -124,9 +171,9 @@
   position: absolute;
   top: 27px;
   right: -13px;
-  width: 30px;
-  height: 40px;
-  border-radius: 6px;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
   background: #ffffff;
   border: 1px solid #e2e8f0;
   color: #475569;
@@ -137,14 +184,13 @@
   z-index: 99;
   padding: 0;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-  transition: all 0.5s ease;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .sidebar.collapsed .toggle-btn {
   position: absolute;
-  top: 470px;
-  right: -11px;
-  transition: all 0.5s ease;
+  top: 27px;
+  right: -13px;
 }
 
 .sidebar.dark-theme .toggle-btn {
@@ -155,17 +201,17 @@
 }
 
 .toggle-btn:hover {
-  background: #1e1e22;
-  color: #ffffff;
-  border-color: #1e1e22;
+  background: #f8fafc;
+  color: #4f46e5;
+  border-color: #c7d2fe;
   transform: scale(1.12);
-  box-shadow: 0 4px 12px rgba(99, 102, 241, 0.4);
+  box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
 }
 
 .sidebar.dark-theme .toggle-btn:hover {
   background: #1e1e22;
-  color: #ffffff;
-  border-color: #1e1e22;
+  color: #818cf8;
+  border-color: #818cf8;
   box-shadow: 0 0 14px rgba(99, 102, 241, 0.6);
 }
 
@@ -299,19 +345,58 @@
 /* =========================================================
    4. TIÊU ĐỀ SECTION & DANH SÁCH MENU (LINEAR BADGES)
 ========================================================= */
+/* Container cuộn chung cho toàn bộ thân điều hướng */
+.sidebar-body {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding-right: 2px;
+  margin-bottom: 6px;
+}
+
+.sidebar-body::-webkit-scrollbar {
+  width: 3px;
+}
+
+.sidebar-body::-webkit-scrollbar-thumb {
+  background: transparent;
+  border-radius: 999px;
+  transition: background 0.2s;
+}
+
+.sidebar-body:hover::-webkit-scrollbar-thumb {
+  background: rgba(148, 163, 184, 0.25);
+}
+
+.sidebar.dark-theme .sidebar-body:hover::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.12);
+}
+
+.sidebar.collapsed .sidebar-body {
+  overflow: visible;
+  gap: 6px;
+}
+
 .menu-section,
+.discussions-section,
 .message-section {
   display: flex;
   flex-direction: column;
 }
 
-.menu-section {
-  flex: 1;
-  overflow-y: auto;
+.discussions-section,
+.message-section {
+  border-top: 1px solid #f1f5f9;
+  margin-top: 4px;
+  padding-top: 6px;
 }
 
-.menu-section::-webkit-scrollbar {
-  width: 0;
+.sidebar.dark-theme .discussions-section,
+.sidebar.dark-theme .message-section {
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
 }
 
 .section-title {
@@ -331,7 +416,7 @@
   font-size: 11px;
   font-weight: 700;
   text-transform: uppercase;
-  letter-spacing: 0.05em;
+  letter-spacing: 0.06em;
   border-radius: 6px;
   transition: background 0.15s ease, color 0.15s ease;
 }
@@ -375,6 +460,7 @@
   font-size: 13.5px;
   font-weight: 500;
   cursor: pointer;
+  position: relative;
   border: 1px solid transparent;
   transition: all 0.18s cubic-bezier(0.4, 0, 0.2, 1);
 }
@@ -408,6 +494,25 @@
   border-color: rgba(99, 102, 241, 0.3);
   color: #a5b4fc;
   box-shadow: 0 0 16px rgba(99, 102, 241, 0.15);
+}
+
+/* Linear Active Indicator */
+.nav-item.route-active::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 3px;
+  height: 18px;
+  border-radius: 0 4px 4px 0;
+  background: #4f46e5;
+  box-shadow: 0 0 8px rgba(79, 70, 229, 0.4);
+}
+
+.sidebar.dark-theme .nav-item.route-active::before {
+  background: #818cf8;
+  box-shadow: 0 0 10px rgba(129, 140, 248, 0.6);
 }
 
 .nav-icon {
@@ -466,6 +571,30 @@
   background: rgba(8, 145, 178, 0.2) !important;
   color: #38bdf8 !important;
   border-color: rgba(56, 189, 248, 0.3);
+}
+
+.badge-purple {
+  background: #f5f3ff !important;
+  color: #7c3aed !important;
+  border: 1px solid #ede9fe;
+}
+
+.sidebar.dark-theme .badge-purple {
+  background: rgba(124, 58, 237, 0.2) !important;
+  color: #a78bfa !important;
+  border-color: rgba(167, 139, 250, 0.3);
+}
+
+.badge-amber {
+  background: #fffbeb !important;
+  color: #d97706 !important;
+  border: 1px solid #fef3c7;
+}
+
+.sidebar.dark-theme .badge-amber {
+  background: rgba(217, 119, 6, 0.2) !important;
+  color: #fbbf24 !important;
+  border-color: rgba(251, 191, 36, 0.3);
 }
 
 .badge-emerald {
@@ -542,7 +671,8 @@
 .sidebar.dark-theme .tree-node.sub-active {
   color: #818cf8;
   font-weight: 600;
-  background: rgba(99, 102, 241, 0.1);
+  background: rgba(99, 102, 241, 0.12);
+  box-shadow: inset 0 0 12px rgba(99, 102, 241, 0.08);
 }
 
 .tree-curve {
@@ -554,6 +684,7 @@
   border-left: 1.5px solid #cbd5e1;
   border-bottom: 1.5px solid #cbd5e1;
   border-bottom-left-radius: 6px;
+  transition: border-color 0.2s ease;
 }
 
 .sidebar.dark-theme .tree-curve {
@@ -562,10 +693,277 @@
 
 .tree-node.sub-active .tree-curve {
   border-color: #6366f1;
+  filter: drop-shadow(0 0 3px rgba(99, 102, 241, 0.5));
 }
 
 .tree-node-label {
   white-space: nowrap;
+}
+
+/* =========================================================
+   5.5. PINNED REPOSITORIES SHELF (BOOKMARKS)
+========================================================= */
+.pinned-section {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-top: 4px;
+  padding-top: 8px;
+  border-top: 1px solid #f1f5f9;
+}
+
+.sidebar.dark-theme .pinned-section {
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.section-header-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 8px;
+  margin-bottom: 2px;
+}
+
+.section-title-static {
+  color: #64748b;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.section-link {
+  font-size: 11px;
+  font-weight: 600;
+  color: #6366f1;
+  text-decoration: none;
+  transition: color 0.15s ease;
+}
+
+.sidebar.dark-theme .section-link {
+  color: #818cf8;
+}
+
+.section-link:hover {
+  text-decoration: underline;
+}
+
+.pinned-list {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.pinned-item {
+  height: 32px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 0 10px;
+  border-radius: 8px;
+  text-decoration: none;
+  color: #475569;
+  font-size: 12.5px;
+  font-weight: 500;
+  transition: all 0.18s ease;
+  border: 1px solid transparent;
+}
+
+.sidebar.dark-theme .pinned-item {
+  color: #94a3b8;
+}
+
+.pinned-item:hover {
+  background: #f1f5f9;
+  color: #0f172a;
+}
+
+.sidebar.dark-theme .pinned-item:hover {
+  background: rgba(255, 255, 255, 0.05);
+  color: #ffffff;
+  border-color: rgba(255, 255, 255, 0.06);
+}
+
+.pinned-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  box-shadow: 0 0 6px currentColor;
+}
+
+.pinned-name {
+  flex: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.pinned-lang {
+  font-size: 10.5px;
+  color: #94a3b8;
+  font-family: monospace;
+}
+
+.sidebar.dark-theme .pinned-lang {
+  color: #64748b;
+}
+
+.pinned-empty-link {
+  height: 32px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 10px;
+  border-radius: 8px;
+  border: 1px dashed #cbd5e1;
+  color: #94a3b8;
+  font-size: 12px;
+  text-decoration: none;
+  transition: all 0.2s ease;
+}
+
+.sidebar.dark-theme .pinned-empty-link {
+  border-color: rgba(255, 255, 255, 0.1);
+  color: #64748b;
+}
+
+.pinned-empty-link:hover {
+  border-color: #6366f1;
+  color: #4f46e5;
+  background: rgba(99, 102, 241, 0.04);
+}
+
+.sidebar.dark-theme .pinned-empty-link:hover {
+  border-color: #818cf8;
+  color: #a5b4fc;
+  background: rgba(99, 102, 241, 0.08);
+}
+
+/* =========================================================
+   5.6. TELEMETRY CARD (DEVBOARD CLOUD / GITHUB HEALTH)
+========================================================= */
+.telemetry-card {
+  margin-top: auto;
+  padding: 12px 14px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.02);
+  transition: all 0.25s ease;
+}
+
+.sidebar.dark-theme .telemetry-card {
+  background: radial-gradient(100% 100% at 50% 0%, rgba(99, 102, 241, 0.06) 0%, rgba(13, 19, 34, 0.6) 100%);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+}
+
+.telemetry-card:hover {
+  border-color: #cbd5e1;
+}
+
+.sidebar.dark-theme .telemetry-card:hover {
+  border-color: rgba(99, 102, 241, 0.3);
+  box-shadow: 0 4px 24px rgba(99, 102, 241, 0.12), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+}
+
+.telemetry-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.telemetry-badge {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  color: #4f46e5;
+  text-transform: uppercase;
+}
+
+.sidebar.dark-theme .telemetry-badge {
+  color: #a5b4fc;
+}
+
+.telemetry-sparkle {
+  color: #6366f1;
+}
+
+.sidebar.dark-theme .telemetry-sparkle {
+  color: #818cf8;
+}
+
+.telemetry-status {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 11px;
+  font-weight: 600;
+  color: #10b981;
+}
+
+.telemetry-pulse {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #10b981;
+  box-shadow: 0 0 6px #10b981;
+  animation: pulseGreen 2s infinite ease-in-out;
+}
+
+.telemetry-stats {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-top: 4px;
+}
+
+.telemetry-stat {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  flex: 1;
+}
+
+.telemetry-num {
+  font-size: 15px;
+  font-weight: 800;
+  color: #0f172a;
+  line-height: 1.1;
+  font-family: inherit;
+}
+
+.sidebar.dark-theme .telemetry-num {
+  color: #f8fafc;
+}
+
+.telemetry-label {
+  font-size: 10px;
+  font-weight: 600;
+  color: #64748b;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.sidebar.dark-theme .telemetry-label {
+  color: #94a3b8;
+}
+
+.telemetry-divider {
+  width: 1px;
+  height: 22px;
+  background: #e2e8f0;
+}
+
+.sidebar.dark-theme .telemetry-divider {
+  background: rgba(255, 255, 255, 0.08);
 }
 
 /* =========================================================
@@ -847,10 +1245,20 @@
   background: #10b981;
   border: 2px solid #ffffff;
   box-shadow: 0 0 6px #10b981;
+  animation: pulseGreen 2.2s infinite ease-in-out;
 }
 
 .sidebar.dark-theme .user-online-dot {
   border-color: #0b0f19;
+}
+
+@keyframes pulseGreen {
+  0%, 100% {
+    box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7);
+  }
+  50% {
+    box-shadow: 0 0 0 4px rgba(16, 185, 129, 0);
+  }
 }
 
 .user-text {

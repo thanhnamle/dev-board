@@ -1,5 +1,6 @@
-import { Component, signal, computed } from '@angular/core';
+import { Component, signal, computed, inject, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { RouterLink } from '@angular/router';
 import {
   LucideAngularModule,
   Star,
@@ -12,8 +13,12 @@ import {
   ArrowUpDown,
   FolderGit2,
   CheckCircle2,
-  Code2
+  Code2,
+  Lock,
+  RefreshCw
 } from 'lucide-angular';
+import { WorkspaceDataService } from '../../../core/services/workspace-data.service';
+import { GitHubApiService } from '../../../core/services/github-api.service';
 
 export interface StarredProject {
   id: number;
@@ -28,18 +33,23 @@ export interface StarredProject {
   tags: string[];
   branch: string;
   lastUpdated: string;
+  updatedAt?: string;
   githubUrl: string;
   isStarred: boolean;
+  isPrivate?: boolean;
 }
 
 @Component({
   selector: 'app-starred',
   standalone: true,
-  imports: [CommonModule, LucideAngularModule],
+  imports: [CommonModule, LucideAngularModule, RouterLink],
   templateUrl: './starred.component.html',
   styleUrl: './starred.component.css'
 })
-export class StarredComponent {
+export class StarredComponent implements OnInit {
+  private readonly workspace = inject(WorkspaceDataService);
+  readonly gitHubApi = inject(GitHubApiService);
+
   // 1. Khai báo Lucide Icons
   readonly Star = Star;
   readonly Search = Search;
@@ -52,112 +62,97 @@ export class StarredComponent {
   readonly FolderGit2 = FolderGit2;
   readonly CheckCircle2 = CheckCircle2;
   readonly Code2 = Code2;
+  readonly Lock = Lock;
+  readonly RefreshCw = RefreshCw;
 
   // 2. Signals quản lý trạng thái
-  searchQuery = signal<string>('');
-  sortBy = signal<'stars' | 'updated'>('stars');
+  readonly searchQuery = signal<string>('');
+  readonly sortBy = signal<'stars' | 'updated'>('stars');
+  readonly selectedLang = signal<string>('All');
+  readonly isSyncing = signal<boolean>(false);
 
-  // 3. Danh sách Starred Projects
-  starredList = signal<StarredProject[]>([
-    {
-      id: 1,
-      name: 'Payment SDK & Webhook Core',
-      repoOwner: 'payoo-work',
-      repoName: 'payment-sdk',
-      description: 'Universal QR-Code & HMAC webhook signature validation SDK for fintech integrations.',
-      language: 'Go',
-      languageColor: '#00add8',
-      versionTag: 'v2.4.0',
-      starsCount: 210,
-      tags: ['SDK', 'Fintech', 'HMAC-SHA256', 'Go'],
-      branch: 'main',
-      lastUpdated: '1d ago',
-      githubUrl: 'https://github.com',
-      isStarred: true
-    },
-    {
-      id: 2,
-      name: 'DevBoard Frontend Client',
-      repoOwner: 'payoo-devboard',
-      repoName: 'frontend',
-      description: 'High-performance engineering workspace dashboard built with Angular 17 and Signals.',
-      language: 'TypeScript',
-      languageColor: '#38bdf8',
-      versionTag: 'v1.8.2',
-      starsCount: 128,
-      tags: ['Angular 17', 'Signals', 'Tailwind', 'SSR'],
-      branch: 'main',
-      lastUpdated: '15m ago',
-      githubUrl: 'https://github.com',
-      isStarred: true
-    },
-    {
-      id: 3,
-      name: 'Core API Gateway Service',
-      repoOwner: 'payoo-devboard',
-      repoName: 'core-api',
-      description: 'Microservices reverse proxy and GitHub event ingestion stream written in Golang.',
-      language: 'Go',
-      languageColor: '#00add8',
-      versionTag: 'v1.4.1',
-      starsCount: 94,
-      tags: ['Go 1.22', 'Gin', 'gRPC', 'Postgres'],
-      branch: 'main',
-      lastUpdated: '1h ago',
-      githubUrl: 'https://github.com',
-      isStarred: true
-    },
-    {
-      id: 4,
-      name: 'DevOps & Helm Chart Automation',
-      repoOwner: 'payoo-devboard',
-      repoName: 'infra-k8s',
-      description: 'Terraform IaC and Kubernetes helm charts for automated GitHub Actions CI/CD.',
-      language: 'Docker',
-      languageColor: '#2496ed',
-      versionTag: 'v3.1.0',
-      starsCount: 67,
-      tags: ['Kubernetes', 'Helm', 'CI/CD', 'Docker'],
-      branch: 'staging',
-      lastUpdated: '4d ago',
-      githubUrl: 'https://github.com',
-      isStarred: true
-    },
-    {
-      id: 5,
-      name: 'OAuth2 / SSO Authentication Hub',
-      repoOwner: 'payoo-devboard',
-      repoName: 'auth-service',
-      description: 'Zero-trust authentication server with GitHub OAuth2 and Redis token caching.',
-      language: 'TypeScript',
-      languageColor: '#38bdf8',
-      versionTag: 'v1.2.0',
-      starsCount: 45,
-      tags: ['OAuth2', 'JWT', 'Redis', 'Security'],
-      branch: 'feature/oauth-refresh',
-      lastUpdated: '3h ago',
-      githubUrl: 'https://github.com',
-      isStarred: true
+  ngOnInit(): void {
+    if (this.gitHubApi.repositories().length === 0) {
+      this.gitHubApi.fetchRepositories();
     }
-  ]);
+  }
+
+  // 3. Danh sách Starred Projects lấy trực tiếp từ WorkspaceDataService (100% Real GitHub Repos)
+  readonly starredList = computed<StarredProject[]>(() => {
+    return this.workspace.projects()
+      .filter(p => p.isStarred)
+      .map(p => {
+        const parts = (p.repoName || '').split('/');
+        const owner = parts[0] || 'thanhnamle';
+        const name = parts[1] || p.name;
+
+        return {
+          id: p.id,
+          name: p.name,
+          repoOwner: owner,
+          repoName: name,
+          description: p.description,
+          language: p.language || 'Markdown',
+          languageColor: p.languageColor || '#38bdf8',
+          versionTag: p.isPrivate ? 'Private' : 'Public',
+          starsCount: p.starsCount || 0,
+          tags: p.tags && p.tags.length ? p.tags : [p.language || 'Code'],
+          branch: p.branch || 'main',
+          lastUpdated: p.lastCommitTime || 'Recently',
+          updatedAt: p.updatedAt,
+          githubUrl: p.githubUrl,
+          isStarred: true,
+          isPrivate: p.isPrivate
+        };
+      });
+  });
+
+  readonly totalStarsCount = computed(() =>
+    this.starredList().reduce((sum, item) => sum + item.starsCount, 0)
+  );
+
+  readonly uniqueLanguagesCount = computed(() => {
+    const langs = new Set(this.starredList().map(p => p.language).filter(Boolean));
+    return langs.size;
+  });
+
+  readonly langFilters = computed<string[]>(() => {
+    const langs = new Set<string>();
+    for (const p of this.starredList()) {
+      if (p.language && p.language !== 'Markdown') {
+        langs.add(p.language);
+      }
+    }
+    return ['All', ...Array.from(langs)];
+  });
 
   // 4. Lọc và Sắp xếp danh sách
-  filteredList = computed(() => {
+  readonly filteredList = computed(() => {
     const q = this.searchQuery().toLowerCase().trim();
     const sort = this.sortBy();
+    const lang = this.selectedLang();
 
     let list = this.starredList().filter(item => {
-      return (
+      const matchSearch =
         !q ||
         item.name.toLowerCase().includes(q) ||
         item.repoName.toLowerCase().includes(q) ||
         item.description.toLowerCase().includes(q) ||
-        item.tags.some(t => t.toLowerCase().includes(q))
-      );
+        item.tags.some(t => t.toLowerCase().includes(q));
+
+      const matchLang =
+        lang === 'All' ||
+        item.language.toLowerCase() === lang.toLowerCase();
+
+      return matchSearch && matchLang;
     });
 
     if (sort === 'stars') {
       list = [...list].sort((a, b) => b.starsCount - a.starsCount);
+    } else if (sort === 'updated') {
+      list = [...list].sort(
+        (a, b) => new Date(b.updatedAt || 0).getTime() - new Date(a.updatedAt || 0).getTime()
+      );
     }
 
     return list;
@@ -165,23 +160,21 @@ export class StarredComponent {
 
   // Toggle Unstar
   toggleStar(id: number) {
-    this.starredList.update(list =>
-      list.map(item => {
-        if (item.id === id) {
-          const nextState = !item.isStarred;
-          return {
-            ...item,
-            isStarred: nextState,
-            starsCount: nextState ? item.starsCount + 1 : item.starsCount - 1
-          };
-        }
-        return item;
-      })
-    );
+    this.workspace.toggleStar(id);
   }
 
   // Đổi kiểu sắp xếp
   setSortBy(sort: 'stars' | 'updated') {
     this.sortBy.set(sort);
+  }
+
+  // Sync lại dữ liệu từ GitHub
+  async syncRepositories(): Promise<void> {
+    this.isSyncing.set(true);
+    try {
+      await this.gitHubApi.fetchRepositories();
+    } finally {
+      this.isSyncing.set(false);
+    }
   }
 }

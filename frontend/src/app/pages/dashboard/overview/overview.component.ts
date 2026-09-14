@@ -157,14 +157,15 @@ export class OverviewComponent implements OnInit {
   readonly weeklyCommitsCount = computed(() => {
     const contrib = this.gitHubApiService.contributions();
     if (contrib?.weeks?.length) {
-      const lastWeek = contrib.weeks[contrib.weeks.length - 1];
-      const sum = (lastWeek.contributionDays || []).reduce((acc: number, d: any) => acc + (d.contributionCount || 0), 0);
+      const allDays = contrib.weeks.flatMap((w: any) => w.contributionDays || []);
+      const last7Days = allDays.slice(-7);
+      const sum = last7Days.reduce((acc: number, d: any) => acc + (d.contributionCount || 0), 0);
       if (sum > 0) return sum;
     }
     // Đếm số events trong 7 ngày từ activities
     const sevenDaysAgo = Date.now() - 7 * 24 * 60 * 60 * 1000;
     const count = this.gitHubApiService.activities().filter(a => new Date(a.timestamp).getTime() >= sevenDaysAgo).length;
-    return count > 0 ? count : 42;
+    return count > 0 ? count : 7;
   });
 
   // Card 3: Số lượng Notes từ WorkspaceDataService

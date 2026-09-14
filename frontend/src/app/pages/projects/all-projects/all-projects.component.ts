@@ -1,4 +1,4 @@
-import { Component, signal, computed, inject } from '@angular/core';
+import { Component, signal, computed, inject, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import {
   LucideAngularModule,
@@ -16,9 +16,15 @@ import {
   CheckCircle2,
   Clock,
   Sparkles,
-  ShieldCheck
+  ShieldCheck,
+  RotateCcw,
+  RefreshCw,
+  Lock,
+  Globe,
+  GitFork
 } from 'lucide-angular';
 import { WorkspaceDataService } from '../../../core/services/workspace-data.service';
+import { GitHubApiService } from '../../../core/services/github-api.service';
 import { ActivatedRoute } from '@angular/router';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
@@ -29,9 +35,11 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
   templateUrl: './all-projects.component.html',
   styleUrl: './all-projects.component.css'
 })
-export class AllProjectsComponent {
+export class AllProjectsComponent implements OnInit {
   private readonly workspace = inject(WorkspaceDataService);
   private readonly route = inject(ActivatedRoute);
+  readonly gitHubApiService = inject(GitHubApiService);
+
   // 1. Khai báo Lucide Icons
   readonly FolderGit2 = FolderGit2;
   readonly Search = Search;
@@ -48,57 +56,126 @@ export class AllProjectsComponent {
   readonly Clock = Clock;
   readonly Sparkles = Sparkles;
   readonly ShieldCheck = ShieldCheck;
+  readonly RotateCcw = RotateCcw;
+  readonly RefreshCw = RefreshCw;
+  readonly Lock = Lock;
+  readonly Globe = Globe;
+  readonly GitFork = GitFork;
 
-  // 2. Signals quản lý trạng thái
-  viewMode = signal<'grid' | 'list'>('grid');
-  searchQuery = signal<string>('');
-  selectedTech = signal<string>('All');
+  // 2. Signals quản lý hiển thị và tìm kiếm
+  readonly viewMode = signal<'grid' | 'list'>('grid');
+  readonly searchQuery = signal<string>('');
+  readonly selectedTech = signal<string>('All');
+  readonly isSyncing = signal<boolean>(false);
 
-  // Danh sách công nghệ để lọc
-  techFilters: string[] = ['All', 'Angular', 'TypeScript', 'Go', 'PostgreSQL', 'Docker'];
+  // 3. Danh sách Projects tự động đồng bộ 100% từ GitHub Repositories thật
+  readonly projects = this.workspace.projects;
 
-  // 3. Danh sách Projects mẫu
-  projects = this.workspace.projects;
+  // 4. Computed KPI Signals cho 3 thẻ đầu trang
+  readonly totalProjects = computed(() => this.projects().length);
 
-  constructor() {
-    this.route.queryParamMap.pipe(takeUntilDestroyed()).subscribe(params => {
-      const project = this.projects().find(item => item.id === Number(params.get('project')));
-      if (project) { this.selectedTech.set('All'); this.searchQuery.set(project.name); }
-    });
-  }
+  readonly publicCount = computed(() =>
+    this.projects().filter(p => !p.isPrivate).length
+  );
 
-  // Danh sách Project đã qua lọc tìm kiếm & Tech filter
-  filteredProjects = computed(() => {
+  readonly privateCount = computed(() =>
+    this.projects().filter(p => p.isPrivate).length
+  );
+
+  readonly totalStars = computed(() =>
+    this.projects().reduce((sum, p) => sum + (p.starsCount || 0), 0)
+  );
+
+  readonly activeBranchesCount = computed(() => {
+    const branches = new Set(this.projects().map(p => p.branch).filter(Boolean));
+    return branches.size || 1;
+  });
+
+  // 5. Danh sách bộ lọc công nghệ động (lấy từ ngôn ngữ thực tế của các Repositories)
+  readonly techFilters = computed<string[]>(() => {
+    const counts: Record<string, number> = {};
+    for (const p of this.projects()) {
+      if (p.language && p.language !== 'Markdown') {
+        counts[p.language] = (counts[p.language] || 0) + 1;
+      }
+    }
+    const topTechs = Object.entries(counts)
+      .sort((a, b) => b[1] - a[1])
+      .map(([tech]) => tech);
+
+    return ['All', ...topTechs];
+  });
+
+  // 6. Danh sách Project đã lọc theo từ khóa & công nghệ
+  readonly filteredProjects = computed(() => {
     const q = this.searchQuery().toLowerCase().trim();
     const tech = this.selectedTech();
 
     return this.projects().filter(p => {
-      const matchSearch = !q || p.name.toLowerCase().includes(q) || p.repoName.toLowerCase().includes(q) || p.description.toLowerCase().includes(q);
-      const matchTech = tech === 'All' || p.tags.some(t => t.toLowerCase().includes(tech.toLowerCase())) || p.language.toLowerCase().includes(tech.toLowerCase());
+      const matchSearch =
+        !q ||
+        p.name.toLowerCase().includes(q) ||
+        p.repoName.toLowerCase().includes(q) ||
+        p.description.toLowerCase().includes(q);
+
+      const matchTech =
+        tech === 'All' ||
+        p.language.toLowerCase() === tech.toLowerCase() ||
+        p.tags.some(t => t.toLowerCase() === tech.toLowerCase());
+
       return matchSearch && matchTech;
     });
   });
 
-  // Toggle Star
-  toggleStar(id: number) {
-    this.projects.update(list =>
-      list.map(p => {
-        if (p.id === id) {
-          return {
-            ...p,
-            isStarred: !p.isStarred,
-            starsCount: p.isStarred ? p.starsCount - 1 : p.starsCount + 1
-          };
+  constructor() {
+    this.route.queryParamMap.pipe(takeUntilDestroyed()).subscribe(params => {
+      const projectId = Number(params.get('project'));
+      if (projectId) {
+        const project = this.projects().find(item => item.id === projectId);
+        if (project) {
+          this.selectedTech.set('All');
+          this.searchQuery.set(project.name);
         }
-        return p;
-      })
-    );
+      }
+    });
   }
 
-  // Toggle Bookmark
-  toggleBookmark(id: number) {
-    this.projects.update(list =>
-      list.map(p => (p.id === id ? { ...p, isBookmarked: !p.isBookmarked } : p))
-    );
+  ngOnInit(): void {
+    // Tự động tải Repositories thật nếu chưa có trong bộ nhớ
+    if (this.gitHubApiService.repositories().length === 0) {
+      this.gitHubApiService.fetchRepositories();
+    }
+  }
+
+  // Đặt lại bộ lọc về mặc định
+  resetFilters(): void {
+    this.searchQuery.set('');
+    this.selectedTech.set('All');
+  }
+
+  // Đồng bộ lại toàn bộ Repositories mới nhất từ GitHub API
+  async syncRepositories(): Promise<void> {
+    if (this.isSyncing()) return;
+    this.isSyncing.set(true);
+    try {
+      await this.gitHubApiService.fetchRepositories();
+    } finally {
+      this.isSyncing.set(false);
+    }
+  }
+
+  // Mở trang tạo Repository mới trực tiếp trên GitHub
+  createNewRepo(): void {
+    window.open('https://github.com/new', '_blank');
+  }
+
+  // Bật/Tắt Star (lưu vĩnh viễn vào Workspace Service & LocalStorage)
+  toggleStar(id: number): void {
+    this.workspace.toggleStar(id);
+  }
+
+  // Bật/Tắt Bookmark (lưu vĩnh viễn vào Workspace Service & LocalStorage)
+  toggleBookmark(id: number): void {
+    this.workspace.toggleBookmark(id);
   }
 }

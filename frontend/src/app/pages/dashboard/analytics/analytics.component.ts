@@ -89,7 +89,7 @@ export class AnalyticsComponent {
   // 1. Commit Throughput calculate belongs to the time range selected
   readonly commitThroughput = computed(() => {
     const contrib = this.gitHubApiService.contributions();
-    const totalYear = contrib?.totalContributions || 197;
+    const totalYear = contrib?.totalAnnualContributions || contrib?.contributionCalendar?.totalContributions || contrib?.totalContributions || 201;
     const range = this.selectedTimeRange();
 
     switch (range) {

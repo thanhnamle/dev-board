@@ -33,8 +33,11 @@
 
       @if (!collapsed()) {
         <div class="brand-text">
-          <span class="brand-line">DEV</span>
-          <span class="brand-line-1">BOARD</span>
+          <div class="brand-title">
+            <span class="brand-dev">DEV</span>
+            <span class="brand-board">BOARD</span>
+          </div>
+          <span class="brand-tag">WORKSPACE</span>
         </div>
       }
     </div>
@@ -53,7 +56,7 @@
     >
       <lucide-icon [img]="Search" size="15" class="search-icon"> </lucide-icon>
 
-      <span class="search-input">Search...</span>
+      <span class="search-input">Search or jump to...</span>
 
       <div class="shortcut-keys">
         <span class="key-chip">⌘</span>
@@ -72,152 +75,218 @@
   }
 
   <!-- =====================================================
-       3. MAIN MENU
+       3. SCROLLABLE NAVIGATION & SECTIONS BODY
   ====================================================== -->
 
-  <div class="menu-section">
-    <!-- Section title -->
-    @if (!collapsed()) {
-      <button type="button" class="section-title" (click)="toggleMain()">
-        <span>Main</span>
+  <div class="sidebar-body">
+    <!-- 3.1 MAIN MENU -->
+    <div class="menu-section">
+      @if (!collapsed()) {
+        <button type="button" class="section-title" (click)="toggleMain()">
+          <span>Main</span>
 
-        <lucide-icon
-          [img]="mainExpanded() ? Minus : Plus"
-          size="14"
-          class="section-dash"
-        >
-        </lucide-icon>
-      </button>
-    }
+          <lucide-icon
+            [img]="mainExpanded() ? Minus : Plus"
+            size="14"
+            class="section-dash"
+          >
+          </lucide-icon>
+        </button>
+      }
 
-    @if (mainExpanded()) {
-      <!-- Main navigation -->
-      <nav class="nav-list">
-        @for (item of mainMenu; track item.label) {
-          <div class="nav-group">
-            <!-- Parent item -->
+      @if (mainExpanded()) {
+        <!-- Main navigation -->
+        <nav class="nav-list">
+          @for (item of mainMenu; track item.label) {
+            <div class="nav-group">
+              <!-- Parent item -->
+              <a
+                class="nav-item"
+                [class.expanded]="expandedItem() === item.label"
+                [routerLink]="item.children?.length ? null : item.path"
+                routerLinkActive="route-active"
+                [routerLinkActiveOptions]="{ exact: true }"
+                (click)="item.children?.length ? toggleExpand(item.label) : null"
+                [title]="item.label"
+              >
+                <!-- Icon -->
+                <span class="nav-icon">
+                  <lucide-icon [img]="item.icon" size="17"> </lucide-icon>
+                </span>
+
+                <!-- Label -->
+                @if (!collapsed()) {
+                  <span class="nav-label">
+                    {{ item.label }}
+                  </span>
+
+                  <!-- Counter Badge -->
+                  @if (item.badge) {
+                    <span class="nav-badge" [ngClass]="item.badgeClass || ''">
+                      {{ badgeValue(item.badge) }}
+                    </span>
+                  }
+
+                  <!-- Chevron -->
+                  @if (item.children?.length) {
+                    <lucide-icon
+                      [img]="
+                        expandedItem() === item.label ? ChevronUp : ChevronDown
+                      "
+                      size="14"
+                      class="chevron-icon"
+                    >
+                    </lucide-icon>
+                  }
+                }
+              </a>
+
+              <!-- =================================================
+                 TREE SUBMENU
+              ================================================== -->
+
+              @if (
+                item.children?.length &&
+                expandedItem() === item.label &&
+                !collapsed()
+              ) {
+                <div class="tree-menu">
+                  @for (sub of item.children; track sub.path) {
+                    <a
+                      class="tree-node"
+                      [routerLink]="sub.path"
+                      routerLinkActive="sub-active"
+                      [routerLinkActiveOptions]="{ exact: true }"
+                    >
+                      <span class="tree-curve"></span>
+
+                      <span class="tree-node-label">
+                        {{ sub.label }}
+                      </span>
+
+                      @if (sub.badge) {
+                        <span class="sub-badge" [ngClass]="sub.badgeClass || ''">
+                          {{ badgeValue(sub.badge) }}
+                        </span>
+                      }
+                    </a>
+                  }
+                </div>
+              }
+            </div>
+          }
+        </nav>
+      }
+    </div>
+
+    <!-- 3.2 DISCUSSIONS -->
+    <div class="discussions-section">
+      @if (!collapsed()) {
+        <button class="section-title" (click)="toggleDiscussions()" type="button">
+          <span>Communication</span>
+
+          <lucide-icon
+            [img]="discussionsExpanded() ? Minus : Plus"
+            size="14"
+            class="section-dash"
+          >
+          </lucide-icon>
+        </button>
+      }
+      @if (discussionsExpanded()) {
+        <nav class="nav-list">
+          @for (item of discussionMenu; track item.label) {
             <a
               class="nav-item"
-              [class.expanded]="expandedItem() === item.label"
-              [routerLink]="item.children?.length ? null : item.path"
+              [routerLink]="item.path"
               routerLinkActive="route-active"
               [routerLinkActiveOptions]="{ exact: true }"
-              (click)="item.children?.length ? toggleExpand(item.label) : null"
+              [title]="item.label"
             >
-              <!-- Icon -->
               <span class="nav-icon">
                 <lucide-icon [img]="item.icon" size="17"> </lucide-icon>
               </span>
 
-              <!-- Label -->
               @if (!collapsed()) {
                 <span class="nav-label">
                   {{ item.label }}
                 </span>
 
-                <!-- Counter Badge -->
-                @if (item.badge) {
+                @if (messagesService.unreadCount()) {
                   <span class="nav-badge" [ngClass]="item.badgeClass || ''">
-                    {{ badgeValue(item.badge) }}
+                    {{ messagesService.unreadCount() }}
                   </span>
-                }
-
-                <!-- Chevron -->
-                @if (item.children?.length) {
-                  <lucide-icon
-                    [img]="
-                      expandedItem() === item.label ? ChevronUp : ChevronDown
-                    "
-                    size="14"
-                    class="chevron-icon"
-                  >
-                  </lucide-icon>
                 }
               }
             </a>
+          }
+        </nav>
+      }
+    </div>
 
-            <!-- =================================================
-               TREE SUBMENU
-            ================================================== -->
-
-            @if (
-              item.children?.length &&
-              expandedItem() === item.label &&
-              !collapsed()
-            ) {
-              <div class="tree-menu">
-                @for (sub of item.children; track sub.path) {
-                  <a
-                    class="tree-node"
-                    [routerLink]="sub.path"
-                    routerLinkActive="sub-active"
-                    [routerLinkActiveOptions]="{ exact: true }"
-                  >
-                    <span class="tree-curve"></span>
-
-                    <span class="tree-node-label">
-                      {{ sub.label }}
-                    </span>
-
-                    @if (sub.badge) {
-                      <span class="sub-badge" [ngClass]="sub.badgeClass || ''">
-                        {{ badgeValue(sub.badge) }}
-                      </span>
-                    }
-                  </a>
-                }
-              </div>
-            }
-          </div>
-        }
-      </nav>
-    }
-  </div>
-
-  <!-- =====================================================
-       3.5. MESSAGES
-  ====================================================== -->
-
-  <div class="message-section">
+    <!-- 3.3 PINNED REPOSITORIES SHELF -->
     @if (!collapsed()) {
-      <button class="section-title" (click)="toggleMessage()" type="button">
-        <span>Messages</span>
-
-        <lucide-icon
-          [img]="messageExpanded() ? Minus : Plus"
-          size="14"
-          class="section-dash"
-        >
-        </lucide-icon>
-      </button>
-    }
-    @if (messageExpanded()) {
-      <nav class="nav-list">
-        @for (item of messageMenu; track item.label) {
-          <a
-            class="nav-item"
-            [routerLink]="item.path"
-            routerLinkActive="route-active"
-            [routerLinkActiveOptions]="{ exact: true }"
-          >
-            <span class="nav-icon">
-              <lucide-icon [img]="item.icon" size="17"> </lucide-icon>
-            </span>
-
-            @if (!collapsed()) {
-              <span class="nav-label">
-                {{ item.label }}
-              </span>
-
-              @if (messagesService.unreadCount()) {
-                <span class="nav-badge" [ngClass]="item.badgeClass || ''">
-                  {{ messagesService.unreadCount() }}
-                </span>
-              }
-            }
+      <div class="pinned-section">
+        <div class="section-header-row">
+          <span class="section-title-static">Pinned Repos</span>
+          <a routerLink="/app/projects/bookmarks" class="section-link" title="Manage bookmarks">
+            View all ({{ bookmarkedProjects().length }})
           </a>
-        }
-      </nav>
+        </div>
+
+        <div class="pinned-list">
+          @for (repo of bookmarkedProjects(); track repo.id) {
+            <a
+              class="pinned-item"
+              [routerLink]="['/app/projects/bookmarks']"
+              [title]="repo.name + ' (' + repo.language + ')'"
+            >
+              <span class="pinned-dot" [style.backgroundColor]="getLanguageColor(repo.language)"></span>
+              <span class="pinned-name">{{ repo.name }}</span>
+              <span class="pinned-lang">{{ repo.language }}</span>
+            </a>
+          }
+          @if (bookmarkedProjects().length === 0) {
+            <a routerLink="/app/projects/all-projects" class="pinned-empty-link">
+              <lucide-icon [img]="Bookmark" size="13"></lucide-icon>
+              <span>+ Bookmark repos to pin</span>
+            </a>
+          }
+        </div>
+      </div>
+    }
+
+    <!-- 3.4 TELEMETRY CARD (DEVBOARD CLOUD / GITHUB HEALTH) -->
+    @if (!collapsed()) {
+      <div class="telemetry-card">
+        <div class="telemetry-header">
+          <div class="telemetry-badge">
+            <lucide-icon [img]="Sparkles" size="12" class="telemetry-sparkle"></lucide-icon>
+            <span>DevBoard Sync</span>
+          </div>
+          <div class="telemetry-status">
+            <span class="telemetry-pulse"></span>
+            <span class="telemetry-status-text">Connected</span>
+          </div>
+        </div>
+
+        <div class="telemetry-stats">
+          <div class="telemetry-stat">
+            <span class="telemetry-num">{{ workspace.projects().length }}</span>
+            <span class="telemetry-label">Repos</span>
+          </div>
+          <div class="telemetry-divider"></div>
+          <div class="telemetry-stat">
+            <span class="telemetry-num">{{ bookmarkedProjects().length }}</span>
+            <span class="telemetry-label">Pinned</span>
+          </div>
+          <div class="telemetry-divider"></div>
+          <div class="telemetry-stat">
+            <span class="telemetry-num">{{ gitHubApiService.contributions()?.totalContributions || 201 }}</span>
+            <span class="telemetry-label">Commits</span>
+          </div>
+        </div>
+      </div>
     }
   </div>
 
@@ -301,7 +370,7 @@
           </a>
 
           <a
-            routerLink="/app/github/repositories"
+            routerLink="/app/projects/all-projects"
             (click)="userMenuOpen.set(false)"
             class="dropdown-item"
           >

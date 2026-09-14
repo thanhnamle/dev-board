@@ -21,11 +21,14 @@ export class CommandPaletteService {
   private readonly pages: CommandResult[] = [
     ['overview', 'Dashboard overview', 'Daily tasks, pull requests and deployments', '/app/dashboard/overview', 'dashboard home tasks pull requests deployments'],
     ['analytics', 'Dashboard analytics', 'Velocity, commits and engineering health', '/app/dashboard/analytics', 'charts velocity commits health'],
-    ['projects', 'All projects', 'Browse engineering projects', '/app/projects/all-projects', 'repositories services'],
-    ['notes', 'All notes', 'Read technical notes and RFCs', '/app/notes/all-notes', 'documents rfc'],
-    ['snippets', 'All snippets', 'Browse reusable code snippets', '/app/snippets/all-snippets', 'code library'],
-    ['github', 'GitHub profile', 'Profile, repositories and contributions', '/app/github/profile', 'github account contributions'],
-    ['messages', 'Messages Hub', 'Mentions, reviews and system alerts', '/app/messages', 'inbox notifications']
+    ['repositories', 'All repositories', 'Browse and manage your 21 GitHub repositories', '/app/projects/all-projects', 'repositories git repos projects'],
+    ['bookmarks', 'Bookmarked repositories', 'Your personal quick-access focus workspace shelf', '/app/projects/bookmarks', 'bookmarks pinned active focus shelf'],
+    ['starred', 'Starred repositories', 'Your favorited GitHub repositories', '/app/projects/starred', 'starred stars favorites'],
+    ['github', 'GitHub profile', 'Profile, bio and 201 annual contributions', '/app/github/profile', 'github account profile bio stats'],
+    ['activities', 'GitHub activities', 'Live commit timeline, PRs and recent activity', '/app/github/activities', 'activities timeline commits events log'],
+    ['notes', 'All notes', 'Read technical notes and architectural RFCs', '/app/notes/all-notes', 'documents rfc notes write'],
+    ['snippets', 'All snippets', 'Browse reusable code snippets and gists', '/app/snippets/all-snippets', 'code library snippets gists'],
+    ['discussions', 'Discussions & Inbox', 'Community discussions, mentions and engineering updates', '/app/discussions', 'discussions inbox notifications messages threads']
   ].map(([id, title, description, path, keywords]) => ({ id: `page-${id}`, kind: 'Page', title, description, path, keywords } as CommandResult));
 
   readonly results = computed(() => {

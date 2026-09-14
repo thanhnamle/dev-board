@@ -18,8 +18,13 @@ export const routes: Routes = [
         children: [
             { path: '', redirectTo: 'dashboard/overview', pathMatch: 'full' },
             {
-                path: 'messages',
+                path: 'discussions',
                 loadComponent: () => import('./pages/messages/messages.component').then(m => m.MessagesComponent)
+            },
+            {
+                path: 'messages',
+                redirectTo: 'discussions',
+                pathMatch: 'full'
             },
             { 
                 path: 'dashboard/overview', 
@@ -58,12 +63,18 @@ export const routes: Routes = [
                 loadComponent: () => import('./pages/snippets/favorites/favorites.component').then(m => m.FavoritesComponent)
             },
             {
+                path: 'repositories',
+                redirectTo: 'projects/all-projects',
+                pathMatch: 'full'
+            },
+            {
                 path: 'github/profile',
                 loadComponent: () => import('./pages/github/profile/profile.component').then(m => m.ProfileComponent)
             },
             {
                 path: 'github/repositories',
-                loadComponent: () => import('./pages/github/repositories/repositories.component').then(m => m.RepositoriesComponent)
+                redirectTo: 'projects/all-projects',
+                pathMatch: 'full'
             },
             {
                 path: 'github/activities',

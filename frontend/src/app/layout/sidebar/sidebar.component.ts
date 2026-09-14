@@ -1,4 +1,4 @@
-import { Component, signal, inject } from '@angular/core';
+import { Component, signal, computed, inject } from '@angular/core';
 import { Router, RouterLink, RouterLinkActive } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { ThemeService } from '../../core/services/theme.service';
@@ -24,7 +24,8 @@ import {
   LogOut,
   User,
   Settings,
-  ExternalLink
+  ExternalLink,
+  Bookmark
 } from 'lucide-angular';
 import { UserService } from '../../core/services/user.service';
 import { MessagesService } from '../../core/services/messages.service';
@@ -84,17 +85,23 @@ export class SidebarComponent {
   readonly Settings = Settings;
   readonly ExternalLink = ExternalLink;
   readonly FolderGit2 = FolderGit2;
+  readonly Bookmark = Bookmark;
   readonly userService = inject(UserService);
   readonly messagesService = inject(MessagesService);
   readonly commandPalette = inject(CommandPaletteService);
   readonly gitHubApiService = inject(GitHubApiService);
-  private readonly workspace = inject(WorkspaceDataService);
+  readonly workspace = inject(WorkspaceDataService);
+
+  readonly bookmarkedProjects = computed(() =>
+    this.workspace.projects().filter(p => p.isBookmarked).slice(0, 4)
+  );
 
   // Signal quản lý trạng thái thu gọn sidebar
   collapsed = signal(false);
 
   mainExpanded = signal(true);
-  messageExpanded = signal(true);
+  discussionsExpanded = signal(true);
+  messageExpanded = this.discussionsExpanded;
 
   // Mặc định đang mở mục 'Dashboard'
   expandedItem = signal<string | null>('Dashboard');
@@ -119,14 +126,23 @@ export class SidebarComponent {
       ]
     },
     {
-      label: 'Projects',
-      icon: Folder,
+      label: 'Repositories',
+      icon: FolderGit2,
       badge: () => this.workspace.projects().length,
-      path: '/app/projects',
+      path: '/app/projects/all-projects',
       children: [
-        { label: 'All Projects', path: '/app/projects/all-projects', badge: () => this.workspace.projects().length },
-        { label: 'Bookmarks', path: '/app/projects/bookmarks', badge: () => this.workspace.projects().filter(project => project.isBookmarked).length },
-        { label: 'Starred', path: '/app/projects/starred', badge: () => this.workspace.projects().filter(project => project.isStarred).length }
+        { label: 'All Repositories', path: '/app/projects/all-projects', badge: () => this.workspace.projects().length },
+        { label: 'Bookmarks', path: '/app/projects/bookmarks', badge: () => this.workspace.projects().filter(project => project.isBookmarked).length, badgeClass: 'badge-purple' },
+        { label: 'Starred', path: '/app/projects/starred', badge: () => this.workspace.projects().filter(project => project.isStarred).length, badgeClass: 'badge-amber' }
+      ]
+    },
+    {
+      label: 'GitHub',
+      icon: Github,
+      path: '/app/github',
+      children: [
+        { label: 'Profile', path: '/app/github/profile' },
+        { label: 'Activities', path: '/app/github/activities' }
       ]
     },
     {
@@ -148,28 +164,18 @@ export class SidebarComponent {
         { label: 'All Snippets', path: '/app/snippets/all-snippets', badge: () => this.workspace.snippets().length },
         { label: 'Favorites', path: '/app/snippets/favorites' }
       ]
-    },
-    {
-      label: 'Github',
-      icon: Github,
-      path: '/app/github',
-      children: [
-        { label: 'Profile', path: '/app/github/profile' },
-        { label: 'Repositories', path: '/app/github/repositories', 
-          badge: () => this.gitHubApiService.repoCount() },
-        { label: 'Activities', path: '/app/github/activities' }
-      ]
     }
   ];
 
-  messageMenu: MenuItem[] = [
+  discussionMenu: MenuItem[] = [
     {
-      label: 'Messages',
+      label: 'Discussions',
       icon: MessageSquare,
-      path: '/app/messages',
+      path: '/app/discussions',
       badgeClass: 'badge-emerald'
     }
   ];
+  messageMenu = this.discussionMenu;
 
   toggleTheme() {
     this.themeService.toggleTheme();
@@ -183,8 +189,12 @@ export class SidebarComponent {
     this.mainExpanded.update(v => !v);
   }
 
+  toggleDiscussions() {
+    this.discussionsExpanded.update(v => !v);
+  }
+
   toggleMessage() {
-    this.messageExpanded.update(v => !v);
+    this.toggleDiscussions();
   }
 
   toggleSidebar() {
@@ -213,5 +223,23 @@ export class SidebarComponent {
     }
 
     this.router.navigate(['/']);
+  }
+
+  getLanguageColor(lang: string | null | undefined): string {
+    const map: Record<string, string> = {
+      TypeScript: '#3178c6',
+      JavaScript: '#f1e05a',
+      Go: '#00add8',
+      Python: '#3572A5',
+      HTML: '#e34c26',
+      CSS: '#563d7c',
+      Dockerfile: '#384d54',
+      Shell: '#89e051',
+      Rust: '#dea584',
+      Java: '#b07219',
+      'C++': '#f34b7d',
+      'C#': '#178600'
+    };
+    return (lang && map[lang]) ? map[lang] : '#818cf8';
   }
 }
