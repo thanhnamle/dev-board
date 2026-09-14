@@ -1,8 +1,7 @@
-import { Component, signal } from '@angular/core';
+import { Component, signal, computed, inject, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import {
-
   Activity,
   ArrowUpRight,
   Bookmark,
@@ -28,6 +27,9 @@ import {
   Sparkles,
   Zap
 } from 'lucide-angular';
+import { GitHubApiService } from '../../../core/services/github-api.service';
+import { WorkspaceDataService } from '../../../core/services/workspace-data.service';
+import { UserService } from '../../../core/services/user.service';
 
 interface DailyTask {
   id: number;
@@ -67,7 +69,7 @@ interface GitActivity {
   templateUrl: './overview.component.html',
   styleUrl: './overview.component.css'
 })
-export class OverviewComponent {
+export class OverviewComponent implements OnInit {
   // Lucide Icons
   readonly Flame = Flame;
   readonly Plus = Plus;
@@ -92,153 +94,216 @@ export class OverviewComponent {
   readonly ShieldCheck = ShieldCheck;
   readonly Layers = Layers;
   readonly Github = Github;
+  readonly gitHubApiService = inject(GitHubApiService);
+  readonly workSpaceDataService = inject(WorkspaceDataService);
+  readonly userService = inject(UserService);
 
   // Trạng thái đồng bộ GitHub
-  isSyncing = signal<boolean>(false);
+  readonly isSyncing = signal<boolean>(false);
 
   // Trạng thái copy snippet
-  copiedSnippet = signal<boolean>(false);
+   readonly copiedSnippet = signal<boolean>(false);
 
-  // Danh sách nhiệm vụ hôm nay (Daily Focus)
-  dailyTasks = signal<DailyTask[]>([
-    { id: 1, text: 'Review PR #42: GitHub OAuth 2.0 token caching', done: true, tag: 'Code Review' },
-    { id: 2, text: 'Complete Angular 17 Signals refactoring in Snippet module', done: false, tag: 'Frontend' },
-    { id: 3, text: 'Draft Architecture RFC for Local-First persistence', done: false, tag: 'Design' },
-    { id: 4, text: 'Verify PostgreSQL migration scripts on staging', done: false, tag: 'Database' }
-  ]);
+    // Lời chào tự động thay đổi theo thời gian thực: Sáng / Chiều / Tối
+  readonly greeting = computed(() => {
+    const hour = new Date().getHours();
+    if (hour < 12) return 'Good morning';
+    if (hour < 18) return 'Good afternoon';
+    return 'Good evening';
+  });
 
-  // Danh sách Pull Requests đang mở
-  activePRs: PullRequest[] = [
-    {
-      id: 42,
-      title: 'feat(auth): implement GitHub SSO & token refresh cycle',
-      repo: 'payoo-devboard/core-api',
-      author: 'thanhnamle',
-      avatar: 'assets/Avatar.jpg',
-      branch: 'feature/oauth-refresh',
-      ciStatus: 'passing',
-      reviewsCount: 2,
-      timeAgo: '25m ago',
-      url: 'https://github.com'
-    },
-    {
-      id: 39,
-      title: 'refactor(ui): migrate dashboard widgets to Angular signals',
-      repo: 'payoo-devboard/frontend',
-      author: 'alex-engineer',
-      avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&h=100&fit=crop&crop=face',
-      branch: 'refactor/signals-ui',
-      ciStatus: 'running',
-      reviewsCount: 1,
-      timeAgo: '2h ago',
-      url: 'https://github.com'
-    },
-    {
-      id: 38,
-      title: 'fix(ssr): resolve hydration mismatch on static code blocks',
-      repo: 'payoo-devboard/frontend',
-      author: 'sarah-dev',
-      avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&h=100&fit=crop&crop=face',
-      branch: 'fix/ssr-hydration',
-      ciStatus: 'passing',
-      reviewsCount: 3,
-      timeAgo: '4h ago',
-      url: 'https://github.com'
+  // Tên hiển thị ưu tiên tên từ GitHub SSO hoặc UserService
+  readonly displayName = computed(() => {
+    return this.gitHubApiService.currentUser()?.name 
+      || this.userService.currentUser().name 
+      || 'Thành Nam';
+  });
+
+  // Tính số ngày commit liên tiếp (Active Streak) từ calendar thật
+  readonly streakDays = computed(() => {
+    const contrib = this.gitHubApiService.contributions();
+    if (!contrib?.weeks?.length) return 12; // Fallback nếu chưa tải xong
+
+    const allDays = contrib.weeks.flatMap((w: any) => w.contributionDays || []);
+    let streak = 0;
+    const today = new Date().toISOString().split('T')[0];
+    let streakStarted = false;
+
+    for (let i = allDays.length - 1; i >= 0; i--) {
+      const day = allDays[i];
+      if (day.date > today) continue; // Bỏ qua ngày trong tương lai
+
+      if (day.contributionCount > 0) {
+        streak++;
+        streakStarted = true;
+      } else if (streakStarted) {
+        break; // Đứt chuỗi streak
+      } else if (day.date === today) {
+        continue; // Hôm nay chưa commit thì xét tiếp hôm qua
+      } else {
+        break;
+      }
     }
-  ];
+    return streak > 0 ? streak : 1;
+  });
 
-  // Luồng commit mới nhất
-  recentActivities: GitActivity[] = [
-    {
-      id: 1,
-      repo: 'payoo-devboard/frontend',
-      branch: 'main',
-      message: 'chore: polish sidebar typography and logo badge styling',
-      hash: 'a7f92b1',
-      timeAgo: '12m ago',
-      additions: 48,
-      deletions: 12
-    },
-    {
-      id: 2,
-      repo: 'payoo-devboard/core-api',
-      branch: 'main',
-      message: 'perf: optimize GitHub API webhook ingestion queue',
-      hash: '90c41e8',
-      timeAgo: '1h ago',
-      additions: 120,
-      deletions: 34
-    },
-    {
-      id: 3,
-      repo: 'payoo-devboard/docs',
-      branch: 'docs/v2',
-      message: 'docs: update keyboard shortcuts and deployment runbook',
-      hash: '3bf19a4',
-      timeAgo: '3h ago',
-      additions: 85,
+    // Card 1: Số lượng Repositories đang quản lý
+  readonly trackedReposCount = computed(() => {
+    const repos = this.gitHubApiService.repositories();
+    return repos.length > 0 ? repos.length : (this.gitHubApiService.currentUser()?.public_repos || 18);
+  });
+
+  // Card 2: Số commit trong 7 ngày gần nhất
+  readonly weeklyCommitsCount = computed(() => {
+    const contrib = this.gitHubApiService.contributions();
+    if (contrib?.weeks?.length) {
+      const lastWeek = contrib.weeks[contrib.weeks.length - 1];
+      const sum = (lastWeek.contributionDays || []).reduce((acc: number, d: any) => acc + (d.contributionCount || 0), 0);
+      if (sum > 0) return sum;
+    }
+    // Đếm số events trong 7 ngày từ activities
+    const sevenDaysAgo = Date.now() - 7 * 24 * 60 * 60 * 1000;
+    const count = this.gitHubApiService.activities().filter(a => new Date(a.timestamp).getTime() >= sevenDaysAgo).length;
+    return count > 0 ? count : 42;
+  });
+
+  // Card 3: Số lượng Notes từ WorkspaceDataService
+  readonly notesCount = computed(() => this.workSpaceDataService.notes().length);
+
+  // Card 4: Số lượng Snippets từ WorkspaceDataService
+  readonly snippetsCount = computed(() => this.workSpaceDataService.snippets().length);
+
+  // Lấy 4 hoạt động commit mới nhất từ GitHub
+  readonly recentActivities = computed<GitActivity[]>(() => {
+    const acts = this.gitHubApiService.activities();
+    if (!acts.length) return [];
+
+    return acts.slice(0, 4).map(a => ({
+      id: a.id,
+      repo: a.repoName,
+      branch: a.branch || 'main',
+      message: a.title,
+      hash: a.commitHash || 'latest',
+      timeAgo: a.timeAgo,
+      additions: 12, // Metadata tượng trưng cho giao diện diff
       deletions: 4
-    }
-  ];
+    }));
+  });
 
-  // Pinned Engineering Notes
-  pinnedNotes = [
-    {
-      id: 1,
-      title: 'DevBoard 2.0 SSR Pipeline RFC',
-      category: 'Architecture',
-      categoryClass: 'badge-purple',
-      updatedAt: 'Today',
-      readTime: '4 min read'
-    },
-    {
-      id: 2,
-      title: 'PostgreSQL Connection Pooling & SSL Setup',
-      category: 'Infrastructure',
-      categoryClass: 'badge-cyan',
-      updatedAt: 'Yesterday',
-      readTime: '6 min read'
-    },
-    {
-      id: 3,
-      title: 'Git Commit Standards & PR Review Checklist',
-      category: 'Guidelines',
-      categoryClass: 'badge-emerald',
-      updatedAt: '3 days ago',
-      readTime: '2 min read'
-    }
-  ];
+  // Lọc các hoạt động liên quan đến PR từ GitHub
+  readonly activePRs = computed<PullRequest[]>(() => {
+    const acts = this.gitHubApiService.activities();
+    return acts.filter(a => a.type === 'pr').slice(0, 3).map(pr => ({
+      id: pr.prNumber || pr.id,
+      title: pr.title,
+      repo: pr.repoName,
+      author: pr.author,
+      avatar: this.gitHubApiService.currentUser()?.avatar_url || 'assets/Avatar.jpg',
+      branch: pr.branch || 'main',
+      ciStatus: 'passing',
+      reviewsCount: 1,
+      timeAgo: pr.timeAgo,
+      url: pr.repoUrl
+    }));
+  });
 
-  // Ghim snippet nhanh (Quick Scratchpad)
-  pinnedSnippetCode = `// Core Signal Auth Guard
-export const authGuard: CanActivateFn = (route, state) => {
-  const auth = inject(DevBoardAuthService);
-  return auth.isAuthenticated() ? true : createUrlTreeFromSnapshot(route, ['/login']);
-};`;
+  readonly pinnedNotes = computed(() => {
+    const all = this.workSpaceDataService.notes();
+    const favs = all.filter(n => n.pinned);
+    const list = favs.length ? favs.slice(0, 3) : all.slice(0, 3);
 
-  // Chuyển đổi trạng thái task
-  toggleTask(taskId: number): void {
-    this.dailyTasks.update(tasks =>
-      tasks.map(t => (t.id === taskId ? { ...t, done: !t.done } : t))
-    );
+    return list.map(n => ({
+      id: n.id,
+      title: n.title,
+      category: n.tags[0] || 'Architecture',
+      categoryClass: this.getTagColor(n.tags[0]),
+      updatedAt: n.lastUpdated,
+      readTime: `${Math.max(2, Math.ceil(n.content.join(' ').length / 350))} min read`
+    }));
+  });
+
+  private getTagColor(tag?: string): string {
+    const map: Record<string, string> = {
+      Architecture: 'badge-purple',
+      Frontend: 'badge-cyan',
+      Backend: 'badge-emerald',
+      DevOps: 'badge-amber',
+      Security: 'badge-rose'
+    };
+    return tag && map[tag] ? map[tag] : 'badge-purple';
   }
 
-  // Giả lập kích hoạt đồng bộ GitHub
-  triggerSync(): void {
+  private readonly STORAGE_KEY = 'devboard_daily_focus';
+
+  dailyTasks = signal<DailyTask[]>(this.loadTasks());
+
+  private loadTasks(): DailyTask[] {
+    if (typeof window !== 'undefined') {
+      try {
+        const saved = window.localStorage.getItem(this.STORAGE_KEY);
+        if (saved) return JSON.parse(saved);
+      } catch (e) {}
+    }
+    return [
+      { id: 1, text: 'Review dev-board repository architecture & signals', done: true, tag: 'Code Review' },
+      { id: 2, text: 'Complete Angular 17 SSR hydration & optimization', done: false, tag: 'Frontend' },
+      { id: 3, text: 'Verify GitHub OAuth 2.0 session persistence on reload', done: true, tag: 'Security' },
+      { id: 4, text: 'Draft Architecture RFC for Local-First Workspace', done: false, tag: 'Design' }
+    ];
+  }
+
+  toggleTask(taskId: number): void {
+    this.dailyTasks.update(tasks => {
+      const updated = tasks.map(t => (t.id === taskId ? { ...t, done: !t.done } : t));
+      if (typeof window !== 'undefined') {
+        window.localStorage.setItem(this.STORAGE_KEY, JSON.stringify(updated));
+      }
+      return updated;
+    });
+  }
+
+  // Snippet được lấy trực tiếp từ danh sách snippets trong Workspace
+  readonly pinnedSnippet = computed(() => {
+    const list = this.workSpaceDataService.snippets();
+    return list.length ? list[0] : null;
+  });
+
+  copyCode(): void {
+    const code = this.pinnedSnippet()?.rawCode || `// DevBoard Core Signal Guard\nexport const authGuard = () => true;`;
+    if (typeof navigator !== 'undefined' && navigator.clipboard) {
+      navigator.clipboard.writeText(code).then(() => {
+        this.copiedSnippet.set(true);
+        setTimeout(() => this.copiedSnippet.set(false), 2000);
+      });
+    }
+  }
+
+  async ngOnInit() {
+    // Tự động tải dữ liệu nếu chưa có sẵn
+    if (this.gitHubApiService.repositories().length === 0) {
+      this.gitHubApiService.fetchRepositories();
+    }
+    if (this.gitHubApiService.activities().length === 0) {
+      this.gitHubApiService.fetchActivities();
+    }
+    if (!this.gitHubApiService.contributions()) {
+      this.gitHubApiService.fetchContributions();
+    }
+  }
+
+  // Hàm Sync thật gọi API backend/GitHub
+  async triggerSync(): Promise<void> {
     if (this.isSyncing()) return;
     this.isSyncing.set(true);
-    setTimeout(() => {
+    try {
+      await Promise.all([
+        this.gitHubApiService.fetchRepositories(),
+        this.gitHubApiService.fetchActivities(),
+        this.gitHubApiService.fetchContributions()
+      ]);
+    } finally {
       this.isSyncing.set(false);
-    }, 1500);
-  }
-
-  // Copy code snippet
-  copyCode(): void {
-    navigator.clipboard.writeText(this.pinnedSnippetCode);
-    this.copiedSnippet.set(true);
-    setTimeout(() => {
-      this.copiedSnippet.set(false);
-    }, 2000);
+    }
   }
 }
 

@@ -64,7 +64,11 @@
         </lucide-icon>
       </button>
 
-      <button type="button" class="action-btn btn-secondary" title="Export CSV Report">
+      <button 
+        type="button" 
+        class="action-btn btn-secondary" 
+        (click)="exportCSV()" 
+        title="Export CSV Report">
         <lucide-icon [img]="Download" class="btn-icon"></lucide-icon>
         <span>Export</span>
       </button>
@@ -76,7 +80,7 @@
   ========================================================= -->
   <section class="metrics-grid">
     
-    <!-- KPI 1: Commit Throughput -->
+    <!-- KPI 1: Commit Throughput (Dynamic Signal) -->
     <div class="metric-card">
       <div class="metric-top">
         <span class="metric-label">Commit Throughput</span>
@@ -85,12 +89,12 @@
         </div>
       </div>
       <div class="metric-value-row">
-        <span class="metric-value">148</span>
+        <span class="metric-value">{{ commitThroughput() }}</span>
         <span class="metric-pill pill-emerald">+24% MoM</span>
       </div>
       <div class="metric-footer">
-        <span class="metric-trend text-emerald">Avg 4.9 commits</span>
-        <span class="metric-sub">/ active day</span>
+        <span class="metric-trend text-emerald">Active Window</span>
+        <span class="metric-sub">({{ selectedTimeRange() }})</span>
       </div>
     </div>
 
@@ -188,7 +192,7 @@
       <!-- Khung biểu đồ thanh (Pure CSS / SVG Stacked Bar Chart) -->
       <div class="bar-chart-container">
         <div class="bars-track">
-          @for (item of velocityDays; track item.day) {
+          @for (item of velocityDays(); track item.day) {
             <div 
               class="bar-column-wrap"
               (mouseenter)="hoveredDay.set(item)"
@@ -256,7 +260,7 @@
 
       <!-- Thanh tiến độ phân tầng nhiều màu -->
       <div class="stacked-progress-bar">
-        @for (lang of languages; track lang.name) {
+        @for (lang of languages(); track lang.name) {
           <div 
             class="progress-slice" 
             [style.width.%]="lang.percent"
@@ -268,7 +272,7 @@
 
       <!-- Danh sách chi tiết từng ngôn ngữ -->
       <div class="language-list">
-        @for (lang of languages; track lang.name) {
+        @for (lang of languages(); track lang.name) {
           <div class="lang-item">
             <div class="lang-left">
               <span class="lang-color-pill" [style.background-color]="lang.color"></span>
@@ -279,6 +283,8 @@
             </div>
             <span class="lang-percent">{{ lang.percent }}%</span>
           </div>
+        } @empty {
+          <div class="empty-list-state">No repository languages detected yet</div>
         }
       </div>
     </section>
@@ -305,7 +311,7 @@
       </div>
 
       <div class="pr-size-list">
-        @for (item of prSizes; track item.label) {
+        @for (item of prSizes(); track item.label) {
           <div class="pr-size-row">
             <div class="pr-size-top">
               <div class="pr-size-title-group">
@@ -337,7 +343,7 @@
       </div>
 
       <div class="focus-hours-list">
-        @for (item of focusHours; track item.period) {
+        @for (item of focusHours(); track item.period) {
           <div class="focus-item">
             <div class="focus-left">
               <div class="focus-badge-icon">

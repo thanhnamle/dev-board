@@ -4,10 +4,10 @@
   <header class="overview-header">
     <div class="header-left">
       <div class="greeting-row">
-        <h1 class="greeting-title">Good morning, Thành Nam ☕</h1>
-        <div class="streak-badge" title="You committed for 12 consecutive days!">
+        <h1 class="greeting-title">{{ greeting() }}, {{ displayName() }} ☕</h1>
+        <div class="streak-badge" [title]="'You committed for ' + streakDays() + ' consecutive days!'">
           <lucide-icon [img]="Flame" class="streak-icon"></lucide-icon>
-          <span>12-day streak</span>
+          <span>{{ streakDays() }}-day streak</span>
         </div>
       </div>
       <p class="greeting-subtitle">
@@ -65,30 +65,30 @@
         </div>
       </div>
       <div class="metric-value-row">
-        <span class="metric-value">8</span>
-        <span class="metric-pill pill-purple">2 PRs Pending</span>
+        <span class="metric-value">{{ trackedReposCount() }}</span>
+        <span class="metric-pill pill-purple">Public</span>
       </div>
       <div class="metric-footer">
-        <span class="metric-trend text-emerald">↑ +2 repos</span>
-        <span class="metric-sub">added this month</span>
+        <span class="metric-trend text-emerald">100% Synced</span>
+        <span class="metric-sub">with GitHub</span>
       </div>
     </div>
 
     <!-- Card 2: Weekly Velocity -->
     <div class="metric-card">
       <div class="metric-top">
-        <span class="metric-label">Weekly Commits</span>
+        <span class="metric-label">Recent Commits</span>
         <div class="metric-icon-box box-cyan">
           <lucide-icon [img]="GitCommit" class="metric-icon"></lucide-icon>
         </div>
       </div>
       <div class="metric-value-row">
-        <span class="metric-value">42</span>
-        <span class="metric-pill pill-emerald">+18% vs last week</span>
+        <span class="metric-value">{{ weeklyCommitsCount() }}</span>
+        <span class="metric-pill pill-emerald">Active Velocity</span>
       </div>
       <div class="metric-footer">
         <span class="metric-trend text-emerald">High Velocity</span>
-        <span class="metric-sub">across 4 active branches</span>
+        <span class="metric-sub">across active branches</span>
       </div>
     </div>
 
@@ -101,12 +101,12 @@
         </div>
       </div>
       <div class="metric-value-row">
-        <span class="metric-value">19</span>
-        <span class="metric-pill pill-cyan">3 Pinned Specs</span>
+        <span class="metric-value">{{ notesCount() }}</span>
+        <span class="metric-pill pill-cyan">{{ pinnedNotes().length }} Pinned</span>
       </div>
       <div class="metric-footer">
-        <span class="metric-trend text-purple">1 updated today</span>
-        <span class="metric-sub">SSR Architecture RFC</span>
+        <span class="metric-trend text-purple">Workspace Notes</span>
+        <span class="metric-sub">architecture & guides</span>
       </div>
     </div>
 
@@ -119,12 +119,12 @@
         </div>
       </div>
       <div class="metric-value-row">
-        <span class="metric-value">64</span>
-        <span class="metric-pill pill-amber">4 Copied Today</span>
+        <span class="metric-value">{{ snippetsCount() }}</span>
+        <span class="metric-pill pill-amber">Reusable Stacks</span>
       </div>
       <div class="metric-footer">
-        <span class="metric-trend text-blue">12 TypeScript</span>
-        <span class="metric-sub">• 8 Go • 6 SQL</span>
+        <span class="metric-trend text-blue">Quick Copy</span>
+        <span class="metric-sub">available across workspace</span>
       </div>
     </div>
 
@@ -151,14 +151,14 @@
             </div>
           </div>
 
-          <a href="https://github.com" target="_blank" class="section-link-btn" title="View all PRs on GitHub">
+          <a [href]="'https://github.com/' + (gitHubApiService.currentUser()?.login || 'thanhnamle')" target="_blank" class="section-link-btn" title="View all PRs on GitHub">
             <span>View all</span>
             <lucide-icon [img]="ArrowUpRight" class="link-arrow"></lucide-icon>
           </a>
         </div>
 
         <div class="pr-list">
-          @for (pr of activePRs; track pr.id) {
+          @for (pr of activePRs(); track pr.id) {
             <div class="pr-item">
               <div class="pr-left">
                 <!-- Avatar & CI Badge -->
@@ -210,6 +210,20 @@
                 </a>
               </div>
             </div>
+          } @empty {
+            <div class="empty-pr-box">
+              <div class="empty-pr-icon-wrapper">
+                <lucide-icon [img]="CheckCircle2" class="empty-icon text-emerald"></lucide-icon>
+              </div>
+              <div class="empty-pr-text">
+                <span class="empty-pr-title">Review Queue Clean</span>
+                <span class="empty-pr-sub">No pending pull requests across your tracked repositories.</span>
+              </div>
+              <a [href]="'https://github.com/' + (gitHubApiService.currentUser()?.login || 'thanhnamle')" target="_blank" class="empty-pr-link" title="Open GitHub">
+                <span>View on GitHub</span>
+                <lucide-icon [img]="ExternalLink" class="empty-link-icon"></lucide-icon>
+              </a>
+            </div>
           }
         </div>
       </section>
@@ -234,7 +248,7 @@
         </div>
 
         <div class="timeline-list">
-          @for (item of recentActivities; track item.id) {
+          @for (item of recentActivities(); track item.id) {
             <div class="timeline-item">
               <div class="timeline-line"></div>
               <div class="timeline-dot">
@@ -258,6 +272,10 @@
                   <span class="diff-badge text-rose">-{{ item.deletions }}</span>
                 </div>
               </div>
+            </div>
+          } @empty {
+            <div class="empty-activity-box">
+              <p>No recent activity detected. Click "Sync GitHub" to refresh.</p>
             </div>
           }
         </div>
@@ -293,14 +311,14 @@
 
         <div class="scratchpad-editor">
           <div class="editor-bar">
-            <span class="editor-tag">TypeScript</span>
-            <span class="editor-file-name">auth-guard.ts</span>
+            <span class="editor-tag">{{ pinnedSnippet()?.languageLabel || 'TypeScript' }}</span>
+            <span class="editor-file-name">{{ pinnedSnippet()?.filename || 'auth-guard.ts' }}</span>
           </div>
-          <pre class="scratchpad-pre"><code><span class="c-comment">// Core Signal Auth Guard</span>
-<span class="c-kw">export const</span> <span class="c-fn">authGuard</span>: <span class="c-typ">CanActivateFn</span> = (route, state) =&gt; &#123;
-  <span class="c-kw">const</span> auth = <span class="c-fn">inject</span>(DevBoardAuthService);
-  <span class="c-kw">return</span> auth.<span class="c-fn">isAuthenticated</span>() ? <span class="c-bool">true</span> : <span class="c-fn">createUrlTreeFromSnapshot</span>(route, [<span class="c-str">'/login'</span>]);
-&#125;;</code></pre>
+          @if (pinnedSnippet()?.codeHtml) {
+            <pre class="scratchpad-pre"><code [innerHTML]="pinnedSnippet()?.codeHtml"></code></pre>
+          } @else {
+            <pre class="scratchpad-pre"><code>{{ pinnedSnippet()?.rawCode || '// DevBoard Core Signal Guard' }}</code></pre>
+          }
         </div>
       </section>
 
@@ -364,7 +382,7 @@
         </div>
 
         <div class="pinned-notes-list">
-          @for (note of pinnedNotes; track note.id) {
+          @for (note of pinnedNotes(); track note.id) {
             <a routerLink="/app/notes/all-notes" class="pinned-note-item">
               <div class="note-top-line">
                 <span class="note-cat-badge {{ note.categoryClass }}">{{ note.category }}</span>
@@ -386,15 +404,15 @@
             </div>
             <div>
               <h2 class="section-title">GitHub API Status</h2>
-              <p class="section-desc">OAuth Token & Organization Health</p>
+              <p class="section-desc">OAuth Token & Workspace Health</p>
             </div>
           </div>
         </div>
 
         <div class="api-health-box">
           <div class="health-row">
-            <span class="health-label">API Rate Limit</span>
-            <span class="health-val font-mono">4,820 / 5,000</span>
+            <span class="health-label">Connected Account</span>
+            <span class="health-val font-mono">&#64;{{ gitHubApiService.currentUser()?.login || 'thanhnamle' }}</span>
           </div>
 
           <!-- Thanh progress bar Rate Limit -->
@@ -404,7 +422,7 @@
 
           <div class="health-meta-grid">
             <div class="health-meta-item">
-              <span class="meta-title">Org Auth</span>
+              <span class="meta-title">Auth Status</span>
               <span class="meta-val text-emerald">Verified</span>
             </div>
             <div class="health-meta-item">
@@ -412,8 +430,8 @@
               <span class="meta-val">4ms (Fast)</span>
             </div>
             <div class="health-meta-item">
-              <span class="meta-title">Webhooks</span>
-              <span class="meta-val text-emerald">Active (3)</span>
+              <span class="meta-title">Repositories</span>
+              <span class="meta-val text-emerald">{{ trackedReposCount() }} Active</span>
             </div>
           </div>
         </div>

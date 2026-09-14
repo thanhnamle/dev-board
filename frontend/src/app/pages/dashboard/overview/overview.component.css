@@ -1020,4 +1020,88 @@
   }
 }
 
+/* =========================================================
+   EMPTY STATES FOR PRs & ACTIVITIES
+========================================================= */
+.empty-pr-box {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 24px 20px;
+  background: var(--item-bg);
+  border: 1px dashed var(--item-border);
+  border-radius: 12px;
+}
+
+.empty-pr-icon-wrapper {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  background: rgba(16, 185, 129, 0.1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.empty-icon {
+  width: 20px;
+  height: 20px;
+}
+
+.empty-pr-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex: 1;
+}
+
+.empty-pr-title {
+  font-size: 0.88rem;
+  font-weight: 700;
+  color: var(--text-title);
+}
+
+.empty-pr-sub {
+  font-size: 0.76rem;
+  color: var(--text-muted);
+}
+
+.empty-pr-link {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.76rem;
+  font-weight: 600;
+  color: #6366f1;
+  text-decoration: none;
+  padding: 6px 12px;
+  border-radius: 8px;
+  background: rgba(99, 102, 241, 0.08);
+  border: 1px solid rgba(99, 102, 241, 0.2);
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.empty-pr-link:hover {
+  background: rgba(99, 102, 241, 0.15);
+  border-color: rgba(99, 102, 241, 0.35);
+}
+
+.empty-link-icon {
+  width: 12px;
+  height: 12px;
+}
+
+.empty-activity-box {
+  padding: 24px;
+  text-align: center;
+  font-size: 0.82rem;
+  color: var(--text-muted);
+  background: var(--item-bg);
+  border: 1px dashed var(--item-border);
+  border-radius: 12px;
+}
+
 
