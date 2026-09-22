@@ -66,7 +66,9 @@
       </div>
       <div class="metric-value-row">
         <span class="metric-value">{{ trackedReposCount() }}</span>
-        <span class="metric-pill pill-purple">Public</span>
+        <span class="metric-pill" [class.pill-purple]="trackedReposCount() > 0" [class.pill-neutral]="trackedReposCount() === 0">
+          {{ trackedReposCount() > 0 ? 'Public' : 'None' }}
+        </span>
       </div>
       <div class="metric-footer">
         <span class="metric-trend text-emerald">100% Synced</span>
@@ -84,11 +86,15 @@
       </div>
       <div class="metric-value-row">
         <span class="metric-value">{{ weeklyCommitsCount() }}</span>
-        <span class="metric-pill pill-emerald">Active Velocity</span>
+        <span class="metric-pill" [class.pill-emerald]="weeklyCommitsCount() > 0" [class.pill-neutral]="weeklyCommitsCount() === 0">
+          {{ weeklyCommitsCount() > 0 ? 'Active Velocity' : 'No Commits' }}
+        </span>
       </div>
       <div class="metric-footer">
-        <span class="metric-trend text-emerald">High Velocity</span>
-        <span class="metric-sub">across active branches</span>
+        <span class="metric-trend" [class.text-emerald]="weeklyCommitsCount() > 0" [class.text-muted]="weeklyCommitsCount() === 0">
+          {{ weeklyCommitsCount() > 0 ? 'High Velocity' : 'Quiet' }}
+        </span>
+        <span class="metric-sub">{{ weeklyCommitsCount() > 0 ? 'across active branches' : 'last 7 days' }}</span>
       </div>
     </div>
 
@@ -151,7 +157,7 @@
             </div>
           </div>
 
-          <a [href]="'https://github.com/' + (gitHubApiService.currentUser()?.login || 'thanhnamle')" target="_blank" class="section-link-btn" title="View all PRs on GitHub">
+          <a [href]="gitHubApiService.currentUser()?.html_url || 'https://github.com'" target="_blank" class="section-link-btn" title="View all PRs on GitHub">
             <span>View all</span>
             <lucide-icon [img]="ArrowUpRight" class="link-arrow"></lucide-icon>
           </a>
@@ -219,7 +225,7 @@
                 <span class="empty-pr-title">Review Queue Clean</span>
                 <span class="empty-pr-sub">No pending pull requests across your tracked repositories.</span>
               </div>
-              <a [href]="'https://github.com/' + (gitHubApiService.currentUser()?.login || 'thanhnamle')" target="_blank" class="empty-pr-link" title="Open GitHub">
+              <a [href]="gitHubApiService.currentUser()?.html_url || 'https://github.com'" target="_blank" class="empty-pr-link" title="Open GitHub">
                 <span>View on GitHub</span>
                 <lucide-icon [img]="ExternalLink" class="empty-link-icon"></lucide-icon>
               </a>
@@ -412,22 +418,28 @@
         <div class="api-health-box">
           <div class="health-row">
             <span class="health-label">Connected Account</span>
-            <span class="health-val font-mono">&#64;{{ gitHubApiService.currentUser()?.login || 'thanhnamle' }}</span>
+            <span class="health-val font-mono">
+              {{ gitHubApiService.currentUser() ? ('@' + gitHubApiService.currentUser()?.login) : 'Not connected' }}
+            </span>
           </div>
 
           <!-- Thanh progress bar Rate Limit -->
           <div class="progress-bar-bg">
-            <div class="progress-bar-fill" style="width: 96.4%;"></div>
+            <div class="progress-bar-fill" [style.width]="gitHubApiService.currentUser() ? '100%' : '0%'"></div>
           </div>
 
           <div class="health-meta-grid">
             <div class="health-meta-item">
               <span class="meta-title">Auth Status</span>
-              <span class="meta-val text-emerald">Verified</span>
+              <span class="meta-val" [class.text-emerald]="gitHubApiService.currentUser()" [class.text-muted]="!gitHubApiService.currentUser()">
+                {{ gitHubApiService.currentUser() ? 'Verified' : 'Guest Mode' }}
+              </span>
             </div>
             <div class="health-meta-item">
-              <span class="meta-title">Latency</span>
-              <span class="meta-val">4ms (Fast)</span>
+              <span class="meta-title">API Status</span>
+              <span class="meta-val" [class.text-emerald]="gitHubApiService.currentUser()">
+                {{ gitHubApiService.currentUser() ? 'Live (Connected)' : 'Standby' }}
+              </span>
             </div>
             <div class="health-meta-item">
               <span class="meta-title">Repositories</span>

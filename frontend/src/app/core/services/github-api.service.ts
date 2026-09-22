@@ -134,35 +134,6 @@ export class GitHubApiService {
       console.warn('[GitHubApiService] Backend profile fetch failed, will try public fallback', err);
     }
 
-    // Fallback: nếu chưa đăng nhập hoặc backend không trả về user, gọi public GitHub API
-    try {
-      const username = 'thanhnamle';
-      const directRes = await fetch(`https://api.github.com/users/${username}`);
-      if (directRes.ok) {
-        const u = await directRes.json();
-        const profileData: GitHubUser = {
-          id: u.id,
-          login: u.login,
-          name: u.name || u.login,
-          avatar_url: u.avatar_url,
-          bio: u.bio || 'Software engineer passionate about building high-performance systems.',
-          company: u.company || null,
-          blog: u.blog || u.html_url,
-          location: u.location || 'Vietnam',
-          public_repos: u.public_repos,
-          public_gists: u.public_gists,
-          followers: u.followers,
-          following: u.following,
-          created_at: u.created_at,
-          html_url: u.html_url,
-        };
-        this.currentUser.set(profileData);
-        return profileData;
-      }
-    } catch (fallbackErr) {
-      console.warn('[GitHubApiService] Direct profile fallback failed:', fallbackErr);
-    }
-
     return null;
   }
 
@@ -174,6 +145,7 @@ export class GitHubApiService {
       this.loading.set(true);
       let rawRepos: any[] = [];
 
+      let backendSuccess = false;
       // 1. Thử gọi backend API
       try {
         const res = await fetch(`${this.baseUrl}/github/repositories`, {
@@ -182,17 +154,18 @@ export class GitHubApiService {
         });
         if (res.ok) {
           const data = await res.json();
-          if (Array.isArray(data) && data.length > 0) {
+          if (Array.isArray(data)) {
             rawRepos = data;
+            backendSuccess = true;
           }
         }
       } catch (e) {
         console.warn('[GitHubApiService] Backend repositories fetch failed, will try public fallback', e);
       }
 
-      // 2. Fallback trực tiếp GitHub API nếu backend chưa có dữ liệu
-      if (rawRepos.length === 0) {
-        const username = this.currentUser()?.login || 'thanhnamle';
+      // 2. Fallback trực tiếp GitHub API chỉ khi backend lỗi mạng VÀ có user login
+      if (!backendSuccess && this.currentUser()?.login) {
+        const username = this.currentUser()!.login;
         try {
           const directRes = await fetch(`https://api.github.com/users/${username}/repos?per_page=100&sort=updated`);
           if (directRes.ok) {
@@ -206,37 +179,36 @@ export class GitHubApiService {
         }
       }
 
-      if (rawRepos.length > 0) {
-        const mapped: GitHubRepoItem[] = rawRepos.map((r: any) => ({
-          id: r.id,
-          name: r.name,
-          fullName: r.full_name,
-          description: r.description || 'No description provided.',
-          language: r.language || 'Markdown',
-          languageColor: this.getLanguageColor(r.language),
-          starsCount: r.stargazers_count ?? 0,
-          forksCount: r.forks_count ?? 0,
-          openIssuesCount: r.open_issues_count ?? 0,
-          isFork: !!r.fork,
-          isPrivate: !!r.private,
-          license: r.license?.spdx_id || 'MIT',
-          tags: r.topics && r.topics.length ? r.topics : ['github', 'repository'],
-          htmlUrl: r.html_url,
-          cloneUrl: r.clone_url,
-          updatedAt: r.updated_at,
-          updatedRelative: `Updated ${new Date(r.updated_at).toLocaleDateString()}`,
-          defaultBranch: r.default_branch || 'main',
-        }));
+      const mapped: GitHubRepoItem[] = rawRepos.map((r: any) => ({
+        id: r.id,
+        name: r.name,
+        fullName: r.full_name,
+        description: r.description || 'No description provided.',
+        language: r.language || 'Markdown',
+        languageColor: this.getLanguageColor(r.language),
+        starsCount: r.stargazers_count ?? 0,
+        forksCount: r.forks_count ?? 0,
+        openIssuesCount: r.open_issues_count ?? 0,
+        isFork: !!r.fork,
+        isPrivate: !!r.private,
+        license: r.license?.spdx_id || 'MIT',
+        tags: r.topics && r.topics.length ? r.topics : ['github', 'repository'],
+        htmlUrl: r.html_url,
+        cloneUrl: r.clone_url,
+        updatedAt: r.updated_at,
+        updatedRelative: `Updated ${new Date(r.updated_at).toLocaleDateString()}`,
+        defaultBranch: r.default_branch || 'main',
+      }));
 
-        this.repositories.set(mapped);
-        return mapped;
-      }
+      this.repositories.set(mapped);
+      return mapped;
     } catch (err) {
       console.error('[GitHubApiService] Lỗi lấy danh sách repos:', err);
+      this.repositories.set([]);
+      return [];
     } finally {
       this.loading.set(false);
     }
-    return [];
   }
 
   // 4. Đăng xuất: Xóa cookie ở Backend và reset state ở Frontend
@@ -265,6 +237,7 @@ export class GitHubApiService {
       this.loading.set(true);
       let rawEvents: any[] = [];
 
+      let backendSuccess = false;
       // 1. Thử gọi qua Backend API (kèm cookie devboard_session)
       try {
         const res = await fetch(`${this.baseUrl}/github/activities`, {
@@ -273,17 +246,18 @@ export class GitHubApiService {
         });
         if (res.ok) {
           const data = await res.json();
-          if (Array.isArray(data) && data.length > 0) {
+          if (Array.isArray(data)) {
             rawEvents = data;
+            backendSuccess = true;
           }
         }
       } catch (e) {
         console.warn('[GitHubApiService] Backend activities fetch failed, will try public fallback', e);
       }
 
-      // 2. Fallback: Nếu Backend trả về rỗng hoặc chưa đăng nhập, gọi trực tiếp public events của GitHub
-      if (rawEvents.length === 0) {
-        const username = this.currentUser()?.login || 'thanhnamle';
+      // 2. Fallback trực tiếp GitHub API chỉ khi backend lỗi mạng VÀ có user login
+      if (!backendSuccess && this.currentUser()?.login) {
+        const username = this.currentUser()!.login;
         try {
           const directRes = await fetch(`https://api.github.com/users/${username}/events?per_page=100`, {
             headers: {
@@ -371,7 +345,7 @@ export class GitHubApiService {
             prNumber,
             timestamp: event.created_at,
             timeAgo: date.toLocaleDateString('vi-VN', { hour: '2-digit', minute: '2-digit', day: '2-digit', month: '2-digit' }),
-            author: event.actor?.login || 'thanhnamle',
+            author: event.actor?.login || this.currentUser()?.login || 'developer',
           };
         });
 
@@ -422,7 +396,7 @@ export class GitHubApiService {
 
     try {
       let rawCommits: any[] = [];
-      const owner = repoName.includes('/') ? repoName.split('/')[0] : (this.currentUser()?.login || 'thanhnamle');
+      const owner = repoName.includes('/') ? repoName.split('/')[0] : (this.currentUser()?.login || 'developer');
       const name = repoName.includes('/') ? repoName.split('/')[1] : repoName;
 
       // 1. Thử gọi backend API
@@ -488,7 +462,7 @@ export class GitHubApiService {
             commitHash: shortHash,
             timestamp: dateStr,
             timeAgo,
-            author: item.author?.login || item.commit?.author?.name || 'thanhnamle',
+            author: item.author?.login || item.commit?.author?.name || this.currentUser()?.login || 'developer',
           };
         });
 

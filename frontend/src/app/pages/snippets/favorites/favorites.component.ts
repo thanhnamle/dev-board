@@ -1,5 +1,6 @@
-import { Component, signal, computed } from '@angular/core';
+import { Component, signal, computed, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
 import {
   LucideAngularModule,
   Heart,
@@ -11,31 +12,24 @@ import {
   Tag,
   Sparkles,
   ExternalLink,
-  Plus
+  Plus,
+  Trash2,
+  X,
+  Save
 } from 'lucide-angular';
-
-export interface FavoriteSnippet {
-  id: number;
-  title: string;
-  filename: string;
-  language: 'typescript' | 'go' | 'sql' | 'docker';
-  languageLabel: string;
-  description: string;
-  rawCode: string;
-  codeHtml: string;
-  tags: string[];
-  lastUsed: string;
-  isFavorite: boolean;
-}
+import { WorkspaceDataService } from '../../../core/services/workspace-data.service';
+import { SnippetItem } from '../../../core/data/snippets';
 
 @Component({
   selector: 'app-favorites',
   standalone: true,
-  imports: [CommonModule, LucideAngularModule],
+  imports: [CommonModule, FormsModule, LucideAngularModule],
   templateUrl: './favorites.component.html',
   styleUrl: './favorites.component.css'
 })
 export class FavoritesComponent {
+  private readonly workspace = inject(WorkspaceDataService);
+
   // 1. Khai báo Lucide Icons
   readonly Heart = Heart;
   readonly Code2 = Code2;
@@ -47,155 +41,60 @@ export class FavoritesComponent {
   readonly Sparkles = Sparkles;
   readonly ExternalLink = ExternalLink;
   readonly Plus = Plus;
+  readonly Trash2 = Trash2;
+  readonly X = X;
+  readonly Save = Save;
 
   // 2. Signals quản lý trạng thái
   searchQuery = signal<string>('');
   copiedSnippetId = signal<number | null>(null);
 
-  // 3. Danh sách 12 Snippets yêu thích nhất
-  favoritesList = signal<FavoriteSnippet[]>([
-    {
-      id: 1,
-      title: 'Angular 17 Custom Debounced Signal Effect',
-      filename: 'debounce-effect.util.ts',
-      language: 'typescript',
-      languageLabel: 'TypeScript',
-      description: 'Debounce reactive effect execution on signal changes to prevent API throttling.',
-      rawCode: `export function debouncedEffect<T>(source: Signal<T>, callback: (val: T) => void, delayMs = 300) {
-  let timer: any;
-  return effect((onCleanup) => {
-    const value = source();
-    untracked(() => {
-      clearTimeout(timer);
-      timer = setTimeout(() => callback(value), delayMs);
-    });
-    onCleanup(() => clearTimeout(timer));
-  });
-}`,
-      codeHtml: `<span class="c-kw">export function</span> <span class="c-fn">debouncedEffect</span>&lt;<span class="c-typ">T</span>&gt;(source: <span class="c-typ">Signal</span>&lt;<span class="c-typ">T</span>&gt;, callback: (val: <span class="c-typ">T</span>) =&gt; <span class="c-typ">void</span>, delayMs = <span class="c-bool">300</span>) {
-  <span class="c-kw">let</span> timer: <span class="c-typ">any</span>;
-  <span class="c-kw">return</span> <span class="c-fn">effect</span>((onCleanup) =&gt; {
-    <span class="c-kw">const</span> value = <span class="c-fn">source</span>();
-    <span class="c-fn">untracked</span>(() =&gt; {
-      <span class="c-fn">clearTimeout</span>(timer);
-      timer = <span class="c-fn">setTimeout</span>(() =&gt; <span class="c-fn">callback</span>(value), delayMs);
-    });
-    <span class="c-fn">onCleanup</span>(() =&gt; <span class="c-fn">clearTimeout</span>(timer));
-  });
-}`,
-      tags: ['Angular', 'Signals', 'Utility'],
-      lastUsed: '10m ago',
-      isFavorite: true
-    },
-    {
-      id: 2,
-      title: 'Go HMAC-SHA256 Webhook Signature Validator',
-      filename: 'webhook_validator.go',
-      language: 'go',
-      languageLabel: 'Go',
-      description: 'Constant-time cryptographic signature verification for payment callbacks.',
-      rawCode: `func VerifyHMAC(payload, signature, secret []byte) bool {
-	mac := hmac.New(sha256.New, secret)
-	mac.Write(payload)
-	expectedMAC := hex.EncodeToString(mac.Sum(nil))
-	return hmac.Equal([]byte(expectedMAC), signature)
-}`,
-      codeHtml: `<span class="c-kw">func</span> <span class="c-fn">VerifyHMAC</span>(payload, signature, secret []<span class="c-typ">byte</span>) <span class="c-typ">bool</span> {
-	mac := hmac.<span class="c-fn">New</span>(sha256.New, secret)
-	mac.<span class="c-fn">Write</span>(payload)
-	expectedMAC := hex.<span class="c-fn">EncodeToString</span>(mac.<span class="c-fn">Sum</span>(<span class="c-bool">nil</span>))
-	<span class="c-kw">return</span> hmac.<span class="c-fn">Equal</span>([]<span class="c-typ">byte</span>(expectedMAC), signature)
-}`,
-      tags: ['Go', 'Security', 'Fintech'],
-      lastUsed: '1h ago',
-      isFavorite: true
-    },
-    {
-      id: 3,
-      title: 'PostgreSQL Upsert with Conflict Handling',
-      filename: 'upsert_profile.sql',
-      language: 'sql',
-      languageLabel: 'SQL',
-      description: 'Atomic upsert query pattern with returning mutated rows in PostgreSQL.',
-      rawCode: `INSERT INTO user_profiles (github_id, username, email, updated_at)
-VALUES ($1, $2, $3, NOW())
-ON CONFLICT (github_id)
-DO UPDATE SET
-  username = EXCLUDED.username,
-  email = EXCLUDED.email,
-  updated_at = NOW()
-RETURNING id, username, updated_at;`,
-      codeHtml: `<span class="c-kw">INSERT INTO</span> user_profiles (github_id, username, email, updated_at)
-<span class="c-kw">VALUES</span> ($1, $2, $3, <span class="c-fn">NOW</span>())
-<span class="c-kw">ON CONFLICT</span> (github_id)
-<span class="c-kw">DO UPDATE SET</span>
-  username = <span class="c-typ">EXCLUDED</span>.username,
-  email = <span class="c-typ">EXCLUDED</span>.email,
-  updated_at = <span class="c-fn">NOW</span>()
-<span class="c-kw">RETURNING</span> id, username, updated_at;`,
-      tags: ['SQL', 'Postgres', 'Database'],
-      lastUsed: 'Yesterday',
-      isFavorite: true
-    },
-    {
-      id: 4,
-      title: 'Multi-stage Production Dockerfile for Go',
-      filename: 'Dockerfile.prod',
-      language: 'docker',
-      languageLabel: 'Docker',
-      description: 'Scratch-based minimal container build reducing image size from 800MB to 12MB.',
-      rawCode: `FROM golang:1.22-alpine AS builder
-WORKDIR /app
-COPY go.mod go.sum ./
-RUN go mod download
-COPY . .
-RUN CGO_ENABLED=0 GOOS=linux go build -ldflags="-w -s" -o server .
+  // Modal form signals
+  isSnippetModalOpen = signal<boolean>(false);
+  formTitle = signal<string>('');
+  formFilename = signal<string>('');
+  formLanguage = signal<string>('typescript');
+  formTags = signal<string>('');
+  formDesc = signal<string>('');
+  formCode = signal<string>('');
 
-FROM scratch
-COPY --from=builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
-COPY --from=builder /app/server /server
-ENTRYPOINT ["/server"]`,
-      codeHtml: `<span class="c-kw">FROM</span> golang:1.22-alpine <span class="c-kw">AS</span> builder
-<span class="c-kw">WORKDIR</span> /app
-<span class="c-kw">COPY</span> go.mod go.sum ./
-<span class="c-kw">RUN</span> go mod download
-<span class="c-kw">COPY</span> . .
-<span class="c-kw">RUN</span> CGO_ENABLED=0 GOOS=linux go build -ldflags=<span class="c-str">"-w -s"</span> -o server .
+  // 3. Danh sách Snippets yêu thích từ WorkspaceDataService
+  favoritesList = computed(() => this.workspace.snippets().filter(s => s.isFavorite));
 
-<span class="c-kw">FROM</span> scratch
-<span class="c-kw">COPY</span> --from=builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
-<span class="c-kw">COPY</span> --from=builder /app/server /server
-<span class="c-kw">ENTRYPOINT</span> [<span class="c-str">"/server"</span>]`,
-      tags: ['Docker', 'MultiStage', 'DevOps'],
-      lastUsed: '2d ago',
-      isFavorite: true
-    }
-  ]);
+  readonly languageCount = computed(() => new Set(this.favoritesList().map(s => s.language)).size);
+  readonly uniqueLanguagesString = computed(() => {
+    const list = Array.from(new Set(this.favoritesList().map(s => s.languageLabel || s.language)));
+    return list.slice(0, 4).join(' • ') || 'None';
+  });
 
   // 4. Lọc danh sách Favorites
   filteredFavorites = computed(() => {
     const q = this.searchQuery().toLowerCase().trim();
     return this.favoritesList().filter(s => {
       return (
-        s.isFavorite &&
-        (!q ||
-          s.title.toLowerCase().includes(q) ||
-          s.filename.toLowerCase().includes(q) ||
-          s.description.toLowerCase().includes(q) ||
-          s.tags.some(t => t.toLowerCase().includes(q)))
+        !q ||
+        s.title.toLowerCase().includes(q) ||
+        s.filename.toLowerCase().includes(q) ||
+        s.description.toLowerCase().includes(q) ||
+        s.tags.some(t => t.toLowerCase().includes(q))
       );
     });
   });
 
   // Toggle Favorite
   toggleFavorite(id: number) {
-    this.favoritesList.update(list =>
-      list.map(s => (s.id === id ? { ...s, isFavorite: !s.isFavorite } : s))
-    );
+    this.workspace.toggleFavoriteSnippet(id);
+  }
+
+  // Delete Snippet
+  deleteSnippet(id: number) {
+    if (confirm('Are you sure you want to delete this snippet?')) {
+      this.workspace.deleteSnippet(id);
+    }
   }
 
   // 1-Click Copy vào Clipboard
-  copyCode(snippet: FavoriteSnippet) {
+  copyCode(snippet: SnippetItem) {
     navigator.clipboard.writeText(snippet.rawCode).then(() => {
       this.copiedSnippetId.set(snippet.id);
       setTimeout(() => {
@@ -204,5 +103,62 @@ ENTRYPOINT ["/server"]`,
         }
       }, 1500);
     });
+  }
+
+  // Modal actions
+  openCreateModal() {
+    this.formTitle.set('');
+    this.formFilename.set('');
+    this.formLanguage.set('typescript');
+    this.formTags.set('');
+    this.formDesc.set('');
+    this.formCode.set('');
+    this.isSnippetModalOpen.set(true);
+  }
+
+  closeSnippetModal() {
+    this.isSnippetModalOpen.set(false);
+  }
+
+  private getLangLabel(lang: string): string {
+    const map: Record<string, string> = {
+      typescript: 'TypeScript',
+      go: 'Go',
+      sql: 'SQL',
+      docker: 'Docker',
+      shell: 'Shell',
+      css: 'CSS',
+      python: 'Python',
+      rust: 'Rust',
+      javascript: 'JavaScript'
+    };
+    return map[lang.toLowerCase()] || lang.toUpperCase();
+  }
+
+  submitSnippet() {
+    const title = this.formTitle().trim();
+    const rawCode = this.formCode().trim();
+    if (!title || !rawCode) return;
+
+    const lang = this.formLanguage().toLowerCase();
+    const languageLabel = this.getLangLabel(lang);
+    const filename = this.formFilename().trim() || `snippet.${lang === 'typescript' ? 'ts' : lang}`;
+    const description = this.formDesc().trim() || 'Favorite user snippet';
+    const rawTags = this.formTags().split(',').map(t => t.trim().replace(/^#/, '')).filter(Boolean);
+    const tags = rawTags.length > 0 ? rawTags : [lang, 'favorite'];
+
+    const newSnippet = this.workspace.addSnippet({
+      title,
+      filename,
+      language: lang,
+      languageLabel,
+      description,
+      rawCode,
+      tags
+    });
+
+    // Mark as favorite immediately
+    this.workspace.toggleFavoriteSnippet(newSnippet.id);
+    this.closeSnippetModal();
   }
 }

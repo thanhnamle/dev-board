@@ -106,11 +106,15 @@ export class SidebarComponent {
   // Mặc định đang mở mục 'Dashboard'
   expandedItem = signal<string | null>('Dashboard');
 
-  currentUser = signal<UserProfile>({
-    name: 'Thành Nam',
-    role: 'Lead Architect',
-    avatarUrl: 'assets/Avatar.jpg',
-    status: 'Online'
+  currentUser = computed<UserProfile>(() => {
+    const gh = this.gitHubApiService.currentUser();
+    const user = this.userService.currentUser();
+    return {
+      name: gh?.name || gh?.login || user.name || 'Developer',
+      role: user.role || 'Software Engineer',
+      avatarUrl: gh?.avatar_url || user.avatarUrl || '',
+      status: 'Online'
+    };
   });
 
   userMenuOpen = signal<boolean>(false);
@@ -216,6 +220,8 @@ export class SidebarComponent {
 
   async logout() {
     this.userMenuOpen.set(false);
+    this.workspace.reset();
+    this.userService.reset();
     await this.gitHubApiService.logout();
 
     if (typeof window !== 'undefined') {

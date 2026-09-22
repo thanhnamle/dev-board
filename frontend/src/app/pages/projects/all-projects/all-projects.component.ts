@@ -88,7 +88,7 @@ export class AllProjectsComponent implements OnInit {
 
   readonly activeBranchesCount = computed(() => {
     const branches = new Set(this.projects().map(p => p.branch).filter(Boolean));
-    return branches.size || 1;
+    return branches.size;
   });
 
   // 5. Danh sách bộ lọc công nghệ động (lấy từ ngôn ngữ thực tế của các Repositories)

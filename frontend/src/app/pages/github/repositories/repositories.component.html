@@ -48,7 +48,7 @@
 
       <!-- Open GitHub Orgs/User Link -->
       <a 
-        href="https://github.com/thanhnamle?tab=repositories" 
+        [href]="gitHubApiService.currentUser()?.login ? 'https://github.com/' + gitHubApiService.currentUser()?.login + '?tab=repositories' : 'https://github.com/new'" 
         target="_blank" 
         class="action-btn btn-primary" 
         title="View on GitHub">
@@ -73,7 +73,7 @@
       </div>
       <div class="metric-value-row">
         <span class="metric-value">{{ repositories().length }}</span>
-        <span class="metric-pill pill-purple">7 Source • 1 Fork</span>
+        <span class="metric-pill pill-purple">{{ sourceCount() }} Source • {{ forkCount() }} Fork</span>
       </div>
       <div class="metric-footer">
         <span class="metric-trend text-purple">100% Synced</span>
@@ -94,8 +94,10 @@
         <span class="metric-pill pill-amber">★ Popular</span>
       </div>
       <div class="metric-footer">
-        <span class="metric-trend text-amber">Top Repos</span>
-        <span class="metric-sub">payment-sdk & signals</span>
+        <span class="metric-trend text-amber">
+          {{ totalStars() > 0 ? (totalStars() + ' Stars') : 'No Stars yet' }}
+        </span>
+        <span class="metric-sub">{{ topStarredRepo() ? topStarredRepo()?.name : 'across repositories' }}</span>
       </div>
     </div>
 
@@ -112,8 +114,8 @@
         <span class="metric-pill pill-cyan">Ecosystem</span>
       </div>
       <div class="metric-footer">
-        <span class="metric-trend text-blue">24 Forks</span>
-        <span class="metric-sub">on primary SDK</span>
+        <span class="metric-trend text-blue">{{ totalForks() }} Forks</span>
+        <span class="metric-sub">across repositories</span>
       </div>
     </div>
 
@@ -130,7 +132,7 @@
         <span class="metric-pill pill-emerald">Protected</span>
       </div>
       <div class="metric-footer">
-        <span class="metric-trend text-emerald">11 Issues</span>
+        <span class="metric-trend text-emerald">{{ totalOpenIssues() }} Issues</span>
         <span class="metric-sub">across repositories</span>
       </div>
     </div>
@@ -186,7 +188,7 @@
           class="custom-select" 
           [value]="selectedLang()" 
           (change)="selectedLang.set($any($event.target).value)">
-          @for (lang of availableLanguages; track lang.value) {
+          @for (lang of availableLanguages(); track lang.value) {
             <option [value]="lang.value">{{ lang.label }}</option>
           }
         </select>

@@ -1,6 +1,9 @@
 :host { display: block; color: var(--text-body); }
 .page-header, .compose-actions, .thread-meta { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
 .page-header { margin-bottom: 20px; flex-wrap: wrap; }
+.header-actions { display: flex; align-items: center; gap: 10px; }
+.btn-new-thread { display: inline-flex; align-items: center; gap: 6px; background: #059669; color: white; border: 1px solid #047857; font-weight: 600; transition: background 0.15s ease; }
+.btn-new-thread:hover { background: #047857; }
 h1 { font-size: 28px; margin: 8px 0; letter-spacing: -1px; }
 h1, h2, strong { color: var(--text-title); }
 h2 { font-size: 18px; line-height: 1.5; }

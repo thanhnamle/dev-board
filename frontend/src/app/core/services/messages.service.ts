@@ -42,4 +42,17 @@ export class MessagesService {
       : thread));
     return true;
   }
+
+  createThread(title: string, repository: string, category: MessageCategory, initialMessage: string): MessageThread {
+    const newThread: MessageThread = {
+      id: Date.now(),
+      title: title.trim(),
+      repository: repository.trim() || 'workspace/general',
+      category,
+      unread: false,
+      messages: [{ author: 'You', body: initialMessage.trim(), local: true }]
+    };
+    this.state.update(threads => [newThread, ...threads]);
+    return newThread;
+  }
 }

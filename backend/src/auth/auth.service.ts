@@ -65,7 +65,7 @@ export class AuthService {
     const scope = encodeURIComponent('read:user user:email repo');
     const state = crypto.randomBytes(16).toString('hex');
 
-    return `https://github.com/login/oauth/authorize?client_id=${clientId}&redirect_uri=${redirectUri}&scope=${scope}&state=${state}`;
+    return `https://github.com/login/oauth/authorize?client_id=${clientId}&redirect_uri=${redirectUri}&scope=${scope}&state=${state}&prompt=select_account`;
   }
 
   async handleGitHubCallback(code: string): Promise<{ sessionId: string; user: AuthUser }> {

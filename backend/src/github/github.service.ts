@@ -159,14 +159,9 @@ export class GitHubService {
           (coll.totalRepositoryContributions || 0) +
           (coll.restrictedContributionsCount || 0);
 
-        // Bổ sung phần chênh lệch contributions (18) từ các đóng góp private/restricted
-        // mà GitHub GraphQL viewer API không quét trực tiếp được từ token OAuth,
-        // đảm bảo số liệu luôn tự động tăng và khớp chính xác 100% với headline trên GitHub profile (hiện tại: 183 + 18 = 201).
-        const restrictedOffset = 18;
-        const total = Math.max(sumAll, coll.contributionCalendar?.totalContributions || 0) + restrictedOffset;
+        const total = Math.max(sumAll, coll.contributionCalendar?.totalContributions || 0);
 
         coll.totalAnnualContributions = total;
-        coll.restrictedContributionsCount = (coll.restrictedContributionsCount || 0) + restrictedOffset;
 
         if (coll.contributionCalendar) {
           coll.contributionCalendar.totalContributions = total;
@@ -195,7 +190,7 @@ export class GitHubService {
   // 6. Lấy danh sách commits của một repository cụ thể
   async getRepoCommits(user: AuthUser, repoName: string, perPage = 50) {
     if (!repoName) return [];
-    const owner = repoName.includes('/') ? repoName.split('/')[0] : (user?.login || 'thanhnamle');
+    const owner = repoName.includes('/') ? repoName.split('/')[0] : user.login;
     const name = repoName.includes('/') ? repoName.split('/')[1] : repoName;
 
     try {

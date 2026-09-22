@@ -282,7 +282,7 @@
           </div>
           <div class="telemetry-divider"></div>
           <div class="telemetry-stat">
-            <span class="telemetry-num">{{ gitHubApiService.contributions()?.totalContributions || 201 }}</span>
+            <span class="telemetry-num">{{ gitHubApiService.contributions()?.totalContributions ?? 0 }}</span>
             <span class="telemetry-label">Commits</span>
           </div>
         </div>
@@ -352,7 +352,7 @@
             }}</span>
             <span class="dropdown-user-handle"
               >&#64;{{
-                gitHubApiService.currentUser()?.login || "thanhnamle"
+                gitHubApiService.currentUser()?.login || "developer"
               }}</span
             >
           </div>
@@ -381,7 +381,7 @@
           <a
             [href]="
               gitHubApiService.currentUser()?.html_url ||
-              'https://github.com/thanhnamle'
+              'https://github.com'
             "
             target="_blank"
             (click)="userMenuOpen.set(false)"

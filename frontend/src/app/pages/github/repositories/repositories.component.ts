@@ -72,17 +72,12 @@ export class RepositoriesComponent {
   readonly gitHubApiService = inject(GitHubApiService);
 
   ngOnInit() {
-    if (this.gitHubApiService.repositories().length === 0) {
-      this.repositories.set(this.gitHubApiService.repositories());
-    }
+    this.repositories.set(this.gitHubApiService.repositories());
   }
 
   constructor() {
     effect(() => {
-      const realRepos = this.gitHubApiService.repositories();
-      if (realRepos.length > 0) {
-        this.repositories.set(realRepos);
-      }
+      this.repositories.set(this.gitHubApiService.repositories());
     });
   }
 
@@ -95,179 +90,19 @@ export class RepositoriesComponent {
   loading = signal<boolean>(false);
   copiedRepoId = signal<number | null>(null);
 
-  // 3. Danh sách ngôn ngữ để lọc
-  availableLanguages = [
-    { label: 'All Languages', value: 'all' },
-    { label: 'TypeScript', value: 'TypeScript' },
-    { label: 'Go', value: 'Go' },
-    { label: 'Python', value: 'Python' },
-    { label: 'HTML/CSS', value: 'HTML' },
-    { label: 'Docker', value: 'Dockerfile' }
-  ];
+  repositories = signal<RepositoryItem[]>([]);
 
-  // 4. Danh sách 8 Repositories mẫu (Khớp với badge '8' ở Sidebar)
-  repositories = signal<RepositoryItem[]>([
-    {
-      id: 1,
-      name: 'dev-board',
-      fullName: 'thanhnamle/dev-board',
-      description: 'Modern developer workspace & internal tooling platform built with Angular 17, SSR, and Signals.',
-      language: 'TypeScript',
-      languageColor: '#3178c6',
-      starsCount: 42,
-      forksCount: 12,
-      openIssuesCount: 3,
-      isFork: false,
-      isPrivate: false,
-      license: 'MIT',
-      tags: ['angular', 'angular17', 'signals', 'internal-tools', 'tailwind-css'],
-      htmlUrl: 'https://github.com/thanhnamle/dev-board',
-      cloneUrl: 'https://github.com/thanhnamle/dev-board.git',
-      updatedAt: '2026-09-03T18:30:00Z',
-      updatedRelative: 'Updated 2 hours ago',
-      defaultBranch: 'main'
-    },
-    {
-      id: 2,
-      name: 'payment-gateway-sdk',
-      fullName: 'thanhnamle/payment-gateway-sdk',
-      description: 'Ultra high-throughput Go & Node.js SDK for secure QR processing, webhook verification and idempotency.',
-      language: 'Go',
-      languageColor: '#00add8',
-      starsCount: 88,
-      forksCount: 24,
-      openIssuesCount: 1,
-      isFork: false,
-      isPrivate: false,
-      license: 'Apache-2.0',
-      tags: ['golang', 'payments', 'fintech', 'microservices', 'sdk'],
-      htmlUrl: 'https://github.com/thanhnamle/payment-gateway-sdk',
-      cloneUrl: 'https://github.com/thanhnamle/payment-gateway-sdk.git',
-      updatedAt: '2026-09-02T10:15:00Z',
-      updatedRelative: 'Updated 1 day ago',
-      defaultBranch: 'master'
-    },
-    {
-      id: 3,
-      name: 'angular-signals-recipe',
-      description: 'Enterprise architecture patterns, state management recipes, and debounced effects using Angular Signals.',
-      language: 'TypeScript',
-      languageColor: '#3178c6',
-      fullName: 'thanhnamle/angular-signals-recipe',
-      starsCount: 65,
-      forksCount: 19,
-      openIssuesCount: 0,
-      isFork: false,
-      isPrivate: false,
-      license: 'MIT',
-      tags: ['angular', 'signals', 'state-management', 'design-patterns'],
-      htmlUrl: 'https://github.com/thanhnamle/angular-signals-recipe',
-      cloneUrl: 'https://github.com/thanhnamle/angular-signals-recipe.git',
-      updatedAt: '2026-08-31T14:20:00Z',
-      updatedRelative: 'Updated 3 days ago',
-      defaultBranch: 'main'
-    },
-    {
-      id: 4,
-      name: 'docker-dev-environments',
-      fullName: 'thanhnamle/docker-dev-environments',
-      description: 'Curated zero-config Docker Compose environments for local PostgreSQL, Redis cluster, Kafka, and MinIO.',
-      language: 'Dockerfile',
-      languageColor: '#384d54',
-      starsCount: 31,
-      forksCount: 7,
-      openIssuesCount: 2,
-      isFork: false,
-      isPrivate: false,
-      license: 'MIT',
-      tags: ['docker', 'devops', 'compose', 'postgres', 'redis'],
-      htmlUrl: 'https://github.com/thanhnamle/docker-dev-environments',
-      cloneUrl: 'https://github.com/thanhnamle/docker-dev-environments.git',
-      updatedAt: '2026-08-27T09:00:00Z',
-      updatedRelative: 'Updated 1 week ago',
-      defaultBranch: 'main'
-    },
-    {
-      id: 5,
-      name: 'cloud-infra-terraform',
-      fullName: 'thanhnamle/cloud-infra-terraform',
-      description: 'Production-ready AWS & GCP infrastructure modules with Kubernetes EKS, VPC peering, and Cloudflare WAF.',
-      language: 'Go',
-      languageColor: '#00add8',
-      starsCount: 54,
-      forksCount: 15,
-      openIssuesCount: 4,
-      isFork: false,
-      isPrivate: false,
-      license: 'Mozilla-2.0',
-      tags: ['terraform', 'aws', 'kubernetes', 'cloud-native', 'security'],
-      htmlUrl: 'https://github.com/thanhnamle/cloud-infra-terraform',
-      cloneUrl: 'https://github.com/thanhnamle/cloud-infra-terraform.git',
-      updatedAt: '2026-08-20T11:45:00Z',
-      updatedRelative: 'Updated 2 weeks ago',
-      defaultBranch: 'main'
-    },
-    {
-      id: 6,
-      name: 'event-driven-microservices',
-      fullName: 'thanhnamle/event-driven-microservices',
-      description: 'Distributed event sourcing template with RabbitMQ, Apache Kafka, gRPC, and outbox pattern implementation.',
-      language: 'Go',
-      languageColor: '#00add8',
-      starsCount: 73,
-      forksCount: 21,
-      openIssuesCount: 1,
-      isFork: false,
-      isPrivate: false,
-      license: 'MIT',
-      tags: ['event-driven', 'kafka', 'rabbitmq', 'cqrs', 'golang'],
-      htmlUrl: 'https://github.com/thanhnamle/event-driven-microservices',
-      cloneUrl: 'https://github.com/thanhnamle/event-driven-microservices.git',
-      updatedAt: '2026-08-15T16:00:00Z',
-      updatedRelative: 'Updated 3 weeks ago',
-      defaultBranch: 'main'
-    },
-    {
-      id: 7,
-      name: 'nestjs-graphql-starter',
-      fullName: 'thanhnamle/nestjs-graphql-starter',
-      description: 'Forked boilerplate for enterprise NestJS APIs with GraphQL code-first schema, Prisma ORM, and JWT guard.',
-      language: 'TypeScript',
-      languageColor: '#3178c6',
-      starsCount: 18,
-      forksCount: 5,
-      openIssuesCount: 0,
-      isFork: true,
-      isPrivate: false,
-      license: 'MIT',
-      tags: ['nestjs', 'graphql', 'prisma', 'typescript', 'starter'],
-      htmlUrl: 'https://github.com/thanhnamle/nestjs-graphql-starter',
-      cloneUrl: 'https://github.com/thanhnamle/nestjs-graphql-starter.git',
-      updatedAt: '2026-08-01T08:30:00Z',
-      updatedRelative: 'Updated 1 month ago',
-      defaultBranch: 'main'
-    },
-    {
-      id: 8,
-      name: 'ai-prompt-evaluator',
-      fullName: 'thanhnamle/ai-prompt-evaluator',
-      description: 'Python utility to benchmark and evaluate LLM prompt performance with token latency and output accuracy.',
-      language: 'Python',
-      languageColor: '#3572A5',
-      starsCount: 39,
-      forksCount: 8,
-      openIssuesCount: 1,
-      isFork: false,
-      isPrivate: false,
-      license: 'MIT',
-      tags: ['python', 'llm', 'ai', 'benchmark', 'gemini'],
-      htmlUrl: 'https://github.com/thanhnamle/ai-prompt-evaluator',
-      cloneUrl: 'https://github.com/thanhnamle/ai-prompt-evaluator.git',
-      updatedAt: '2026-07-25T13:10:00Z',
-      updatedRelative: 'Updated 1 month ago',
-      defaultBranch: 'main'
+  // 3. Danh sách ngôn ngữ động tính từ Repositories
+  availableLanguages = computed(() => {
+    const langs = new Set<string>();
+    for (const r of this.repositories()) {
+      if (r.language) langs.add(r.language);
     }
-  ]);
+    return [
+      { label: 'All Languages', value: 'all' },
+      ...Array.from(langs).sort().map(l => ({ label: l, value: l }))
+    ];
+  });
 
   // 5. Computed Signal: Tự động lọc & sắp xếp danh sách Repositories
   filteredRepos = computed(() => {
@@ -315,6 +150,14 @@ export class RepositoriesComponent {
     return this.repositories().reduce((sum, r) => sum + r.forksCount, 0);
   });
 
+  sourceCount = computed(() => this.repositories().filter(r => !r.isFork).length);
+  forkCount = computed(() => this.repositories().filter(r => r.isFork).length);
+  totalOpenIssues = computed(() => this.repositories().reduce((sum, r) => sum + (r.openIssuesCount || 0), 0));
+  topStarredRepo = computed(() => {
+    const sorted = [...this.repositories()].sort((a, b) => b.starsCount - a.starsCount);
+    return sorted.length ? sorted[0] : null;
+  });
+
   // 8. Hàm 1-Click Copy git clone URL
   copyCloneUrl(repo: RepositoryItem, event: MouseEvent) {
     event.stopPropagation();
@@ -329,14 +172,12 @@ export class RepositoriesComponent {
     }
   }
 
-  // 9. Hàm làm mới dữ liệu (hỗ trợ gọi live GitHub API nếu muốn)
-    async syncRepositories() {
+  // 9. Hàm làm mới dữ liệu
+  async syncRepositories() {
     this.loading.set(true);
     try {
       const realRepos = await this.gitHubApiService.fetchRepositories();
-      if (realRepos.length > 0) {
-        this.repositories.set(realRepos);
-      }
+      this.repositories.set(realRepos);
     } finally {
       this.loading.set(false);
     }

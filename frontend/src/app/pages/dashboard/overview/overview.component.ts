@@ -116,15 +116,16 @@ export class OverviewComponent implements OnInit {
   readonly displayName = computed(() => {
     return this.gitHubApiService.currentUser()?.name 
       || this.userService.currentUser().name 
-      || 'Thành Nam';
+      || 'Developer';
   });
 
   // Tính số ngày commit liên tiếp (Active Streak) từ calendar thật
   readonly streakDays = computed(() => {
     const contrib = this.gitHubApiService.contributions();
-    if (!contrib?.weeks?.length) return 12; // Fallback nếu chưa tải xong
+    const weeks = contrib?.contributionCalendar?.weeks || contrib?.weeks;
+    if (!weeks?.length) return 0;
 
-    const allDays = contrib.weeks.flatMap((w: any) => w.contributionDays || []);
+    const allDays = weeks.flatMap((w: any) => w.contributionDays || []);
     let streak = 0;
     const today = new Date().toISOString().split('T')[0];
     let streakStarted = false;
@@ -144,28 +145,28 @@ export class OverviewComponent implements OnInit {
         break;
       }
     }
-    return streak > 0 ? streak : 1;
+    return streak;
   });
 
-    // Card 1: Số lượng Repositories đang quản lý
+  // Card 1: Số lượng Repositories đang quản lý
   readonly trackedReposCount = computed(() => {
     const repos = this.gitHubApiService.repositories();
-    return repos.length > 0 ? repos.length : (this.gitHubApiService.currentUser()?.public_repos || 18);
+    if (repos.length > 0) return repos.length;
+    return this.gitHubApiService.currentUser()?.public_repos ?? 0;
   });
 
   // Card 2: Số commit trong 7 ngày gần nhất
   readonly weeklyCommitsCount = computed(() => {
     const contrib = this.gitHubApiService.contributions();
-    if (contrib?.weeks?.length) {
-      const allDays = contrib.weeks.flatMap((w: any) => w.contributionDays || []);
+    const weeks = contrib?.contributionCalendar?.weeks || contrib?.weeks;
+    if (weeks?.length) {
+      const allDays = weeks.flatMap((w: any) => w.contributionDays || []);
       const last7Days = allDays.slice(-7);
-      const sum = last7Days.reduce((acc: number, d: any) => acc + (d.contributionCount || 0), 0);
-      if (sum > 0) return sum;
+      return last7Days.reduce((acc: number, d: any) => acc + (d.contributionCount || 0), 0);
     }
     // Đếm số events trong 7 ngày từ activities
     const sevenDaysAgo = Date.now() - 7 * 24 * 60 * 60 * 1000;
-    const count = this.gitHubApiService.activities().filter(a => new Date(a.timestamp).getTime() >= sevenDaysAgo).length;
-    return count > 0 ? count : 7;
+    return this.gitHubApiService.activities().filter(a => new Date(a.timestamp).getTime() >= sevenDaysAgo).length;
   });
 
   // Card 3: Số lượng Notes từ WorkspaceDataService
@@ -186,8 +187,8 @@ export class OverviewComponent implements OnInit {
       message: a.title,
       hash: a.commitHash || 'latest',
       timeAgo: a.timeAgo,
-      additions: 12, // Metadata tượng trưng cho giao diện diff
-      deletions: 4
+      additions: a.type === 'commit' ? 1 : 0,
+      deletions: 0
     }));
   });
 
@@ -199,7 +200,7 @@ export class OverviewComponent implements OnInit {
       title: pr.title,
       repo: pr.repoName,
       author: pr.author,
-      avatar: this.gitHubApiService.currentUser()?.avatar_url || 'assets/Avatar.jpg',
+      avatar: this.gitHubApiService.currentUser()?.avatar_url || '',
       branch: pr.branch || 'main',
       ciStatus: 'passing',
       reviewsCount: 1,
@@ -246,10 +247,10 @@ export class OverviewComponent implements OnInit {
       } catch (e) {}
     }
     return [
-      { id: 1, text: 'Review dev-board repository architecture & signals', done: true, tag: 'Code Review' },
-      { id: 2, text: 'Complete Angular 17 SSR hydration & optimization', done: false, tag: 'Frontend' },
-      { id: 3, text: 'Verify GitHub OAuth 2.0 session persistence on reload', done: true, tag: 'Security' },
-      { id: 4, text: 'Draft Architecture RFC for Local-First Workspace', done: false, tag: 'Design' }
+      { id: 1, text: 'Review repository pull requests & architectural RFCs', done: true, tag: 'Code Review' },
+      { id: 2, text: 'Validate reactive state & telemetry data synchronization', done: false, tag: 'Engineering' },
+      { id: 3, text: 'Verify GitHub OAuth 2.0 session security on reload', done: true, tag: 'Security' },
+      { id: 4, text: 'Review pinned documentation & reusable snippets', done: false, tag: 'Docs' }
     ];
   }
 

@@ -24,9 +24,9 @@ export class UserService {
       }
     } catch { /* Fall back when browser storage is unavailable or invalid. */ }
     return {
-      name: 'Thành Nam',
-      role: 'Lead Architect',
-      avatarUrl: 'assets/Avatar.jpg'
+      name: 'Developer',
+      role: 'Software Engineer',
+      avatarUrl: ''
     };
   }
 
@@ -38,6 +38,17 @@ export class UserService {
         if (typeof window !== 'undefined') window.localStorage.setItem(this.STORAGE_KEY, JSON.stringify(updated));
       } catch { /* Keep the in-memory profile when storage is unavailable. */ }
       return updated;
+    });
+  }
+
+  reset(): void {
+    try {
+      if (typeof window !== 'undefined') window.localStorage.removeItem(this.STORAGE_KEY);
+    } catch { /* Ignore storage errors. */ }
+    this.currentUser.set({
+      name: 'Developer',
+      role: 'Software Engineer',
+      avatarUrl: ''
     });
   }
 }

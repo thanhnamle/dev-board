@@ -2,14 +2,15 @@ export interface SnippetItem {
   id: number;
   title: string;
   filename: string;
-  language: 'typescript' | 'go' | 'sql' | 'docker' | 'shell' | 'css';
+  language: 'typescript' | 'go' | 'sql' | 'docker' | 'shell' | 'css' | string;
   languageLabel: string;
   description: string;
-  codeHtml: string;
+  codeHtml?: string;
   rawCode: string;
   tags: string[];
   lastUsed: string;
   copied?: boolean;
+  isFavorite?: boolean;
 }
 
 export const DEMO_SNIPPETS: SnippetItem[] = [
@@ -20,6 +21,7 @@ export const DEMO_SNIPPETS: SnippetItem[] = [
       language: 'typescript',
       languageLabel: 'TypeScript',
       description: 'Custom helper to execute side-effects with a debounce delay on signal value changes.',
+      isFavorite: true,
       rawCode: `import { effect, Signal, untracked } from '@angular/core';
 
 export function debouncedEffect<T>(
@@ -64,6 +66,7 @@ export function debouncedEffect<T>(
       language: 'go',
       languageLabel: 'Go',
       description: 'Cryptographic HMAC-SHA256 signature verification for GitHub & Payment webhooks.',
+      isFavorite: true,
       rawCode: `package security
 
 import (

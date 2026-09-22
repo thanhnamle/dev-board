@@ -336,13 +336,12 @@ export class ActivitiesComponent implements OnInit {
     const month = this.selectedMonth();
     const year = this.selectedYear();
     if (month === 'all') {
-      if (contrib?.totalAnnualContributions !== undefined && contrib.totalAnnualContributions > 0) {
+      if (contrib?.totalAnnualContributions !== undefined) {
         return contrib.totalAnnualContributions;
       }
-      if (contrib?.contributionCalendar?.totalContributions !== undefined && contrib.contributionCalendar.totalContributions > 0) {
+      if (contrib?.contributionCalendar?.totalContributions !== undefined) {
         return contrib.contributionCalendar.totalContributions;
       }
-      if (year === 2026) return 201;
     }
     return this.chartData().reduce((sum, item) => sum + item.count, 0);
   });
@@ -407,15 +406,12 @@ export class ActivitiesComponent implements OnInit {
       return this.repoCommits().filter(a => a.type === 'commit').length;
     }
     const contrib = this.gitHubApiService.contributions();
-    const year = this.selectedYear();
     if (contrib) {
-      // 151 commits public + 18 commits trong repo private/collaborator = 169 commits
       const baseCommits = contrib.totalCommitContributions || 0;
-      const restricted = contrib.restrictedContributionsCount || (year === 2026 ? 18 : 0);
+      const restricted = contrib.restrictedContributionsCount || 0;
       return baseCommits + restricted;
     }
-    const commits = this.activities().filter(a => a.type === 'commit').length;
-    return year === 2026 ? 169 : (commits || 0);
+    return this.activities().filter(a => a.type === 'commit').length;
   });
 
   prCount = computed(() => {
@@ -424,11 +420,10 @@ export class ActivitiesComponent implements OnInit {
       return this.activities().filter(a => a.type === 'pr' && a.repoName.toLowerCase().includes(repo.toLowerCase())).length;
     }
     const contrib = this.gitHubApiService.contributions();
-    if (contrib?.totalPullRequestContributions) {
+    if (contrib?.totalPullRequestContributions !== undefined) {
       return contrib.totalPullRequestContributions;
     }
-    const prs = this.activities().filter(a => a.type === 'pr').length;
-    return this.selectedYear() === 2026 ? 15 : prs;
+    return this.activities().filter(a => a.type === 'pr').length;
   });
 
   branchReleaseCount = computed(() => {
@@ -441,10 +436,9 @@ export class ActivitiesComponent implements OnInit {
       const ops = (contrib.totalIssueContributions || 0) +
                   (contrib.totalPullRequestReviewContributions || 0) +
                   (contrib.totalRepositoryContributions || 0);
-      if (ops > 0) return ops;
+      return ops;
     }
-    const ops = this.activities().filter(a => a.type === 'branch' || a.type === 'release').length;
-    return this.selectedYear() === 2026 ? 13 : ops;
+    return this.activities().filter(a => a.type === 'branch' || a.type === 'release').length;
   });
 
   activeDaysCount = computed(() => {
@@ -456,10 +450,10 @@ export class ActivitiesComponent implements OnInit {
           if (d.contributionCount > 0) count++;
         });
       });
-      if (count > 0) return count;
+      return count;
     }
     const dates = new Set(this.activities().map(a => new Date(a.timestamp).toDateString()));
-    return dates.size || 1;
+    return dates.size;
   });
 
   // 🎯 TÍNH TOÁN ĐỦ 52 TUẦN (364 NGÀY) TRẢI ĐỀU CẢ NĂM TỪ GITHUB GRAPHQL
@@ -571,10 +565,18 @@ export class ActivitiesComponent implements OnInit {
         { label: 'Others', count: 0, percentage: 0, color: '#f59e0b' }
       ];
     }
-    const commits = this.commitCount();          // 169
-    const prs = this.prCount();                  // 15
-    const branches = this.branchReleaseCount();  // 13
-    const total = commits + prs + branches || 1;
+    const commits = this.commitCount();
+    const prs = this.prCount();
+    const branches = this.branchReleaseCount();
+    const total = commits + prs + branches;
+    if (total === 0) {
+      return [
+        { label: 'Commits', count: 0, percentage: 0, color: '#8b5cf6' },
+        { label: 'Pull Requests', count: 0, percentage: 0, color: '#10b981' },
+        { label: 'Branches', count: 0, percentage: 0, color: '#06b6d4' },
+        { label: 'Others', count: 0, percentage: 0, color: '#f59e0b' }
+      ];
+    }
     return [
       { label: 'Commits', count: commits, percentage: Math.round((commits / total) * 100), color: '#8b5cf6' },
       { label: 'Pull Requests', count: prs, percentage: Math.round((prs / total) * 100), color: '#10b981' },

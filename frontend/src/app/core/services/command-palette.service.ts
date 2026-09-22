@@ -21,10 +21,10 @@ export class CommandPaletteService {
   private readonly pages: CommandResult[] = [
     ['overview', 'Dashboard overview', 'Daily tasks, pull requests and deployments', '/app/dashboard/overview', 'dashboard home tasks pull requests deployments'],
     ['analytics', 'Dashboard analytics', 'Velocity, commits and engineering health', '/app/dashboard/analytics', 'charts velocity commits health'],
-    ['repositories', 'All repositories', 'Browse and manage your 21 GitHub repositories', '/app/projects/all-projects', 'repositories git repos projects'],
+    ['repositories', 'All repositories', 'Browse and manage your GitHub repositories', '/app/projects/all-projects', 'repositories git repos projects'],
     ['bookmarks', 'Bookmarked repositories', 'Your personal quick-access focus workspace shelf', '/app/projects/bookmarks', 'bookmarks pinned active focus shelf'],
     ['starred', 'Starred repositories', 'Your favorited GitHub repositories', '/app/projects/starred', 'starred stars favorites'],
-    ['github', 'GitHub profile', 'Profile, bio and 201 annual contributions', '/app/github/profile', 'github account profile bio stats'],
+    ['github', 'GitHub profile', 'Profile, bio and contributions overview', '/app/github/profile', 'github account profile bio stats'],
     ['activities', 'GitHub activities', 'Live commit timeline, PRs and recent activity', '/app/github/activities', 'activities timeline commits events log'],
     ['notes', 'All notes', 'Read technical notes and architectural RFCs', '/app/notes/all-notes', 'documents rfc notes write'],
     ['snippets', 'All snippets', 'Browse reusable code snippets and gists', '/app/snippets/all-snippets', 'code library snippets gists'],

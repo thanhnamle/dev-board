@@ -28,7 +28,7 @@
       </div>
 
       <!-- Nút tạo Snippet mới -->
-      <button type="button" class="action-btn btn-primary" title="Create new snippet">
+      <button type="button" class="action-btn btn-primary" (click)="openCreateModal()" title="Create new snippet">
         <lucide-icon [img]="Plus" size="15"></lucide-icon>
         <span>+ New Snippet</span>
       </button>
@@ -58,18 +58,18 @@
 
     <div class="metric-card">
       <div class="metric-top">
-        <span class="metric-label">1-Click Velocity</span>
+        <span class="metric-label">Codebase Volume</span>
         <div class="metric-icon-box box-emerald">
           <lucide-icon [img]="Copy" class="metric-icon"></lucide-icon>
         </div>
       </div>
       <div class="metric-value-row">
-        <span class="metric-value">128</span>
-        <span class="metric-pill pill-emerald">4 Copied Today</span>
+        <span class="metric-value">{{ totalCodeLines() }}</span>
+        <span class="metric-pill pill-emerald">Lines of Code</span>
       </div>
       <div class="metric-footer">
-        <span class="metric-trend text-emerald">Clipboard Ready</span>
-        <span class="metric-sub">instant dev insertion</span>
+        <span class="metric-trend text-emerald">Reusable Code</span>
+        <span class="metric-sub">across {{ snippets().length }} snippets</span>
       </div>
     </div>
 
@@ -114,7 +114,7 @@
     @for (snippet of filteredSnippets(); track snippet.id) {
       <div class="snippet-card">
         
-        <!-- Header Card: Title + Lang Badge + 1-Click Copy Button -->
+        <!-- Header Card: Title + Lang Badge + Actions -->
         <div class="snippet-header-row">
           <div class="snippet-title-group">
             <span class="lang-tag-badge" [ngClass]="{
@@ -128,19 +128,40 @@
             <h3 class="snippet-title">{{ snippet.title }}</h3>
           </div>
 
-          <!-- Nút Copy Code 1-Click Thông minh -->
-          <button 
-            type="button" 
-            class="copy-code-btn" 
-            [class.copied]="copiedSnippetId() === snippet.id"
-            (click)="copyCode(snippet)"
-            title="Copy Code to Clipboard">
-            <lucide-icon 
-              [img]="copiedSnippetId() === snippet.id ? Check : Copy" 
-              size="13">
-            </lucide-icon>
-            <span>{{ copiedSnippetId() === snippet.id ? 'Copied!' : 'Copy Code' }}</span>
-          </button>
+          <div class="snippet-card-actions">
+            <!-- Favorite Toggle -->
+            <button 
+              type="button" 
+              class="icon-action-btn"
+              [class.active-fav]="snippet.isFavorite"
+              (click)="toggleFavorite(snippet, $event)"
+              [title]="snippet.isFavorite ? 'Remove from favorites' : 'Add to favorites'">
+              <lucide-icon [img]="Heart" size="13" [class.fill-heart]="snippet.isFavorite"></lucide-icon>
+            </button>
+
+            <!-- Delete Snippet -->
+            <button 
+              type="button" 
+              class="icon-action-btn delete-icon-btn"
+              (click)="deleteSnippet(snippet, $event)"
+              title="Delete snippet">
+              <lucide-icon [img]="Trash2" size="13"></lucide-icon>
+            </button>
+
+            <!-- 1-Click Copy Button -->
+            <button 
+              type="button" 
+              class="copy-code-btn" 
+              [class.copied]="copiedSnippetId() === snippet.id"
+              (click)="copyCode(snippet)"
+              title="Copy Code to Clipboard">
+              <lucide-icon 
+                [img]="copiedSnippetId() === snippet.id ? Check : Copy" 
+                size="13">
+              </lucide-icon>
+              <span>{{ copiedSnippetId() === snippet.id ? 'Copied!' : 'Copy' }}</span>
+            </button>
+          </div>
         </div>
 
         <!-- Description -->
@@ -156,7 +177,7 @@
             <span class="lang-meta">{{ snippet.languageLabel }}</span>
           </div>
 
-          <pre class="code-pre-area"><code [innerHTML]="snippet.codeHtml"></code></pre>
+          <pre class="code-pre-area">@if (snippet.codeHtml) {<code [innerHTML]="snippet.codeHtml"></code>} @else {<code>{{ snippet.rawCode }}</code>}</pre>
         </div>
 
         <!-- Card Footer: Tags + Last Used -->
@@ -175,3 +196,76 @@
   </div>
 
 </div>
+
+<!-- MODAL TẠO SNIPPET MỚI -->
+@if (isSnippetModalOpen()) {
+  <div class="modal-backdrop" (click)="closeSnippetModal()">
+    <div class="modal-card" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <div class="modal-title-group">
+          <div class="modal-icon-badge">
+            <lucide-icon [img]="Code2" size="18"></lucide-icon>
+          </div>
+          <div>
+            <h3 class="modal-title">Create Code Snippet</h3>
+            <p class="modal-subtitle">Save reusable logic, algorithms, or utility scripts</p>
+          </div>
+        </div>
+        <button type="button" class="modal-close-btn" (click)="closeSnippetModal()">
+          <lucide-icon [img]="X" size="18"></lucide-icon>
+        </button>
+      </div>
+
+      <div class="modal-body">
+        <div class="form-row-2">
+          <div class="form-group">
+            <label class="form-label">Title</label>
+            <input type="text" class="form-input" placeholder="e.g. JWT Auth Interceptor" [ngModel]="formTitle()" (ngModelChange)="formTitle.set($event)" />
+          </div>
+          <div class="form-group">
+            <label class="form-label">Language</label>
+            <select class="form-select" [ngModel]="formLanguage()" (ngModelChange)="formLanguage.set($event)">
+              <option value="typescript">TypeScript</option>
+              <option value="go">Go</option>
+              <option value="sql">SQL</option>
+              <option value="docker">Docker</option>
+              <option value="shell">Shell / Bash</option>
+              <option value="css">CSS / Styling</option>
+              <option value="python">Python</option>
+              <option value="rust">Rust</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-row-2">
+          <div class="form-group">
+            <label class="form-label">Filename</label>
+            <input type="text" class="form-input" placeholder="e.g. auth.interceptor.ts" [ngModel]="formFilename()" (ngModelChange)="formFilename.set($event)" />
+          </div>
+          <div class="form-group">
+            <label class="form-label">Tags (comma separated)</label>
+            <input type="text" class="form-input" placeholder="e.g. auth, jwt, interceptor" [ngModel]="formTags()" (ngModelChange)="formTags.set($event)" />
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Description</label>
+          <input type="text" class="form-input" placeholder="Brief summary of what this snippet does..." [ngModel]="formDesc()" (ngModelChange)="formDesc.set($event)" />
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Source Code</label>
+          <textarea class="form-textarea" rows="8" placeholder="Paste your code here..." [ngModel]="formCode()" (ngModelChange)="formCode.set($event)"></textarea>
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button type="button" class="btn-cancel" (click)="closeSnippetModal()">Cancel</button>
+        <button type="button" class="btn-submit" (click)="submitSnippet()" [disabled]="!formTitle().trim() || !formCode().trim()">
+          <lucide-icon [img]="Save" size="14"></lucide-icon>
+          <span>Save Snippet</span>
+        </button>
+      </div>
+    </div>
+  </div>
+}

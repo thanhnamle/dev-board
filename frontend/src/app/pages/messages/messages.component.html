@@ -1,6 +1,12 @@
 <header class="page-header">
   <div><p class="eyebrow">WORKSPACE / DISCUSSIONS</p><h1>Discussions & Inbox</h1><p>Community discussions, mentions, PR reviews and engineering updates.</p></div>
-  <button type="button" (click)="inbox.markAllRead()" [disabled]="!inbox.unreadCount()">Mark all as read</button>
+  <div class="header-actions">
+    <button type="button" class="btn-new-thread" (click)="openNewThreadModal()">
+      <lucide-icon [img]="Plus" size="14"></lucide-icon>
+      <span>+ New Discussion</span>
+    </button>
+    <button type="button" (click)="inbox.markAllRead()" [disabled]="!inbox.unreadCount()">Mark all as read</button>
+  </div>
 </header>
 <p class="demo-notice">Demo workspace · Sample notifications & discussions. Replies and read status stay in memory until you reload. GitHub is not connected.</p>
 <div class="inbox">
@@ -46,3 +52,60 @@
     }
   </section>
 </div>
+
+<!-- MODAL TẠO DISCUSSION THREAD MỚI -->
+@if (isNewThreadModalOpen()) {
+  <div class="modal-backdrop" (click)="closeNewThreadModal()">
+    <div class="modal-card" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <div class="modal-title-group">
+          <div class="modal-icon-badge">
+            <lucide-icon [img]="MessageSquare" size="18"></lucide-icon>
+          </div>
+          <div>
+            <h3 class="modal-title">New Discussion Thread</h3>
+            <p class="modal-subtitle">Start a technical discussion or code review request</p>
+          </div>
+        </div>
+        <button type="button" class="modal-close-btn" (click)="closeNewThreadModal()">
+          <lucide-icon [img]="X" size="18"></lucide-icon>
+        </button>
+      </div>
+
+      <div class="modal-body">
+        <div class="form-group">
+          <label class="form-label">Discussion Title</label>
+          <input type="text" class="form-input" placeholder="e.g. Discuss GraphQL caching strategy" [ngModel]="newTitle()" (ngModelChange)="newTitle.set($event)" />
+        </div>
+
+        <div class="form-row-2">
+          <div class="form-group">
+            <label class="form-label">Repository Context</label>
+            <input type="text" class="form-input" placeholder="e.g. devboard/frontend" [ngModel]="newRepo()" (ngModelChange)="newRepo.set($event)" />
+          </div>
+          <div class="form-group">
+            <label class="form-label">Category</label>
+            <select class="form-select" [ngModel]="newCategory()" (ngModelChange)="newCategory.set($event)">
+              <option value="mentions">Mentions & Ideas</option>
+              <option value="reviews">Code Review</option>
+              <option value="system">System Notification</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Initial Message / Context</label>
+          <textarea class="form-textarea" rows="6" placeholder="Provide background, questions, or architectural considerations..." [ngModel]="newMessage()" (ngModelChange)="newMessage.set($event)"></textarea>
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button type="button" class="btn-cancel" (click)="closeNewThreadModal()">Cancel</button>
+        <button type="button" class="btn-submit" (click)="submitNewThread()" [disabled]="!newTitle().trim() || !newMessage().trim()">
+          <lucide-icon [img]="Send" size="14"></lucide-icon>
+          <span>Start Discussion</span>
+        </button>
+      </div>
+    </div>
+  </div>
+}

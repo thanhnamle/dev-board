@@ -109,7 +109,7 @@ export class ProfileComponent implements OnInit {
   // State Signals quản lý giao diện
   readonly loading = signal<boolean>(false);
   readonly copied = signal<boolean>(false);
-  readonly searchQuery = signal<string>('thanhnamle');
+  readonly searchQuery = signal<string>('');
   readonly activeTab = signal<'overview' | 'repositories'>('overview');
 
   // Toàn bộ danh sách repositories thật từ GitHub
@@ -117,19 +117,19 @@ export class ProfileComponent implements OnInit {
 
   // Dữ liệu Profile người dùng
   readonly profile = signal<GitHubProfile>({
-    login: 'thanhnamle',
-    name: 'Thanh Nam Le',
-    avatar_url: 'assets/Avatar.jpg',
-    html_url: 'https://github.com/thanhnamle',
-    bio: 'Software engineer passionate about building high-performance systems and clean user experiences.',
+    login: '',
+    name: 'Developer',
+    avatar_url: '',
+    html_url: '',
+    bio: '',
     company: null,
-    blog: 'https://thanhnamle.dev',
-    location: 'Ho Chi Minh City, Vietnam',
-    public_repos: 18,
+    blog: '',
+    location: '',
+    public_repos: 0,
     public_gists: 0,
     followers: 0,
-    following: 1,
-    created_at: '2021-03-15T08:00:00Z'
+    following: 0,
+    created_at: new Date().toISOString()
   });
 
   constructor() {
@@ -180,22 +180,21 @@ export class ProfileComponent implements OnInit {
     }
   }
 
-  // Helper đồng bộ dữ liệu User vào profile signal
   private syncUserToProfile(user: any) {
     this.profile.set({
       login: user.login,
       name: user.name || user.login,
-      avatar_url: user.avatar_url || 'assets/Avatar.jpg',
+      avatar_url: user.avatar_url || '',
       html_url: user.html_url || `https://github.com/${user.login}`,
-      bio: user.bio || 'Software engineer passionate about building high-performance systems.',
+      bio: user.bio || 'Open source developer & engineering workspace member.',
       company: user.company || null,
-      blog: user.blog || user.html_url || `https://github.com/${user.login}`,
-      location: user.location || 'Vietnam',
+      blog: user.blog || '',
+      location: user.location || '',
       public_repos: user.public_repos ?? 0,
       public_gists: user.public_gists ?? 0,
       followers: user.followers ?? 0,
       following: user.following ?? 0,
-      created_at: user.created_at || '2021-03-15T08:00:00Z'
+      created_at: user.created_at || new Date().toISOString()
     });
   }
 
@@ -222,16 +221,7 @@ export class ProfileComponent implements OnInit {
   // 4. Computed Signal: Tổng số Contributions năm qua
   readonly totalContributions = computed<number>(() => {
     const contrib = this.gitHubApiService.contributions();
-    if (contrib?.totalAnnualContributions) {
-      return contrib.totalAnnualContributions;
-    }
-    if (contrib?.contributionCalendar?.totalContributions) {
-      return contrib.contributionCalendar.totalContributions;
-    }
-    if (contrib?.totalContributions) {
-      return contrib.totalContributions;
-    }
-    return 201;
+    return contrib?.totalAnnualContributions ?? contrib?.contributionCalendar?.totalContributions ?? contrib?.totalContributions ?? 0;
   });
 
   // 5. Computed Signal: Top 4 Pinned Repositories chọn lọc từ các repo thật
@@ -323,7 +313,7 @@ export class ProfileComponent implements OnInit {
     const stars = this.totalStars();
     const user = this.profile();
     const contrib = this.gitHubApiService.contributions();
-    const totalContribCount = contrib?.totalAnnualContributions || contrib?.totalContributions || 201;
+    const totalContribCount = contrib?.totalAnnualContributions ?? contrib?.totalContributions ?? 0;
     const prCount = contrib?.totalPullRequestContributions || 0;
     const repoCount = user.public_repos || repos.length || 0;
 

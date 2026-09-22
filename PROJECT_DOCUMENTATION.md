@@ -14,7 +14,7 @@
 **DevBoard** là nền tảng không gian làm việc tập trung (All-in-one Developer Dashboard & Workspace) được thiết kế đặc thù cho các kỹ sư phần mềm. Dự án giải quyết bài toán phân mảnh công cụ hàng ngày bằng cách tích hợp quản lý mã nguồn GitHub thật, ghi chú kỹ thuật, kho lưu trữ code mẫu (snippets), thảo luận kỹ thuật và theo dõi tiến độ dự án vào một giao diện trực quan, tối giản theo ngôn ngữ thiết kế **Linear & Obsidian**.
 
 ### Mục tiêu cốt lõi:
-* **Tích hợp hệ sinh thái GitHub thật:** Xác thực bảo mật OAuth 2.0, đồng bộ trực tiếp 21 repositories cá nhân, commit history, và đồ thị đóng góp 201 contributions/năm.
+* **Tích hợp hệ sinh thái GitHub thật:** Xác thực bảo mật OAuth 2.0 (hỗ trợ chuyển đổi tài khoản linh hoạt), đồng bộ trực tiếp toàn bộ repositories cá nhân, lịch sử commit và đồ thị đóng góp contributions theo tài khoản thực tế.
 * **Quản lý dự án cá nhân (Projects Hub):**
   - Danh mục toàn bộ kho mã nguồn (`All Repositories`).
   - **Kệ Bookmarks độc quyền của DevBoard:** Tính năng lưu trữ độc lập trên ứng dụng web giúp lập trình viên ghim nhanh các dự án trọng tâm vào kệ làm việc cá nhân (Personal Focus Shelf).
@@ -207,13 +207,14 @@ Hệ thống điều hướng được quản trị tại [frontend/src/app/app.
 * Thay vì phụ thuộc vào GitHub (vốn không có tính năng Bookmarks), DevBoard xây dựng **Bookmarks** như một tính năng độc quyền dành riêng cho web app:
   - Cho phép lập trình viên ghim riêng các repository yêu thích vào kệ làm việc cá nhân.
   - Trạng thái `isBookmarked` và `isStarred` được lưu trữ Local-First qua `localStorage`, đồng bộ lập tức qua Angular Signals trong `WorkspaceDataService`.
-* Loại bỏ toàn bộ mock repos rác, đồng bộ 100% 21 repositories thật từ GitHub của người dùng.
+* Loại bỏ toàn bộ mock repos rác, đồng bộ 100% repositories thật từ GitHub của người dùng đang đăng nhập.
 
-### 5.4. Tích Hợp GitHub API Real-Time
-* `GitHubApiService` kết nối NestJS Backend lấy dữ liệu thật:
-  - Tên, avatar, bio, số followers, public repos.
-  - Lịch sử commits thật hiển thị trên dòng thời gian `ActivitiesComponent`.
-  - Đồ thị 201 contributions hàng năm được tính toán chính xác theo từng tuần và từng ngày.
+### 5.4. Tích Hợp GitHub API Real-Time & Loại Bỏ Triệt Để Dữ Liệu Hardcode
+* `GitHubApiService` kết nối NestJS Backend lấy dữ liệu thật 100%:
+  - Tên, username, avatar, bio, số followers, public repos theo tài khoản đang xác thực.
+  - Lịch sử commits thật hiển thị trên dòng thời gian `ActivitiesComponent` và `OverviewComponent`.
+  - Đồ thị contributions hàng năm được tính toán chính xác theo từng tuần và từng ngày trực tiếp từ GitHub GraphQL API.
+  - **Zero-State Handling:** Loại bỏ hoàn toàn các giá trị hardcode mẫu (như offset 18 commits, mock repos, fake MoM percentages, hardcoded username fallbacks), đảm bảo tài khoản mới tạo (0 commit, 0 repo) hiển thị trạng thái số 0 sạch sẽ, chuyên nghiệp.
 
 ### 5.5. Spotlight Command Palette (⌘K)
 * Mở bằng phím tắt `⌘K` (Mac) hoặc `Ctrl+K` (Windows/Linux) hoặc bấm vào thanh tìm kiếm ở Sidebar.
@@ -268,14 +269,24 @@ npm run build       # Biên dịch toàn bộ SSR bundle và 14 static routes
 - [x] Chuyển đổi toàn diện từ Messages sang Discussions (`/app/discussions`).
 - [x] Đại tu giao diện Sidebar (Linear Obsidian, Active Pill, Pinned Repos shelf, Telemetry Sync card).
 - [x] Spotlight Command Palette (⌘K) tra cứu nhanh toàn ứng dụng.
+- [x] **Hệ thống CRUD hoàn chỉnh cho Engineering Notes & Specs:**
+  - Modal tạo mới và chỉnh sửa tài liệu chuẩn Obsidian glassmorphism.
+  - Xóa ghi chú an toàn, toggle ghim (Pin/Unpin) tức thì.
+  - Tự động tính toán số từ (Word Count) và thời lượng đọc (Reading Time).
+  - Tự động lưu trữ bền bỉ vào `localStorage` theo từng user login.
+- [x] **Hệ thống CRUD hoàn chỉnh cho Code Snippets & Gists:**
+  - Modal tạo snippet với nhiều ngôn ngữ lập trình, tags và mô tả.
+  - Đánh dấu yêu thích (Heart) đồng bộ 2 chiều với trang Favorites Hub.
+  - Xóa snippet, sao chép mã nguồn 1-Click thông minh.
+- [x] **Topic Tags Hub & Deep Linking:** Modal tạo tag kèm note khởi đầu, tự động phân loại tag cloud, click chuyển thẳng tới note chi tiết.
+- [x] **Kênh thảo luận kỹ thuật (Discussions Thread Creator):** Bổ sung modal tạo chủ đề thảo luận mới với ngữ cảnh repository và phản hồi ngay.
 - [x] Khắc phục triệt để các lỗi template compiler và budget limit trong Angular 17.
 
 ### Kế hoạch tiếp theo (Upcoming):
-- [ ] **Hoàn thiện nghiệp vụ người dùng cho Notes & Snippets:**
-  - Xây dựng modal/trình soạn thảo Markdown để người dùng tạo mới, sửa, xóa ghi chú cá nhân.
-  - Cho phép người dùng lưu thêm các snippet mới với syntax highlighter.
+- [ ] **Mobile Sidebar Drawer & Responsive Split-View:**
+  - Bổ sung nút hamburger menu và backdrop overlay cho màn hình di động < 768px.
 - [ ] **Giai đoạn 4: Database Persistence (Production Ready):**
-  - Tích hợp PostgreSQL + Prisma ORM vào NestJS Backend để lưu session vĩnh viễn (chống mất session khi restart).
+  - Tích hợp PostgreSQL + Prisma ORM vào NestJS Backend để lưu session vĩnh viễn (chống mất session khi restart server).
   - Lưu trữ Notes, Snippets và Bookmarks lên Cloud Database.
 - [ ] **DevOps & Triển khai:**
   - Thiết lập Docker Compose chạy trọn gói Angular SSR, NestJS Backend và PostgreSQL.

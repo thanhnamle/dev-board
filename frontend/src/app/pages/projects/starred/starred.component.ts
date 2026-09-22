@@ -83,7 +83,7 @@ export class StarredComponent implements OnInit {
       .filter(p => p.isStarred)
       .map(p => {
         const parts = (p.repoName || '').split('/');
-        const owner = parts[0] || 'thanhnamle';
+        const owner = parts[0] || this.gitHubApi.currentUser()?.login || 'developer';
         const name = parts[1] || p.name;
 
         return {

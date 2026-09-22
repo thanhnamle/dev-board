@@ -7,7 +7,7 @@
     <div class="header-left">
       <div class="title-row">
         <h1 class="tags-title">Topic Tags & Categorization</h1>
-        <span class="count-pill">{{ tagList.length - 1 }} Active Topics</span>
+        <span class="count-pill">{{ tagList().length > 1 ? tagList().length - 1 : 0 }} Active Topics</span>
       </div>
       <p class="tags-subtitle">
         Explore technical documentation, architectural RFCs, and runbooks grouped by topic
@@ -28,7 +28,7 @@
       </div>
 
       <!-- Nút tạo Tag mới -->
-      <button type="button" class="action-btn btn-primary" title="Create new tag">
+      <button type="button" class="action-btn btn-primary" (click)="openCreateModal()" title="Create new tag">
         <lucide-icon [img]="Plus" size="15"></lucide-icon>
         <span>+ New Tag</span>
       </button>
@@ -47,8 +47,8 @@
         </div>
       </div>
       <div class="metric-value-row">
-        <span class="metric-value">{{ tagList.length - 1 }}</span>
-        <span class="metric-pill pill-purple">19 Notes Linked</span>
+        <span class="metric-value">{{ tagList().length > 1 ? tagList().length - 1 : 0 }}</span>
+        <span class="metric-pill pill-purple">{{ notes().length }} Notes Linked</span>
       </div>
       <div class="metric-footer">
         <span class="metric-trend text-purple">100% Coverage</span>
@@ -64,8 +64,8 @@
         </div>
       </div>
       <div class="metric-value-row">
-        <span class="metric-value">#Architecture</span>
-        <span class="metric-pill pill-emerald">6 Specs</span>
+        <span class="metric-value">#{{ topTag().name }}</span>
+        <span class="metric-pill pill-emerald">{{ topTag().count }} Spec{{ topTag().count > 1 ? 's' : '' }}</span>
       </div>
       <div class="metric-footer">
         <span class="metric-trend text-emerald">Core Foundation</span>
@@ -101,7 +101,7 @@
     </h2>
 
     <div class="tag-cloud-pills">
-      @for (tag of tagList; track tag.name) {
+      @for (tag of tagList(); track tag.name) {
         <button 
           type="button" 
           class="topic-pill"
@@ -145,7 +145,7 @@
         <!-- Card Footer with Jump Link -->
         <div class="card-footer-line">
           <span class="updated-time">Updated: {{ note.lastUpdated }}</span>
-          <a routerLink="/app/notes/all-notes" class="jump-link">
+          <a routerLink="/app/notes/all-notes" [queryParams]="{ note: note.id }" class="jump-link">
             <span>Read Note</span>
             <lucide-icon [img]="ArrowRight" size="13"></lucide-icon>
           </a>
@@ -156,3 +156,61 @@
   </div>
 
 </div>
+
+<!-- MODAL TẠO TOPIC TAG MỚI -->
+@if (isTagModalOpen()) {
+  <div class="modal-backdrop" (click)="closeTagModal()">
+    <div class="modal-card" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <div class="modal-title-group">
+          <div class="modal-icon-badge">
+            <lucide-icon [img]="Tag" size="18"></lucide-icon>
+          </div>
+          <div>
+            <h3 class="modal-title">Create Topic Tag</h3>
+            <p class="modal-subtitle">Tag your technical specs and create an indexed knowledge topic</p>
+          </div>
+        </div>
+        <button type="button" class="modal-close-btn" (click)="closeTagModal()">
+          <lucide-icon [img]="X" size="18"></lucide-icon>
+        </button>
+      </div>
+
+      <div class="modal-body">
+        <div class="form-group">
+          <label class="form-label">Topic Tag Name (without #)</label>
+          <input type="text" class="form-input" placeholder="e.g. kubernetes, oauth2, caching" [ngModel]="newTagName()" (ngModelChange)="newTagName.set($event)" />
+        </div>
+
+        <div class="form-row-2">
+          <div class="form-group">
+            <label class="form-label">Initial Note Title</label>
+            <input type="text" class="form-input" placeholder="e.g. Cluster Ingress Setup" [ngModel]="noteTitle()" (ngModelChange)="noteTitle.set($event)" />
+          </div>
+          <div class="form-group">
+            <label class="form-label">Category</label>
+            <select class="form-select" [ngModel]="noteCategory()" (ngModelChange)="noteCategory.set($event)">
+              <option value="architecture">Architecture RFC</option>
+              <option value="infrastructure">Cloud Infrastructure</option>
+              <option value="security">Security Policy</option>
+              <option value="runbooks">Operations Runbook</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Summary / Description</label>
+          <input type="text" class="form-input" placeholder="Brief 1-line overview of this spec..." [ngModel]="noteExcerpt()" (ngModelChange)="noteExcerpt.set($event)" />
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button type="button" class="btn-cancel" (click)="closeTagModal()">Cancel</button>
+        <button type="button" class="btn-submit" (click)="submitTag()" [disabled]="!newTagName().trim() || !noteTitle().trim()">
+          <lucide-icon [img]="Save" size="14"></lucide-icon>
+          <span>Create Tag & Note</span>
+        </button>
+      </div>
+    </div>
+  </div>
+}

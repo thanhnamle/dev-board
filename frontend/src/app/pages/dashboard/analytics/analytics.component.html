@@ -90,47 +90,65 @@
       </div>
       <div class="metric-value-row">
         <span class="metric-value">{{ commitThroughput() }}</span>
-        <span class="metric-pill pill-emerald">+24% MoM</span>
+        @if (commitThroughput() > 0) {
+          <span class="metric-pill pill-emerald">{{ commitThroughput() }} in window</span>
+        } @else {
+          <span class="metric-pill pill-neutral">0 commits</span>
+        }
       </div>
       <div class="metric-footer">
-        <span class="metric-trend text-emerald">Active Window</span>
-        <span class="metric-sub">({{ selectedTimeRange() }})</span>
+        <span class="metric-trend" [class.text-emerald]="commitThroughput() > 0" [class.text-muted]="commitThroughput() === 0">
+          {{ commitThroughput() > 0 ? 'Active Cadence' : 'No Activity' }}
+        </span>
+        <span class="metric-sub">in selected window ({{ selectedTimeRange() }})</span>
       </div>
     </div>
 
-    <!-- KPI 2: PR Turnaround Cycle Time -->
+    <!-- KPI 2: Tracked Pull Requests -->
     <div class="metric-card">
       <div class="metric-top">
-        <span class="metric-label">Mean Time To Merge</span>
+        <span class="metric-label">Tracked Pull Requests</span>
         <div class="metric-icon-box box-purple">
-          <lucide-icon [img]="Clock" class="metric-icon"></lucide-icon>
+          <lucide-icon [img]="GitPullRequest" class="metric-icon"></lucide-icon>
         </div>
       </div>
       <div class="metric-value-row">
-        <span class="metric-value">4.2h</span>
-        <span class="metric-pill pill-cyan">35% Faster</span>
+        <span class="metric-value">{{ totalPRs() }}</span>
+        @if (totalPRs() > 0) {
+          <span class="metric-pill pill-cyan">{{ totalPRs() }} Recorded</span>
+        } @else {
+          <span class="metric-pill pill-neutral">No PRs</span>
+        }
       </div>
       <div class="metric-footer">
-        <span class="metric-trend text-purple">Top 5% Tier</span>
-        <span class="metric-sub">across organization</span>
+        <span class="metric-trend" [class.text-purple]="totalPRs() > 0" [class.text-muted]="totalPRs() === 0">
+          {{ totalPRs() > 0 ? 'PRs Recorded' : 'Queue Clean' }}
+        </span>
+        <span class="metric-sub">across repositories</span>
       </div>
     </div>
 
-    <!-- KPI 3: First Review Response -->
+    <!-- KPI 3: Tracked Repositories -->
     <div class="metric-card">
       <div class="metric-top">
-        <span class="metric-label">Review Response</span>
+        <span class="metric-label">Tracked Repositories</span>
         <div class="metric-icon-box box-emerald">
           <lucide-icon [img]="Zap" class="metric-icon"></lucide-icon>
         </div>
       </div>
       <div class="metric-value-row">
-        <span class="metric-value">28m</span>
-        <span class="metric-pill pill-emerald">94% Under 1h</span>
+        <span class="metric-value">{{ totalReposCount() }}</span>
+        @if (totalReposCount() > 0) {
+          <span class="metric-pill pill-emerald">{{ languages().length }} Languages</span>
+        } @else {
+          <span class="metric-pill pill-neutral">0 Repos</span>
+        }
       </div>
       <div class="metric-footer">
-        <span class="metric-trend text-emerald">Sub-hour SLA</span>
-        <span class="metric-sub">for all linked PRs</span>
+        <span class="metric-trend" [class.text-emerald]="totalReposCount() > 0" [class.text-muted]="totalReposCount() === 0">
+          {{ totalReposCount() > 0 ? 'Codebase Synced' : 'Standby' }}
+        </span>
+        <span class="metric-sub">via GitHub API</span>
       </div>
     </div>
 
@@ -143,12 +161,16 @@
         </div>
       </div>
       <div class="metric-value-row">
-        <span class="metric-value">22%</span>
-        <span class="metric-pill pill-amber">Balanced</span>
+        <span class="metric-value">{{ refactorRatio() }}</span>
+        <span class="metric-pill" [class.pill-amber]="commitThroughput() > 0" [class.pill-neutral]="commitThroughput() === 0">
+          {{ commitThroughput() > 0 ? 'Refactor Rate' : 'No Code' }}
+        </span>
       </div>
       <div class="metric-footer">
-        <span class="metric-trend text-blue">+12.4k LOC</span>
-        <span class="metric-sub">net code addition</span>
+        <span class="metric-trend" [class.text-blue]="commitThroughput() > 0" [class.text-muted]="commitThroughput() === 0">
+          {{ commitThroughput() > 0 ? totalActivitiesCount() + ' Events' : '0 Events' }}
+        </span>
+        <span class="metric-sub">in activity timeline</span>
       </div>
     </div>
 

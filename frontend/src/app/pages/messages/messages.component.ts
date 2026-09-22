@@ -1,18 +1,32 @@
 import { Component, computed, inject, signal } from '@angular/core';
+import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import {
+  LucideAngularModule,
+  MessageSquare,
+  Plus,
+  X,
+  Send
+} from 'lucide-angular';
 import { MessageCategory, MessagesService } from '../../core/services/messages.service';
 import { WorkspaceDataService } from '../../core/services/workspace-data.service';
 
 @Component({
   selector: 'app-messages',
   standalone: true,
-  imports: [FormsModule],
+  imports: [CommonModule, FormsModule, LucideAngularModule],
   templateUrl: './messages.component.html',
   styleUrl: './messages.component.css'
 })
 export class MessagesComponent {
   readonly inbox = inject(MessagesService);
   private readonly workspace = inject(WorkspaceDataService);
+
+  readonly MessageSquare = MessageSquare;
+  readonly Plus = Plus;
+  readonly X = X;
+  readonly Send = Send;
+
   readonly categories: { id: MessageCategory | 'all'; label: string }[] = [
     { id: 'all', label: 'All discussions' }, { id: 'mentions', label: 'Mentions' },
     { id: 'reviews', label: 'Review requests' }, { id: 'system', label: 'System alerts' }
@@ -25,6 +39,14 @@ export class MessagesComponent {
   readonly snippetId = signal('');
   readonly snippets = this.workspace.snippets;
   readonly feedback = signal('');
+
+  // Modal signals
+  readonly isNewThreadModalOpen = signal<boolean>(false);
+  readonly newTitle = signal<string>('');
+  readonly newRepo = signal<string>('');
+  readonly newCategory = signal<MessageCategory>('mentions');
+  readonly newMessage = signal<string>('');
+
   readonly filteredThreads = computed(() => {
     const query = this.query().trim().toLowerCase();
     return this.inbox.threads().filter(thread =>
@@ -63,5 +85,32 @@ export class MessagesComponent {
       this.updateDraft('');
       this.feedback.set('Reply added to this demo session. Nothing was sent to GitHub.');
     }
+  }
+
+  openNewThreadModal() {
+    this.newTitle.set('');
+    this.newRepo.set('');
+    this.newCategory.set('mentions');
+    this.newMessage.set('');
+    this.isNewThreadModalOpen.set(true);
+  }
+
+  closeNewThreadModal() {
+    this.isNewThreadModalOpen.set(false);
+  }
+
+  submitNewThread() {
+    const title = this.newTitle().trim();
+    const msg = this.newMessage().trim();
+    if (!title || !msg) return;
+
+    const thread = this.inbox.createThread(
+      title,
+      this.newRepo().trim() || 'workspace/discussions',
+      this.newCategory(),
+      msg
+    );
+    this.closeNewThreadModal();
+    this.selectThread(thread.id);
   }
 }

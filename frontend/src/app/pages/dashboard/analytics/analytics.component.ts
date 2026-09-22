@@ -89,24 +89,53 @@ export class AnalyticsComponent {
   // 1. Commit Throughput calculate belongs to the time range selected
   readonly commitThroughput = computed(() => {
     const contrib = this.gitHubApiService.contributions();
-    const totalYear = contrib?.totalAnnualContributions || contrib?.contributionCalendar?.totalContributions || contrib?.totalContributions || 201;
+    const weeks = contrib?.contributionCalendar?.weeks || contrib?.weeks;
+    const totalYear = contrib?.totalAnnualContributions ?? contrib?.contributionCalendar?.totalContributions ?? contrib?.totalContributions ?? 0;
+    if (totalYear === 0) return 0;
     const range = this.selectedTimeRange();
 
-    switch (range) {
-      case '7d': return Math.min(totalYear, 14);
-      case '30d': return Math.min(totalYear, 42);
-      case '90d': return Math.min(totalYear, 95);
-      case '1y': return totalYear;
+    if (weeks?.length) {
+      const allDays = weeks.flatMap((w: any) => w.contributionDays || []);
+      if (range === '7d') {
+        return allDays.slice(-7).reduce((sum: number, d: any) => sum + (d.contributionCount || 0), 0);
+      }
+      if (range === '30d') {
+        return allDays.slice(-30).reduce((sum: number, d: any) => sum + (d.contributionCount || 0), 0);
+      }
+      if (range === '90d') {
+        return allDays.slice(-90).reduce((sum: number, d: any) => sum + (d.contributionCount || 0), 0);
+      }
+      return totalYear;
     }
+
+    return 0;
+  });
+
+  readonly totalPRs = computed(() => this.gitHubApiService.activities().filter(a => a.type === 'pr').length);
+  readonly totalReposCount = computed(() => this.gitHubApiService.repositories().length);
+  readonly totalActivitiesCount = computed(() => this.gitHubApiService.activities().length);
+
+  readonly refactorRatio = computed(() => {
+    const acts = this.gitHubApiService.activities();
+    if (acts.length === 0) return '0%';
+    const refactorActs = acts.filter(a =>
+      a.title?.toLowerCase().includes('refactor') ||
+      a.title?.toLowerCase().includes('clean') ||
+      a.title?.toLowerCase().includes('fix') ||
+      a.title?.toLowerCase().includes('perf')
+    );
+    const pct = Math.round((refactorActs.length / acts.length) * 100);
+    return `${pct}%`;
   });
 
   // 2. Trích xuất 7 ngày commit gần nhất từ dữ liệu Calendar thật
   readonly velocityDays = computed<VelocityDay[]>(() => {
     const contrib = this.gitHubApiService.contributions();
+    const weeks = contrib?.contributionCalendar?.weeks || contrib?.weeks;
     const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
     const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-    if (!contrib?.weeks?.length) {
-      // Fallback 7 ngày gần nhất nếu chưa load xong
+    if (!weeks?.length) {
+      // 7 ngày gần nhất hiển thị 0 nếu chưa có dữ liệu
       const result: VelocityDay[] = [];
       for (let i = 6; i >= 0; i--) {
         const d = new Date();
@@ -114,10 +143,10 @@ export class AnalyticsComponent {
         result.push({
           day: dayNames[d.getDay()],
           date: `${monthNames[d.getMonth()]} ${String(d.getDate()).padStart(2, '0')}`,
-          feat: 2,
-          fix: 1,
-          refactor: 1,
-          total: 4
+          feat: 0,
+          fix: 0,
+          refactor: 0,
+          total: 0
         });
       }
       return result;
@@ -127,6 +156,16 @@ export class AnalyticsComponent {
     return last7Days.map((d: any) => {
       const dateObj = new Date(d.date);
       const total = d.contributionCount || 0;
+      if (total === 0) {
+        return {
+          day: dayNames[dateObj.getDay()],
+          date: `${monthNames[dateObj.getMonth()]} ${String(dateObj.getDate()).padStart(2, '0')}`,
+          feat: 0,
+          fix: 0,
+          refactor: 0,
+          total: 0
+        };
+      }
       // Phân bổ ước lượng loại commit nếu có commit trong ngày
       const feat = Math.ceil(total * 0.5);
       const fix = Math.floor(total * 0.3);
@@ -198,7 +237,40 @@ export class AnalyticsComponent {
   readonly prSizes = computed<PRSizeDistribution[]>(() => {
     const acts = this.gitHubApiService.activities();
     const prActs = acts.filter(a => a.type === 'pr');
-    const totalPRs = prActs.length || 24;
+    const totalPRs = prActs.length;
+
+    if (totalPRs === 0) {
+      return [
+        {
+          label: 'XS (< 50 LOC)',
+          desc: 'Quick fix & typo patches',
+          count: 0,
+          percent: 0,
+          badgeClass: 'pill-emerald'
+        },
+        {
+          label: 'S (50 - 200 LOC)',
+          desc: 'Feature additions & tweaks',
+          count: 0,
+          percent: 0,
+          badgeClass: 'pill-cyan'
+        },
+        {
+          label: 'M (200 - 500 LOC)',
+          desc: 'Module architecture & core flows',
+          count: 0,
+          percent: 0,
+          badgeClass: 'pill-purple'
+        },
+        {
+          label: 'L (> 500 LOC)',
+          desc: 'Large migrations & overhaul',
+          count: 0,
+          percent: 0,
+          badgeClass: 'pill-amber'
+        }
+      ];
+    }
 
     return [
       {
@@ -231,6 +303,7 @@ export class AnalyticsComponent {
       }
     ];
   });
+
   // 4. Phân tích khung giờ hoạt động từ activities thật
   readonly focusHours = computed<FocusHour[]>(() => {
     const acts = this.gitHubApiService.activities();
@@ -243,27 +316,52 @@ export class AnalyticsComponent {
       else if (h >= 12 && h < 18) afternoon++;
       else night++;
     }
-    const total = acts.length || 1;
+    const total = morning + afternoon + night;
+    if (total === 0) {
+      return [
+        {
+          period: 'Morning Deep Flow',
+          timeRange: '09:00 - 11:30 AM',
+          commitsCount: 0,
+          percent: 0,
+          tag: 'No data'
+        },
+        {
+          period: 'Afternoon Sprint',
+          timeRange: '02:00 - 05:00 PM',
+          commitsCount: 0,
+          percent: 0,
+          tag: 'No data'
+        },
+        {
+          period: 'Night Polish & Refactor',
+          timeRange: '08:00 - 10:30 PM',
+          commitsCount: 0,
+          percent: 0,
+          tag: 'No data'
+        }
+      ];
+    }
     return [
       {
         period: 'Morning Deep Flow',
         timeRange: '09:00 - 11:30 AM',
-        commitsCount: morning || 18,
-        percent: Math.round(((morning || 18) / (total > 1 ? total : 40)) * 100),
+        commitsCount: morning,
+        percent: Math.round((morning / total) * 100),
         tag: 'Most Productive'
       },
       {
         period: 'Afternoon Sprint',
         timeRange: '02:00 - 05:00 PM',
-        commitsCount: afternoon || 14,
-        percent: Math.round(((afternoon || 14) / (total > 1 ? total : 40)) * 100),
+        commitsCount: afternoon,
+        percent: Math.round((afternoon / total) * 100),
         tag: 'High Velocity'
       },
       {
         period: 'Night Polish & Refactor',
         timeRange: '08:00 - 10:30 PM',
-        commitsCount: night || 8,
-        percent: Math.round(((night || 8) / (total > 1 ? total : 40)) * 100),
+        commitsCount: night,
+        percent: Math.round((night / total) * 100),
         tag: 'Deep Work'
       }
     ];

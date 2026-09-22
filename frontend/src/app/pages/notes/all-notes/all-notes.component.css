@@ -475,6 +475,12 @@
   color: #6366f1;
 }
 
+.action-delete-btn:hover {
+  border-color: rgba(239, 68, 68, 0.4);
+  color: #ef4444;
+  background: rgba(239, 68, 68, 0.08);
+}
+
 .viewer-meta-bar {
   display: flex;
   align-items: center;

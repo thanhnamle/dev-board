@@ -48,37 +48,65 @@
 - [x] **Xử lý `.gitignore` triệt để:** Loại bỏ các file rác và dependencies không mong muốn.
 - [x] **AuthModule (`backend/src/auth/`):**
   - Luồng OAuth 2.0: `/api/auth/github` -> GitHub Authorization -> `/api/auth/github/callback`.
+  - Hỗ trợ đổi tài khoản GitHub linh hoạt với tham số `&prompt=select_account`, giải quyết triệt để vấn đề đăng xuất xong đăng nhập lại vẫn dính tài khoản cũ.
   - Trao đổi Authorization Code lấy Access Token bảo mật ở server-side.
   - Endpoint `GET /api/auth/me` kiểm tra trạng thái đăng nhập.
   - Endpoint `POST /api/auth/logout` thu hồi session và xóa cookie.
 - [x] **GitHubModule (`backend/src/github/`):**
-  - Tích hợp gọi GitHub REST API an toàn: `/user`, `/user/repos`, `/users/:login/events`, tính toán đóng góp hàng năm (201 contributions).
+  - Tích hợp gọi GitHub REST API an toàn: `/user`, `/user/repos`, `/users/:login/events`, tính toán lịch đóng góp và phân loại hoạt động theo tài khoản người dùng thực tế.
 
 ### C. Tích hợp dữ liệu thật (Real-Data Integration) vào Frontend
 - [x] **Xây dựng `GitHubApiService` (`src/app/core/services/github-api.service.ts`):**
   - Quản lý State toàn cục bằng Angular Signals (`currentUser`, `repositories`, `activities`, `contributions`, `isAuthenticated`, `loading`).
   - Đảm bảo an toàn với Angular SSR (`isPlatformBrowser`).
   - Gửi kèm HttpOnly Session Cookie bằng `credentials: 'include'`.
-- [x] **Đồng bộ hóa `WorkspaceDataService`:**
-  - Tự động đồng bộ 21 GitHub repositories vào State dự án `workspace.projects()`.
-  - Cơ chế Local-First bền bỉ với `localStorage`: lưu trữ danh sách ID các repo được Bookmark và Star, tự động khởi tạo mặc định cho repo nổi bật (`dev-board`).
+- [x] **Đồng bộ hóa `WorkspaceDataService` & Cô lập dữ liệu đa tài khoản (User-Scoped Data):**
+  - Phân tách Bookmarks & Starred theo từng tài khoản (`devboard_bookmarked_project_ids_${login}`), reset sạch sẽ khi Logout để tránh rò rỉ dữ liệu giữa các tài khoản khác nhau.
+  - Cơ chế Local-First bền bỉ với `localStorage`: lưu trữ danh sách ID các repo được Bookmark và Star phản ứng tức thì.
+- [x] **Loại bỏ triệt để các Mock/Fallback giả lập (Zero-Data Overhaul):**
+  - Khắc phục lỗi dùng toán tử falsy `||` khiến tài khoản mới/trắng (0 commits, 0 PRs, 0 repos) bị nhảy số giả (18 commits, 201 telemetry, 24 PRs ảo).
+  - Chuyển toàn bộ sang nullish coalescing `?? 0` và kiểm tra mảng rỗng trên toàn bộ hệ thống (`Overview`, `Analytics`, `Profile`, `Activities`, `Sidebar`).
+  - Cung cấp trạng thái rỗng sạch sẽ (Empty States & Zero Metric Badges) chính xác 100% theo dữ liệu API thật.
 - [x] **Khắc phục các lỗi kỹ thuật nền tảng:**
   - Xử lý lỗi Angular 17 template compiler (`NG5002: Unexpected character EOF / unescaped {` và `&#64;` interpolation).
   - Điều chỉnh ngân sách build kích thước style trong `angular.json` để `npm run build` vượt qua 100% không lỗi.
 
 ---
 
+### D. Hoàn thiện các phân hệ chức năng tương tác (Interactive Workspace Hubs)
+- [x] **Phân hệ Ghi chú kỹ thuật (Engineering Notes & Specs CRUD):**
+  - **Modal tạo mới & Chỉnh sửa Spec (Linear Obsidian Modal):** Hỗ trợ nhập tiêu đề, danh mục (Architecture RFC, Cloud Infra, Security Policy, Operations Runbook), tóm tắt, gắn nhãn tags và nội dung văn bản Markdown đa đoạn.
+  - **Chức năng Chỉnh sửa (Edit) & Xóa (Delete):** Cho phép cập nhật trực tiếp nội dung spec đang xem hoặc xóa khỏi kho ghi chú với xác nhận an toàn.
+  - **Tính năng Ghim (Pin/Unpin):** Ghim nhanh các tài liệu kỹ thuật quan trọng lên đầu danh mục.
+  - **Chỉ số thời gian thực (Dynamic Metrics):** Tự động đếm tổng số từ (word count), ước tính thời gian đọc (read time) và thống kê số lượng spec theo từng phân loại (thay thế hoàn toàn số liệu hardcode).
+  - **Lưu trữ bền vững:** Tự động đồng bộ vào `localStorage` có phân tách theo user login (`devboard_user_notes_${login}`).
+- [x] **Kho lưu trữ Code Snippets & Gists (Snippets CRUD & Favorites):**
+  - **Modal tạo mới Snippet:** Cho phép thêm đoạn mã code mẫu với tiêu đề, tên file, phân loại ngôn ngữ (TypeScript, Go, SQL, Docker, Shell, CSS, Python, Rust,...), tags và mô tả.
+  - **Hệ thống Favorites đồng bộ:** Nút thả tim (Heart) trên từng thẻ snippet giúp đưa ngay vào danh mục yêu thích (`FavoritesComponent`), đồng bộ 2 chiều tức thì.
+  - **1-Click Copy & Xóa snippet:** Sao chép mã nguồn trực tiếp vào clipboard với thông báo phản hồi trực quan; nút xóa bỏ code cũ/thừa.
+  - **Lưu trữ bền vững:** Tự động đồng bộ vào `localStorage` (`devboard_user_snippets_${login}`).
+- [x] **Trang Favorites Hub (`/app/snippets/favorites`):**
+  - Kết nối trực tiếp vào `WorkspaceDataService` (loại bỏ danh sách tĩnh 4 mục trước đây).
+  - Thống kê thời gian thực: số lượng stack ngôn ngữ, số lượng util ghim.
+  - Bổ sung trạng thái rỗng đẹp mắt (Obsidian Empty State) khi chưa có snippet nào được đánh dấu yêu thích kèm nút tạo nhanh.
+- [x] **Phân loại Chủ đề Tags (`/app/notes/tags`):**
+  - Modal tạo nhanh **+ New Tag** liên kết ngay một note kỹ thuật ban đầu, giúp từ khóa xuất hiện tức thì trong đám mây chủ đề (Tag Cloud) và các thẻ số liệu.
+  - Liên kết điều hướng sâu (`[queryParams]="{ note: note.id }"`): Bấm "Read Note" chuyển thẳng sang xem bài viết tương ứng tại trang `all-notes`.
+- [x] **Kênh Thảo luận Kỹ thuật (`/app/discussions`):**
+  - Nút và Modal **+ New Discussion**: Tạo chủ đề thảo luận mới với tiêu đề, ngữ cảnh repository (`devboard/frontend`,...), danh mục (`Mentions`, `Code Review`, `System`) và nội dung mở đầu.
+  - Tự động kích hoạt xem và phản hồi ngay thread vừa tạo.
+- [x] **Hệ thống Modal Glassmorphism Toàn Cục (`styles.css`):**
+  - Bộ class tái sử dụng (`modal-backdrop`, `modal-card`, `modal-header`, `modal-body`, `modal-footer`, `form-input`, `form-select`, `form-textarea`,...) đồng bộ 100% phong cách thiết kế Obsidian dark/light trên toàn bộ ứng dụng.
+
+---
+
 ## 2. ⚡ NHỮNG VIỆC ĐANG LÀM (IN PROGRESS)
 
-### A. Hoàn thiện nghiệp vụ người dùng cho Notes & Snippets
-- [ ] **Chức năng Tạo / Chỉnh sửa / Xóa (CRUD) cho Notes:**
-  - Bổ sung modal hoặc trang soạn thảo Markdown cho phép người dùng tự viết ghi chú mới và gắn tag riêng.
-- [ ] **Chức năng Thêm / Quản lý Snippets mới:**
-  - Cho phép người dùng dán các đoạn mã mẫu thường dùng và chọn ngôn ngữ highlight.
-
-### B. Tinh chỉnh Responsive & Mobile Layout
+### A. Tinh chỉnh Responsive & Mobile Layout
 - [ ] **Mobile Sidebar Drawer:**
   - Bổ sung nút hamburger menu và backdrop overlay khi xem trên màn hình điện thoại/tablet nhỏ hơn 768px.
+- [ ] **Tối ưu hiển thị bảng Split-view trên thiết bị di động:**
+  - Chuyển chế độ xem split-pane 1/3 - 2/3 ở trang Notes sang dạng tab chuyển đổi trên màn hình hẹp.
 
 ---
 

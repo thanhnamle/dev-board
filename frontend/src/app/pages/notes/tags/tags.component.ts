@@ -1,6 +1,8 @@
-import { Component, signal, computed } from '@angular/core';
+import { Component, signal, computed, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
+import { WorkspaceDataService } from '../../../core/services/workspace-data.service';
 import {
   LucideAngularModule,
   Tag,
@@ -12,7 +14,9 @@ import {
   ArrowRight,
   FileText,
   Clock,
-  Hash
+  Hash,
+  X,
+  Save
 } from 'lucide-angular';
 
 export interface TagMeta {
@@ -34,7 +38,7 @@ export interface TaggedNote {
 @Component({
   selector: 'app-tags',
   standalone: true,
-  imports: [CommonModule, LucideAngularModule, RouterLink],
+  imports: [CommonModule, FormsModule, LucideAngularModule, RouterLink],
   templateUrl: './tags.component.html',
   styleUrl: './tags.component.css'
 })
@@ -50,81 +54,58 @@ export class TagsComponent {
   readonly FileText = FileText;
   readonly Clock = Clock;
   readonly Hash = Hash;
+  readonly X = X;
+  readonly Save = Save;
+
+  private readonly workspace = inject(WorkspaceDataService);
 
   // 2. Signals quản lý trạng thái
   selectedTag = signal<string>('All');
   searchQuery = signal<string>('');
 
-  // 3. Danh sách các Topic Tags
-  tagList: TagMeta[] = [
-    { name: 'All', count: 19, color: '#6366f1' },
-    { name: 'Architecture', count: 6, color: '#8b5cf6' },
-    { name: 'Security', count: 5, color: '#10b981' },
-    { name: 'Angular 17', count: 4, color: '#38bdf8' },
-    { name: 'PostgreSQL', count: 3, color: '#a855f7' },
-    { name: 'DevOps', count: 3, color: '#f59e0b' },
-    { name: 'SSR', count: 2, color: '#38bdf8' },
-    { name: 'OAuth2', count: 2, color: '#10b981' },
-    { name: 'PgBouncer', count: 2, color: '#a855f7' },
-    { name: 'K8s', count: 2, color: '#f43f5e' },
-    { name: 'UI/UX', count: 2, color: '#ec4899' }
-  ];
+  // Modal Signals
+  isTagModalOpen = signal<boolean>(false);
+  newTagName = signal<string>('');
+  noteTitle = signal<string>('');
+  noteCategory = signal<string>('architecture');
+  noteExcerpt = signal<string>('');
 
-  // 4. Danh sách các bài viết mẫu
-  taggedNotes = signal<TaggedNote[]>([
-    {
-      id: 1,
-      title: 'DevBoard 2.0 SSR Pipeline & Hydration RFC',
-      excerpt: 'Angular 17 non-destructive hydration implementation, TransferState caching, and edge routing.',
-      category: 'Architecture',
-      readTime: '4 min read',
-      lastUpdated: 'Today at 09:15 AM',
-      tags: ['Architecture', 'Angular 17', 'SSR', 'UI/UX']
-    },
-    {
-      id: 2,
-      title: 'PostgreSQL Connection Pooling & SSL Setup Guide',
-      excerpt: 'PgBouncer setup in transaction mode with mutual TLS 1.3 encryption and failover replicas.',
-      category: 'Infrastructure',
-      readTime: '6 min read',
-      lastUpdated: 'Yesterday at 04:30 PM',
-      tags: ['PostgreSQL', 'PgBouncer', 'Security', 'DevOps']
-    },
-    {
-      id: 3,
-      title: 'GitHub SSO & Sliding Session Token Rotation',
-      excerpt: 'OAuth 2.0 sliding refresh windows with encrypted HTTP-only cookie persistence.',
-      category: 'Security',
-      readTime: '5 min read',
-      lastUpdated: '2 days ago',
-      tags: ['Security', 'OAuth2', 'Architecture']
-    },
-    {
-      id: 4,
-      title: 'Kubernetes Production Cluster Disaster Recovery Runbook',
-      excerpt: 'Step-by-step failover execution runbook for multi-region Kubernetes clusters.',
-      category: 'Runbooks',
-      readTime: '8 min read',
-      lastUpdated: '3 days ago',
-      tags: ['DevOps', 'K8s', 'Architecture']
-    },
-    {
-      id: 5,
-      title: 'Linear Obsidian Theme Design Tokens & CSS Architecture',
-      excerpt: 'Design token specification for dual Dark/Light mode theme harmony using CSS Custom Properties.',
-      category: 'Architecture',
-      readTime: '3 min read',
-      lastUpdated: '4 days ago',
-      tags: ['Architecture', 'UI/UX', 'Angular 17']
+  readonly notes = this.workspace.notes;
+
+  // 3. Danh sách các Topic Tags động từ Notes
+  readonly tagList = computed<TagMeta[]>(() => {
+    const notes = this.notes();
+    const tagCounts: Record<string, number> = {};
+    for (const n of notes) {
+      for (const t of n.tags) {
+        tagCounts[t] = (tagCounts[t] || 0) + 1;
+      }
     }
-  ]);
+    const colors = ['#8b5cf6', '#10b981', '#38bdf8', '#a855f7', '#f59e0b', '#f43f5e', '#ec4899', '#6366f1'];
+    const entries = Object.entries(tagCounts).sort((a, b) => b[1] - a[1]);
+    const items: TagMeta[] = [
+      { name: 'All', count: notes.length, color: '#6366f1' },
+      ...entries.map(([name, count], i) => ({
+        name,
+        count,
+        color: colors[i % colors.length]
+      }))
+    ];
+    return items;
+  });
+
+  // Top Category
+  readonly topTag = computed<TagMeta>(() => {
+    const list = this.tagList().filter(t => t.name !== 'All');
+    return list.length ? list[0] : { name: 'Architecture', count: 0, color: '#8b5cf6' };
+  });
 
   // 5. Lọc danh sách theo Tag và Ô tìm kiếm
   filteredNotes = computed(() => {
     const active = this.selectedTag();
     const q = this.searchQuery().toLowerCase().trim();
 
-    return this.taggedNotes().filter(note => {
+    return this.notes().filter(note => {
       const matchTag = active === 'All' || note.tags.includes(active);
       const matchQuery =
         !q ||
@@ -139,5 +120,44 @@ export class TagsComponent {
   // Chọn Tag
   selectTag(tagName: string) {
     this.selectedTag.set(tagName);
+  }
+
+  // Modal Open / Close / Submit
+  openCreateModal() {
+    this.newTagName.set('');
+    this.noteTitle.set('');
+    this.noteCategory.set('architecture');
+    this.noteExcerpt.set('');
+    this.isTagModalOpen.set(true);
+  }
+
+  closeTagModal() {
+    this.isTagModalOpen.set(false);
+  }
+
+  submitTag() {
+    const tagName = this.newTagName().trim().replace(/^#/, '');
+    const title = this.noteTitle().trim();
+    if (!tagName || !title) return;
+
+    const cat = this.noteCategory();
+    const catLabels: Record<string, string> = {
+      architecture: 'Architecture RFC',
+      infrastructure: 'Cloud Infrastructure',
+      security: 'Security Policy',
+      runbooks: 'Operations Runbook'
+    };
+
+    this.workspace.addNote({
+      title,
+      category: cat,
+      categoryLabel: catLabels[cat] || 'Technical Spec',
+      excerpt: this.noteExcerpt().trim() || `Technical note categorized under #${tagName}`,
+      content: [`Documentation for topic #${tagName}.`],
+      tags: [tagName]
+    });
+
+    this.selectedTag.set(tagName);
+    this.closeTagModal();
   }
 }
