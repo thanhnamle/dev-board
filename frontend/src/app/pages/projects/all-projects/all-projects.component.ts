@@ -25,13 +25,13 @@ import {
 } from 'lucide-angular';
 import { WorkspaceDataService } from '../../../core/services/workspace-data.service';
 import { GitHubApiService } from '../../../core/services/github-api.service';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, RouterLink } from '@angular/router';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 @Component({
   selector: 'app-all-projects',
   standalone: true,
-  imports: [CommonModule, LucideAngularModule],
+  imports: [CommonModule, LucideAngularModule, RouterLink],
   templateUrl: './all-projects.component.html',
   styleUrl: './all-projects.component.css'
 })

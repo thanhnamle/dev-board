@@ -187,23 +187,111 @@ export class GitHubService {
     }
   }
 
-  // 6. Lấy danh sách commits của một repository cụ thể
-  async getRepoCommits(user: AuthUser, repoName: string, perPage = 50) {
+  // Lấy tổng số commit chính xác thông qua Link header của HEAD request (1 call nhẹ)
+  async getRepoTotalCommits(user: AuthUser, owner: string, name: string): Promise<number> {
+    try {
+      const res = await fetch(`https://api.github.com/repos/${owner}/${name}/commits?per_page=1`, {
+        method: 'HEAD',
+        headers: {
+          ...(user?.accessToken ? { Authorization: `Bearer ${user.accessToken}` } : {}),
+          'User-Agent': 'DevBoard-Backend',
+          Accept: 'application/vnd.github.v3+json',
+        },
+      });
+      if (!res.ok) return 0;
+      const link = res.headers.get('link');
+      if (link) {
+        const match = link.match(/[?&]page=(\d+)[^>]*>;\s*rel="last"/);
+        if (match) return parseInt(match[1], 10);
+      }
+      return 1;
+    } catch (e: any) {
+      this.logger.warn(`Could not determine total commits for ${owner}/${name}: ${e.message}`);
+      return 0;
+    }
+  }
+
+  // 6. Lấy danh sách commits của một repository cụ thể kèm tổng số commit và hỗ trợ tải nhiều trang
+  async getRepoCommits(user: AuthUser, repoName: string, page = 1, perPage = 100, fetchAll = false) {
+    if (!repoName) return { commits: [], totalCount: 0, page: 1, hasMore: false };
+    const owner = repoName.includes('/') ? repoName.split('/')[0] : user.login;
+    const name = repoName.includes('/') ? repoName.split('/')[1] : repoName;
+
+    const totalCountPromise = this.getRepoTotalCommits(user, owner, name);
+
+    const fetchSinglePage = async (p: number) => {
+      try {
+        const data = await this.fetchGitHub(
+          `/repos/${owner}/${name}/commits?per_page=${perPage}&page=${p}`,
+          user.accessToken,
+        );
+        return Array.isArray(data) ? data : [];
+      } catch (err: any) {
+        try {
+          const res = await fetch(`https://api.github.com/repos/${owner}/${name}/commits?per_page=${perPage}&page=${p}`, {
+            headers: {
+              ...(user?.accessToken ? { Authorization: `Bearer ${user.accessToken}` } : {}),
+              'User-Agent': 'DevBoard-Backend',
+              Accept: 'application/vnd.github.v3+json',
+            },
+          });
+          if (res.ok) {
+            const data = await res.json();
+            return Array.isArray(data) ? data : [];
+          }
+        } catch (e: any) {
+          this.logger.error(`Public commits page ${p} failed for ${owner}/${name}: ${e.message}`);
+        }
+        return [];
+      }
+    };
+
+    try {
+      let commits = await fetchSinglePage(page);
+      const totalCount = await totalCountPromise;
+
+      // Nếu repo có quy mô vừa phải (<= 300 commits) và đang yêu cầu page 1, tự động kéo hết các trang còn lại để hiển thị đầy đủ
+      if ((fetchAll || totalCount <= 300) && totalCount > perPage && page === 1) {
+        const totalPages = Math.ceil(totalCount / perPage);
+        for (let p = 2; p <= Math.min(totalPages, 5); p++) {
+          const nextBatch = await fetchSinglePage(p);
+          if (nextBatch.length > 0) {
+            commits = commits.concat(nextBatch);
+          }
+        }
+      }
+
+      const effectiveTotal = Math.max(totalCount, commits.length);
+      const hasMore = commits.length < effectiveTotal;
+
+      return {
+        commits,
+        totalCount: effectiveTotal,
+        page,
+        hasMore,
+      };
+    } catch (err: any) {
+      this.logger.error(`Failed to fetch commits for ${owner}/${name}: ${err.message}`);
+      return { commits: [], totalCount: 0, page, hasMore: false };
+    }
+  }
+
+  // 7. Lấy danh sách Pull Requests của repository
+  async getRepoPulls(user: AuthUser, repoName: string, state = 'all', perPage = 30) {
     if (!repoName) return [];
     const owner = repoName.includes('/') ? repoName.split('/')[0] : user.login;
     const name = repoName.includes('/') ? repoName.split('/')[1] : repoName;
 
     try {
-      // 1. Thử lấy qua token của user
-      const commits = await this.fetchGitHub(
-        `/repos/${owner}/${name}/commits?per_page=${perPage}`,
+      const pulls = await this.fetchGitHub(
+        `/repos/${owner}/${name}/pulls?state=${state}&per_page=${perPage}&sort=updated`,
         user.accessToken,
       );
-      return Array.isArray(commits) ? commits : [];
+      return Array.isArray(pulls) ? pulls : [];
     } catch (err: any) {
-      this.logger.warn(`Failed to fetch commits with token for ${owner}/${name}: ${err.message}. Retrying via public GitHub API...`);
+      this.logger.warn(`Failed to fetch pulls for ${owner}/${name}: ${err.message}. Trying public API...`);
       try {
-        const res = await fetch(`https://api.github.com/repos/${owner}/${name}/commits?per_page=${perPage}`, {
+        const res = await fetch(`https://api.github.com/repos/${owner}/${name}/pulls?state=${state}&per_page=${perPage}&sort=updated`, {
           headers: {
             'User-Agent': 'DevBoard-Backend',
             Accept: 'application/vnd.github.v3+json',
@@ -214,7 +302,39 @@ export class GitHubService {
           return Array.isArray(data) ? data : [];
         }
       } catch (e: any) {
-        this.logger.error(`Public commits fallback failed for ${owner}/${name}: ${e.message}`);
+        this.logger.error(`Public pulls fallback failed for ${owner}/${name}: ${e.message}`);
+      }
+      return [];
+    }
+  }
+
+  // 8. Lấy danh sách Branches của repository
+  async getRepoBranches(user: AuthUser, repoName: string, perPage = 30) {
+    if (!repoName) return [];
+    const owner = repoName.includes('/') ? repoName.split('/')[0] : user.login;
+    const name = repoName.includes('/') ? repoName.split('/')[1] : repoName;
+
+    try {
+      const branches = await this.fetchGitHub(
+        `/repos/${owner}/${name}/branches?per_page=${perPage}`,
+        user.accessToken,
+      );
+      return Array.isArray(branches) ? branches : [];
+    } catch (err: any) {
+      this.logger.warn(`Failed to fetch branches for ${owner}/${name}: ${err.message}. Trying public API...`);
+      try {
+        const res = await fetch(`https://api.github.com/repos/${owner}/${name}/branches?per_page=${perPage}`, {
+          headers: {
+            'User-Agent': 'DevBoard-Backend',
+            Accept: 'application/vnd.github.v3+json',
+          },
+        });
+        if (res.ok) {
+          const data = await res.json();
+          return Array.isArray(data) ? data : [];
+        }
+      } catch (e: any) {
+        this.logger.error(`Public branches fallback failed for ${owner}/${name}: ${e.message}`);
       }
       return [];
     }

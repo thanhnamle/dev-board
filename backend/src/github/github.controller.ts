@@ -47,9 +47,36 @@ export class GitHubController {
   async getCommits(
     @Req() req: Request & { user: any },
     @Query('repo') repo: string,
+    @Query('page') page?: string,
+    @Query('per_page') perPage?: string,
+    @Query('all') all?: string,
+  ) {
+    const pageNum = page ? parseInt(page, 10) : 1;
+    const limit = perPage ? parseInt(perPage, 10) : 100;
+    const fetchAll = all === 'true' || all === '1';
+    return this.githubService.getRepoCommits(req.user, repo, pageNum, limit, fetchAll);
+  }
+
+  // GET /api/github/pulls - Lấy danh sách Pull Requests của repository
+  @Get('pulls')
+  async getPulls(
+    @Req() req: Request & { user: any },
+    @Query('repo') repo: string,
+    @Query('state') state?: string,
     @Query('per_page') perPage?: string,
   ) {
-    const limit = perPage ? parseInt(perPage, 10) : 50;
-    return this.githubService.getRepoCommits(req.user, repo, limit);
+    const limit = perPage ? parseInt(perPage, 10) : 30;
+    return this.githubService.getRepoPulls(req.user, repo, state || 'all', limit);
+  }
+
+  // GET /api/github/branches - Lấy danh sách branches của repository
+  @Get('branches')
+  async getBranches(
+    @Req() req: Request & { user: any },
+    @Query('repo') repo: string,
+    @Query('per_page') perPage?: string,
+  ) {
+    const limit = perPage ? parseInt(perPage, 10) : 30;
+    return this.githubService.getRepoBranches(req.user, repo, limit);
   }
 }

@@ -22,6 +22,7 @@ export class CommandPaletteService {
     ['overview', 'Dashboard overview', 'Daily tasks, pull requests and deployments', '/app/dashboard/overview', 'dashboard home tasks pull requests deployments'],
     ['analytics', 'Dashboard analytics', 'Velocity, commits and engineering health', '/app/dashboard/analytics', 'charts velocity commits health'],
     ['repositories', 'All repositories', 'Browse and manage your GitHub repositories', '/app/projects/all-projects', 'repositories git repos projects'],
+    ['workspace', 'Repository Workspace', 'Visual Git graph, commit stream, PRs and branches', '/app/projects/workspace', 'workspace git graph commits pull requests pr branches inspect'],
     ['bookmarks', 'Bookmarked repositories', 'Your personal quick-access focus workspace shelf', '/app/projects/bookmarks', 'bookmarks pinned active focus shelf'],
     ['starred', 'Starred repositories', 'Your favorited GitHub repositories', '/app/projects/starred', 'starred stars favorites'],
     ['github', 'GitHub profile', 'Profile, bio and contributions overview', '/app/github/profile', 'github account profile bio stats'],

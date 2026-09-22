@@ -39,6 +39,15 @@ export const routes: Routes = [
                 loadComponent: () => import('./pages/projects/all-projects/all-projects.component').then(m => m.AllProjectsComponent) 
             },
             { 
+                path: 'projects/workspace', 
+                loadComponent: () => import('./pages/projects/repo-workspace/repo-workspace.component').then(m => m.RepoWorkspaceComponent) 
+            },
+            { 
+                path: 'workspace', 
+                redirectTo: 'projects/workspace', 
+                pathMatch: 'full' 
+            },
+            { 
                 path: 'projects/bookmarks', 
                 loadComponent: () => import('./pages/projects/bookmarks/bookmarks.component').then(m => m.BookmarksComponent) 
             },

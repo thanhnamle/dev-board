@@ -248,6 +248,15 @@
 
           <div class="deploy-status-group">
             <a
+              [routerLink]="['/app/projects/workspace']"
+              [queryParams]="{ repo: project.repoName }"
+              class="workspace-link-btn"
+              title="Open repository in Git Workspace"
+            >
+              <lucide-icon [img]="Layers" size="12"></lucide-icon>
+              <span>Workspace</span>
+            </a>
+            <a
               [href]="project.githubUrl"
               target="_blank"
               class="live-link-btn"

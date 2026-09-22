@@ -145,7 +145,7 @@ AngularProject/
             └── pages/               # Các trang giao diện chức năng
                 ├── landing/         # Landing page & GitHub OAuth Login Card
                 ├── dashboard/       # Dashboard Overview & Analytics
-                ├── projects/        # All-projects, Bookmarks, Starred
+                ├── projects/        # All-projects, Bookmarks, Starred, Repo-workspace (Git Graph)
                 ├── messages/        # Discussions & Inbox (route: /app/discussions)
                 ├── notes/           # All-notes, Tags
                 ├── snippets/        # All-snippets, Favorites
@@ -168,6 +168,8 @@ Hệ thống điều hướng được quản trị tại [frontend/src/app/app.
 | `/app/projects/all-projects`| `AllProjectsComponent`| Auth | Danh mục 21 repositories thật từ tài khoản GitHub, bộ lọc tag/ngôn ngữ |
 | `/app/projects/bookmarks`| `BookmarksComponent` | Auth | **Kệ dự án lưu riêng của DevBoard**: Quản lý các repository được ghim |
 | `/app/projects/starred` | `StarredComponent`   | Auth | Danh sách các kho mã nguồn ưa thích |
+| `/app/projects/workspace`| `RepoWorkspaceComponent` | Auth | **Repository Workspace & Git Graph**: Trực quan hóa branch graph, commit stream, PRs, branches, clone |
+| `/app/workspace`         | *Redirect về `projects/workspace`* | Auth | Đường dẫn tắt tiện lợi tới Không gian làm việc Repo |
 | `/app/discussions`       | `MessagesComponent`  | Auth | **Discussions & Inbox Hub**: Quản lý trao đổi code review, mentions |
 | `/app/messages`          | *Redirect về `discussions`* | Auth | Tương thích ngược với liên kết cũ |
 | `/app/notes/all-notes`   | `AllNotesComponent`  | Auth | Trình soạn thảo và danh sách ghi chú kỹ thuật |
@@ -220,6 +222,30 @@ Hệ thống điều hướng được quản trị tại [frontend/src/app/app.
 * Mở bằng phím tắt `⌘K` (Mac) hoặc `Ctrl+K` (Windows/Linux) hoặc bấm vào thanh tìm kiếm ở Sidebar.
 * Hỗ trợ tìm kiếm tức thì theo từ khóa qua tất cả các trang, dự án, ghi chú và đoạn code mẫu.
 
+### 5.6. Không Gian Làm Việc Kho Mã Nguồn & Git Graph (`RepoWorkspaceComponent`)
+* **Định tuyến:** `/app/projects/workspace` (hỗ trợ alias `/app/workspace` và query param `?repo=owner/name`).
+* **Trình trực quan hóa Git Graph (Interactive SVG Canvas):**
+  - Thuật toán phân bổ làn nhánh (branch lane calculation) tự động gán tọa độ x, y cho từng commit.
+  - Vẽ đường cong Bezier (`d="M ... C ..."`) mượt mà kết nối commit cha con và các nhánh rẽ/nhập.
+  - Node commit phát sáng theo màu sắc của từng làn nhánh; phân biệt merge commit bằng vòng tròn kép (double ring).
+  - Tương tác click chọn commit trực quan kích hoạt Inspector Panel.
+* **Luồng Commit Stream & Commit Inspector:**
+  - **Khắc phục triệt để giới hạn 50 commits (True Total Commits & Auto Multi-page):**
+    - Sử dụng kỹ thuật đọc `Link` header từ request `HEAD` (`per_page=1`) để lấy chính xác 100% tổng số commit (ví dụ: **121 commits** thay vì bị ngắt ở 50).
+    - Tự động kéo đa trang (auto-fetch multi-page) đối với repository có quy mô vừa phải (<= 300 commits) để nạp trọn vẹn 100% commits.
+    - Nút "Load More Commits" hỗ trợ tải phân trang mượt mà đối với repository lớn.
+    - Ribbon hiển thị trực quan tỷ lệ commit đã tải: `commits.length` of `totalCommitsCount` synced.
+  - Danh sách commit chi tiết: SHA 7 ký tự (1-click copy), commit message, tên tác giả, avatar GitHub, verified GPG badge, relative timestamp.
+  - Bộ lọc tìm kiếm commit tức thì theo message, hash hoặc author.
+  - Inspector Panel: Xem mã SHA đầy đủ, link GitHub commit, author/committer, commit parents SHA và cây file thay đổi.
+* **Pull Requests Explorer:**
+  - Lọc theo trạng thái `All`, `Open`, `Merged`, `Closed`.
+  - Hiển thị badge luồng nhánh `headRef` ➔ `baseRef`, avatar người mở, số comment, review state, link trực tiếp tới GitHub.
+* **Branches & Quick Checkout:**
+  - Danh sách nhánh, huy hiệu `default`, commit SHA mới nhất, nút 1-click sao chép lệnh `git checkout <branch>`.
+* **Repository Meta & Quick Clone:**
+  - Thẻ thông tin repo và hộp lệnh sao chép 1-Click cho `git clone HTTPS` và `git clone SSH`.
+
 ---
 
 ## 6. 🚀 Hướng Dẫn Cài Đặt & Vận Hành (Getting Started)
@@ -255,7 +281,7 @@ npm start
 ```bash
 cd frontend
 npx tsc --noEmit    # Kiểm tra 0 lỗi TypeScript
-npm run build       # Biên dịch toàn bộ SSR bundle và 14 static routes
+npm run build       # Biên dịch toàn bộ SSR bundle và 15 static routes
 ```
 
 ---
@@ -280,6 +306,14 @@ npm run build       # Biên dịch toàn bộ SSR bundle và 14 static routes
   - Xóa snippet, sao chép mã nguồn 1-Click thông minh.
 - [x] **Topic Tags Hub & Deep Linking:** Modal tạo tag kèm note khởi đầu, tự động phân loại tag cloud, click chuyển thẳng tới note chi tiết.
 - [x] **Kênh thảo luận kỹ thuật (Discussions Thread Creator):** Bổ sung modal tạo chủ đề thảo luận mới với ngữ cảnh repository và phản hồi ngay.
+- [x] **Không Gian Làm Việc Kho Mã Nguồn & Git Graph Visualizer (`/app/projects/workspace`):**
+  - Trực quan hóa luồng commit theo làn nhánh (branch lanes SVG).
+  - Git commit history stream với avatar tác giả thật, SHA copy, Verified badge.
+  - Bảng commit inspector chi tiết.
+  - Quản lý Pull Requests đa trạng thái (`Open`, `Merged`, `Closed`).
+  - Danh sách Branches với 1-Click `git checkout` command.
+  - Bộ chọn repository tức thì đồng bộ URL query parameter `?repo=owner/name`.
+  - Backend API NestJS: endpoints `/pulls`, `/branches`, `/commits`.
 - [x] Khắc phục triệt để các lỗi template compiler và budget limit trong Angular 17.
 
 ### Kế hoạch tiếp theo (Upcoming):

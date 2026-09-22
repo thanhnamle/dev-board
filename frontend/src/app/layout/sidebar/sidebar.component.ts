@@ -136,6 +136,7 @@ export class SidebarComponent {
       path: '/app/projects/all-projects',
       children: [
         { label: 'All Repositories', path: '/app/projects/all-projects', badge: () => this.workspace.projects().length },
+        { label: 'Repo Workspace', path: '/app/projects/workspace', badge: 'Git', badgeClass: 'badge-purple' },
         { label: 'Bookmarks', path: '/app/projects/bookmarks', badge: () => this.workspace.projects().filter(project => project.isBookmarked).length, badgeClass: 'badge-purple' },
         { label: 'Starred', path: '/app/projects/starred', badge: () => this.workspace.projects().filter(project => project.isStarred).length, badgeClass: 'badge-amber' }
       ]

@@ -1,0 +1,710 @@
+<div class="workspace-container">
+  
+  <!-- =========================================================
+       1. TOP REPOSITORY SELECTOR & ACTIONS HEADER
+  ========================================================= -->
+  <header class="workspace-header">
+    <div class="header-left">
+      <div class="repo-selector-wrapper">
+        <div class="repo-selector-box" (click)="toggleDropdown()">
+          <div class="repo-icon-badge">
+            <lucide-icon [img]="FolderGit2" size="18"></lucide-icon>
+          </div>
+          <div class="repo-info-text">
+            <div class="repo-title-row">
+              <h1 class="repo-name">{{ currentRepo()?.fullName || 'Select Repository' }}</h1>
+              @if (currentRepo()?.isPrivate) {
+                <span class="badge-private">Private</span>
+              } @else {
+                <span class="badge-public">Public</span>
+              }
+            </div>
+            <p class="repo-desc">{{ currentRepo()?.description || 'Interactive repository workspace with Git visualization' }}</p>
+          </div>
+          <lucide-icon [img]="ChevronDown" size="16" class="dropdown-arrow" [class.rotated]="isRepoDropdownOpen()"></lucide-icon>
+        </div>
+
+        <!-- Custom Dropdown Menu of User Repositories -->
+        @if (isRepoDropdownOpen()) {
+          <div class="repo-dropdown-menu" (click)="$event.stopPropagation()">
+            <div class="dropdown-header-search">
+              <lucide-icon [img]="Search" size="13" class="search-icon"></lucide-icon>
+              <input type="text" placeholder="Switch repository..." class="dropdown-search-input" #repoSearch (input)="0" />
+            </div>
+            <div class="dropdown-list">
+              @for (r of allRepos(); track r.id) {
+                @if (!repoSearch.value || r.fullName.toLowerCase().includes(repoSearch.value.toLowerCase())) {
+                  <button 
+                    type="button" 
+                    class="dropdown-item" 
+                    [class.active]="r.fullName === currentRepo()?.fullName"
+                    (click)="selectRepository(r.fullName)">
+                    <div class="item-left">
+                      <span class="lang-dot" [style.backgroundColor]="r.languageColor || '#6366f1'"></span>
+                      <span class="item-name">{{ r.fullName }}</span>
+                    </div>
+                    <span class="item-branch">{{ r.defaultBranch || 'main' }}</span>
+                  </button>
+                }
+              }
+            </div>
+          </div>
+        }
+      </div>
+    </div>
+
+    <!-- Header Right Actions: Quick Clone + GitHub Link -->
+    <div class="header-actions">
+      @if (currentRepo(); as repo) {
+        <button 
+          type="button" 
+          class="action-btn btn-clone" 
+          (click)="copyCloneCommand(repo.cloneUrl || repo.htmlUrl)"
+          [title]="'Copy: git clone ' + (repo.cloneUrl || repo.htmlUrl)">
+          <lucide-icon [img]="copiedClone() ? Check : Copy" size="13"></lucide-icon>
+          <span>{{ copiedClone() ? 'Cloned command copied!' : 'git clone' }}</span>
+        </button>
+
+        <a 
+          [href]="repo.htmlUrl" 
+          target="_blank" 
+          rel="noopener noreferrer" 
+          class="action-btn btn-external" 
+          title="Open Repository on GitHub">
+          <lucide-icon [img]="ExternalLink" size="13"></lucide-icon>
+          <span>View on GitHub</span>
+        </a>
+
+        <button 
+          type="button" 
+          class="action-btn btn-refresh" 
+          (click)="loadWorkspaceData(repo.fullName)"
+          [class.spinning]="loading()"
+          title="Sync with GitHub">
+          <lucide-icon [img]="RefreshCw" size="13"></lucide-icon>
+        </button>
+      }
+    </div>
+  </header>
+
+  <!-- =========================================================
+       2. TOP 4 METRICS RIBBON
+  ========================================================= -->
+  <section class="metrics-grid">
+    <div class="metric-card">
+      <div class="metric-top">
+        <span class="metric-label">Git Commits</span>
+        <div class="metric-icon-box box-indigo">
+          <lucide-icon [img]="GitCommit" class="metric-icon"></lucide-icon>
+        </div>
+      </div>
+      <div class="metric-value-row">
+        <span class="metric-value">{{ totalCommitsCount() || commits().length }}</span>
+        <span class="metric-pill pill-indigo">{{ currentRepo()?.defaultBranch || 'main' }}</span>
+      </div>
+      <div class="metric-footer">
+        <span class="metric-trend text-indigo">Commit History</span>
+        <span class="metric-sub">{{ commits().length }} of {{ totalCommitsCount() || commits().length }} synced</span>
+      </div>
+    </div>
+
+    <div class="metric-card">
+      <div class="metric-top">
+        <span class="metric-label">Pull Requests</span>
+        <div class="metric-icon-box box-emerald">
+          <lucide-icon [img]="GitPullRequest" class="metric-icon"></lucide-icon>
+        </div>
+      </div>
+      <div class="metric-value-row">
+        <span class="metric-value">{{ pullRequests().length }}</span>
+        <span class="metric-pill pill-emerald">{{ openPRsCount() }} Open</span>
+      </div>
+      <div class="metric-footer">
+        <span class="metric-trend text-emerald">Code Reviews</span>
+        <span class="metric-sub">branches merged</span>
+      </div>
+    </div>
+
+    <div class="metric-card">
+      <div class="metric-top">
+        <span class="metric-label">Active Branches</span>
+        <div class="metric-icon-box box-amber">
+          <lucide-icon [img]="GitBranch" class="metric-icon"></lucide-icon>
+        </div>
+      </div>
+      <div class="metric-value-row">
+        <span class="metric-value">{{ branches().length }}</span>
+        <span class="metric-pill pill-amber">Head Tree</span>
+      </div>
+      <div class="metric-footer">
+        <span class="metric-trend text-amber">Default Branch</span>
+        <span class="metric-sub">{{ currentRepo()?.defaultBranch || 'main' }}</span>
+      </div>
+    </div>
+
+    <div class="metric-card">
+      <div class="metric-top">
+        <span class="metric-label">Primary Stack</span>
+        <div class="metric-icon-box box-cyan">
+          <lucide-icon [img]="Code2" class="metric-icon"></lucide-icon>
+        </div>
+      </div>
+      <div class="metric-value-row">
+        <span class="metric-value">{{ currentRepo()?.language || 'Code' }}</span>
+        <span class="metric-pill pill-cyan">
+          <lucide-icon [img]="Star" size="10"></lucide-icon>
+          {{ currentRepo()?.starsCount || 0 }}
+        </span>
+      </div>
+      <div class="metric-footer">
+        <span class="metric-trend text-blue">Forks: {{ currentRepo()?.forksCount || 0 }}</span>
+        <span class="metric-sub">repository stats</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- =========================================================
+       3. WORKSPACE TABS NAVIGATION
+  ========================================================= -->
+  <div class="workspace-tabs-row">
+    <button 
+      type="button" 
+      class="nav-tab" 
+      [class.active]="activeTab() === 'graph'"
+      (click)="activeTab.set('graph')">
+      <lucide-icon [img]="Layers" size="15"></lucide-icon>
+      <span>Git Graph & Visualizer</span>
+      <span class="tab-badge">{{ totalCommitsCount() || commits().length }}</span>
+    </button>
+
+    <button 
+      type="button" 
+      class="nav-tab" 
+      [class.active]="activeTab() === 'commits'"
+      (click)="activeTab.set('commits')">
+      <lucide-icon [img]="GitCommit" size="15"></lucide-icon>
+      <span>Commit Stream</span>
+      <span class="tab-badge">{{ filteredCommits().length }}</span>
+    </button>
+
+    <button 
+      type="button" 
+      class="nav-tab" 
+      [class.active]="activeTab() === 'pulls'"
+      (click)="activeTab.set('pulls')">
+      <lucide-icon [img]="GitPullRequest" size="15"></lucide-icon>
+      <span>Pull Requests</span>
+      <span class="tab-badge">{{ pullRequests().length }}</span>
+    </button>
+
+    <button 
+      type="button" 
+      class="nav-tab" 
+      [class.active]="activeTab() === 'branches'"
+      (click)="activeTab.set('branches')">
+      <lucide-icon [img]="GitBranch" size="15"></lucide-icon>
+      <span>Branches & Tags</span>
+      <span class="tab-badge">{{ branches().length }}</span>
+    </button>
+
+    <button 
+      type="button" 
+      class="nav-tab" 
+      [class.active]="activeTab() === 'overview'"
+      (click)="activeTab.set('overview')">
+      <lucide-icon [img]="Info" size="15"></lucide-icon>
+      <span>Repo Overview</span>
+    </button>
+  </div>
+
+  <!-- =========================================================
+       4. TAB CONTENT: GIT GRAPH & VISUAL LANES
+  ========================================================= -->
+  @if (activeTab() === 'graph') {
+    <div class="graph-workspace-layout">
+      <!-- Cột Trái: SVG Git Graph Canvas + Commit Nodes -->
+      <div class="graph-viewport-card">
+        <div class="viewport-header">
+          <div class="viewport-title-group">
+            <lucide-icon [img]="Sparkles" size="15" class="text-indigo"></lucide-icon>
+            <span class="viewport-title">Visual Branching Graph</span>
+          </div>
+          <div class="viewport-legend">
+            <span class="legend-item"><span class="legend-dot dot-main"></span> Main Lane</span>
+            <span class="legend-item"><span class="legend-dot dot-feature"></span> Feature Lanes</span>
+            <span class="legend-item"><span class="legend-ring"></span> Merge Node</span>
+          </div>
+        </div>
+
+        <!-- Table Column Headers Bar -->
+        <div class="graph-table-header" [style.paddingLeft.px]="graphData().width">
+          <span class="col-head col-commit">Commit</span>
+          <span class="col-head col-msg">Message / Description</span>
+          <div class="col-head-right">
+            <span class="col-head col-author">Author</span>
+            <span class="col-head col-date">Date</span>
+          </div>
+        </div>
+
+        <div class="graph-scroll-container">
+          <div class="graph-canvas-wrapper" [style.height.px]="graphData().height">
+            <!-- Vertical Guideline Separator between Graph and Text -->
+            <div class="graph-lane-divider" [style.left.px]="graphData().width - 8"></div>
+
+            <!-- SVG Vector Lines Layer -->
+            <svg class="graph-svg" [attr.height]="graphData().height" [style.width.px]="graphData().width">
+              <defs>
+                <filter id="glow" x="-20%" y="-20%" width="140%" height="140%">
+                  <feGaussianBlur stdDeviation="3" result="blur" />
+                  <feComposite in="SourceGraphic" in2="blur" operator="over" />
+                </filter>
+              </defs>
+
+              <!-- Connector Lines -->
+              @for (link of graphData().links; track $index) {
+                <path 
+                  [attr.d]="link.path" 
+                  [attr.stroke]="link.color" 
+                  stroke-width="2" 
+                  fill="none" 
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  class="graph-link-line"
+                />
+              }
+
+              <!-- Commit Circle Nodes -->
+              @for (node of graphData().nodes; track node.commit.sha) {
+                <g 
+                  class="graph-node-group" 
+                  [class.selected]="selectedCommit()?.sha === node.commit.sha"
+                  (click)="selectCommitNode(node.commit)">
+                  
+                  <!-- Outer Halo -->
+                  <circle 
+                    [attr.cx]="node.x" 
+                    [attr.cy]="node.y" 
+                    [attr.r]="selectedCommit()?.sha === node.commit.sha ? 8.5 : 5.5" 
+                    [attr.fill]="node.color"
+                    fill-opacity="0.22"
+                    class="node-halo"
+                  />
+
+                  <!-- Core Node -->
+                  <circle 
+                    [attr.cx]="node.x" 
+                    [attr.cy]="node.y" 
+                    [attr.r]="node.isMerge ? 4.8 : 3.5" 
+                    [attr.fill]="node.color"
+                    stroke="#0b0f19"
+                    stroke-width="1.8"
+                    class="node-core"
+                  />
+
+                  @if (node.isMerge) {
+                    <!-- Inner merge dot -->
+                    <circle 
+                      [attr.cx]="node.x" 
+                      [attr.cy]="node.y" 
+                      r="1.5" 
+                      fill="#ffffff"
+                    />
+                  }
+                </g>
+              }
+            </svg>
+
+            <!-- DOM Commit Messages Overlay aligned with SVG rows -->
+            <div class="graph-rows-layer">
+              @for (node of graphData().nodes; track node.commit.sha) {
+                <div 
+                  class="graph-commit-row" 
+                  [style.top.px]="node.y - 20"
+                  [style.paddingLeft.px]="graphData().width"
+                  [class.active]="selectedCommit()?.sha === node.commit.sha"
+                  (click)="selectCommitNode(node.commit)">
+                  
+                  <div class="row-hash-pill" (click)="copySha(node.commit.sha, $event)" title="Click to copy SHA">
+                    <span class="hash-text">{{ node.commit.shortSha }}</span>
+                    <lucide-icon [img]="copiedSha() === node.commit.sha ? Check : Copy" size="10"></lucide-icon>
+                  </div>
+
+                  <span class="row-msg" [title]="node.commit.message">{{ node.commit.message }}</span>
+
+                  <div class="row-meta">
+                    @if (node.commit.verified) {
+                      <span class="verified-pill" title="PGP / GPG Verified Commit">Verified</span>
+                    }
+                    <div class="author-tag">
+                      @if (node.commit.authorAvatar) {
+                        <img [src]="node.commit.authorAvatar" alt="" class="row-avatar" />
+                      }
+                      <span class="row-author">{{ node.commit.authorName }}</span>
+                    </div>
+                    <span class="row-time">{{ node.commit.timeAgo }}</span>
+                  </div>
+                </div>
+              }
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Cột Phải: Selected Commit Inspector Panel -->
+      <aside class="commit-inspector-panel">
+        @if (selectedCommit(); as c) {
+          <div class="inspector-card">
+            <div class="inspector-header">
+              <span class="inspector-badge">Commit Details</span>
+              <a [href]="c.htmlUrl" target="_blank" rel="noopener noreferrer" class="link-github" title="Open commit on GitHub">
+                <span>GitHub</span>
+                <lucide-icon [img]="ExternalLink" size="12"></lucide-icon>
+              </a>
+            </div>
+
+            <h3 class="inspector-msg">{{ c.message }}</h3>
+            @if (c.description) {
+              <p class="inspector-desc">{{ c.description }}</p>
+            }
+
+            <div class="inspector-fields">
+              <div class="field-item">
+                <span class="field-label">Commit SHA</span>
+                <div class="field-value-row">
+                  <code class="sha-code">{{ c.sha }}</code>
+                  <button type="button" class="copy-mini-btn" (click)="copySha(c.sha, $event)">
+                    <lucide-icon [img]="copiedSha() === c.sha ? Check : Copy" size="12"></lucide-icon>
+                  </button>
+                </div>
+              </div>
+
+              <div class="field-item">
+                <span class="field-label">Author</span>
+                <div class="author-row">
+                  <div class="author-avatar-box">
+                    @if (c.authorAvatar) {
+                      <img [src]="c.authorAvatar" alt="Avatar" class="avatar-img" />
+                    } @else {
+                      <lucide-icon [img]="User" size="14"></lucide-icon>
+                    }
+                  </div>
+                  <div>
+                    <span class="author-display-name">{{ c.authorName }}</span>
+                    @if (c.authorLogin) {
+                      <span class="author-handle">&#64;{{ c.authorLogin }}</span>
+                    }
+                  </div>
+                </div>
+              </div>
+
+              <div class="field-item">
+                <span class="field-label">Committed Date</span>
+                <span class="field-value">{{ c.timestamp | date:'medium' }} ({{ c.timeAgo }})</span>
+              </div>
+
+              <div class="field-item">
+                <span class="field-label">Parent Commits</span>
+                <div class="parents-list">
+                  @for (parent of c.parents; track parent) {
+                    <span class="parent-chip">{{ parent.substring(0, 7) }}</span>
+                  } @empty {
+                    <span class="field-value text-muted">Initial commit (no parents)</span>
+                  }
+                </div>
+              </div>
+
+              <div class="field-item">
+                <span class="field-label">Signature Verification</span>
+                <div class="verification-status">
+                  @if (c.verified) {
+                    <lucide-icon [img]="ShieldCheck" size="15" class="text-emerald"></lucide-icon>
+                    <span class="text-emerald">Verified Cryptographic Signature</span>
+                  } @else {
+                    <span class="text-muted">Unverified signature</span>
+                  }
+                </div>
+              </div>
+            </div>
+          </div>
+        } @else {
+          <div class="empty-inspector">
+            <lucide-icon [img]="GitCommit" size="32" class="text-muted"></lucide-icon>
+            <p>Select any commit node in the graph to inspect detailed metadata.</p>
+          </div>
+        }
+      </aside>
+    </div>
+  }
+
+  <!-- =========================================================
+       5. TAB CONTENT: DETAILED COMMIT STREAM
+  ========================================================= -->
+  @if (activeTab() === 'commits') {
+    <div class="commits-tab-content">
+      <!-- Search Box Filter -->
+      <div class="commits-filter-bar">
+        <div class="search-box">
+          <lucide-icon [img]="Search" size="14" class="search-icon"></lucide-icon>
+          <input 
+            type="text" 
+            placeholder="Search commits by message, SHA, or author..." 
+            [ngModel]="commitSearch()"
+            (ngModelChange)="commitSearch.set($event)"
+            class="search-input"
+          />
+        </div>
+        <span class="commits-count">{{ filteredCommits().length }} Commits</span>
+      </div>
+
+      <!-- Commits List -->
+      <div class="commits-timeline">
+        @for (c of filteredCommits(); track c.sha) {
+          <div class="commit-stream-item">
+            <div class="timeline-indicator">
+              <span class="timeline-line"></span>
+              <span class="timeline-dot"></span>
+            </div>
+
+            <div class="commit-stream-card">
+              <div class="card-left">
+                <div class="commit-header">
+                  <h4 class="commit-title">{{ c.message }}</h4>
+                  @if (c.verified) {
+                    <span class="verified-pill">Verified</span>
+                  }
+                </div>
+                @if (c.description) {
+                  <p class="commit-desc">{{ c.description }}</p>
+                }
+                <div class="commit-meta-row">
+                  <span class="commit-author">by <strong>{{ c.authorName }}</strong></span>
+                  <span class="meta-dot">•</span>
+                  <span class="commit-time">{{ c.timeAgo }}</span>
+                </div>
+              </div>
+
+              <div class="card-right">
+                <button type="button" class="sha-pill" (click)="copySha(c.sha, $event)">
+                  <code>{{ c.shortSha }}</code>
+                  <lucide-icon [img]="copiedSha() === c.sha ? Check : Copy" size="11"></lucide-icon>
+                </button>
+                <a [href]="c.htmlUrl" target="_blank" rel="noopener noreferrer" class="link-commit-external">
+                  <lucide-icon [img]="ArrowUpRight" size="14"></lucide-icon>
+                </a>
+              </div>
+            </div>
+          </div>
+        } @empty {
+          <div class="empty-state-card">
+            <lucide-icon [img]="Search" size="32" class="text-muted"></lucide-icon>
+            <p>No commits match your search query "{{ commitSearch() }}"</p>
+          </div>
+        }
+      </div>
+
+      <!-- Load More Commits Button -->
+      @if (hasMoreCommits()) {
+        <div class="load-more-section">
+          <button 
+            type="button" 
+            class="btn-load-more" 
+            (click)="loadMoreCommits()" 
+            [disabled]="loadingMoreCommits()">
+            <lucide-icon [img]="RefreshCw" size="14" [class.spinning]="loadingMoreCommits()"></lucide-icon>
+            <span>{{ loadingMoreCommits() ? 'Loading more commits...' : 'Load More Commits (' + commits().length + ' / ' + totalCommitsCount() + ')' }}</span>
+          </button>
+        </div>
+      }
+    </div>
+  }
+
+  <!-- =========================================================
+       6. TAB CONTENT: PULL REQUESTS
+  ========================================================= -->
+  @if (activeTab() === 'pulls') {
+    <div class="pulls-tab-content">
+      <!-- PR Filter Row -->
+      <div class="pulls-filter-row">
+        <div class="filter-pills">
+          <button 
+            type="button" 
+            class="filter-pill" 
+            [class.active]="prFilter() === 'all'"
+            (click)="prFilter.set('all')">
+            All ({{ pullRequests().length }})
+          </button>
+          <button 
+            type="button" 
+            class="filter-pill pill-open" 
+            [class.active]="prFilter() === 'open'"
+            (click)="prFilter.set('open')">
+            Open ({{ openPRsCount() }})
+          </button>
+          <button 
+            type="button" 
+            class="filter-pill pill-merged" 
+            [class.active]="prFilter() === 'merged'"
+            (click)="prFilter.set('merged')">
+            Merged
+          </button>
+          <button 
+            type="button" 
+            class="filter-pill" 
+            [class.active]="prFilter() === 'closed'"
+            (click)="prFilter.set('closed')">
+            Closed
+          </button>
+        </div>
+      </div>
+
+      <!-- PR Cards List -->
+      <div class="pulls-grid">
+        @for (pr of filteredPRs(); track pr.id) {
+          <div class="pr-card">
+            <div class="pr-card-header">
+              <div class="pr-status-pill" [ngClass]="{
+                'status-open': pr.state === 'open',
+                'status-merged': pr.state === 'merged',
+                'status-closed': pr.state === 'closed'
+              }">
+                <lucide-icon [img]="GitPullRequest" size="12"></lucide-icon>
+                <span>{{ pr.state | uppercase }}</span>
+              </div>
+              <span class="pr-number">#{{ pr.number }}</span>
+            </div>
+
+            <h3 class="pr-title">{{ pr.title }}</h3>
+            @if (pr.body) {
+              <p class="pr-body">{{ pr.body }}</p>
+            }
+
+            <div class="pr-branches-flow">
+              <span class="branch-pill">{{ pr.headRef }}</span>
+              <span class="arrow-symbol">➔</span>
+              <span class="branch-pill branch-target">{{ pr.baseRef }}</span>
+            </div>
+
+            <div class="pr-card-footer">
+              <div class="author-info">
+                <span class="author-name">Opened by {{ pr.authorName }}</span>
+                <span class="meta-dot">•</span>
+                <span class="pr-date">{{ pr.timeAgo }}</span>
+              </div>
+
+              <a [href]="pr.htmlUrl" target="_blank" rel="noopener noreferrer" class="link-pr">
+                <span>View PR</span>
+                <lucide-icon [img]="ExternalLink" size="12"></lucide-icon>
+              </a>
+            </div>
+          </div>
+        } @empty {
+          <div class="empty-state-card">
+            <lucide-icon [img]="GitPullRequest" size="36" class="text-muted"></lucide-icon>
+            <h3>No Pull Requests Found</h3>
+            <p>There are no pull requests matching the current filter for this repository.</p>
+          </div>
+        }
+      </div>
+    </div>
+  }
+
+  <!-- =========================================================
+       7. TAB CONTENT: BRANCHES EXPLORER
+  ========================================================= -->
+  @if (activeTab() === 'branches') {
+    <div class="branches-tab-content">
+      <div class="branches-list">
+        @for (b of branches(); track b.name) {
+          <div class="branch-card">
+            <div class="branch-left">
+              <div class="branch-icon-box">
+                <lucide-icon [img]="GitBranch" size="16"></lucide-icon>
+              </div>
+              <div>
+                <div class="branch-name-row">
+                  <span class="branch-name">{{ b.name }}</span>
+                  @if (b.isDefault) {
+                    <span class="badge-default">default</span>
+                  }
+                  @if (b.protected) {
+                    <span class="badge-protected">protected</span>
+                  }
+                </div>
+                <span class="branch-commit-sub">Latest commit: <code>{{ b.shortSha }}</code></span>
+              </div>
+            </div>
+
+            <div class="branch-actions">
+              <button 
+                type="button" 
+                class="copy-branch-btn" 
+                (click)="copySha('git checkout ' + b.name, $event)"
+                title="Copy git checkout command">
+                <lucide-icon [img]="copiedSha() === ('git checkout ' + b.name) ? Check : Copy" size="12"></lucide-icon>
+                <span>Checkout</span>
+              </button>
+            </div>
+          </div>
+        }
+      </div>
+    </div>
+  }
+
+  <!-- =========================================================
+       8. TAB CONTENT: REPO OVERVIEW & CLONE INSTRUCTIONS
+  ========================================================= -->
+  @if (activeTab() === 'overview') {
+    <div class="overview-tab-content">
+      <div class="overview-grid">
+        <!-- Quick Clone Box -->
+        <div class="overview-card">
+          <div class="card-heading">
+            <lucide-icon [img]="Terminal" size="16" class="text-indigo"></lucide-icon>
+            <h3>Quick Clone & Remote Commands</h3>
+          </div>
+          <div class="command-block">
+            <div class="command-line">
+              <span class="cmd-prompt">$</span>
+              <code>git clone {{ currentRepo()?.cloneUrl || currentRepo()?.htmlUrl }}</code>
+              <button type="button" class="copy-cmd-btn" (click)="copyCloneCommand(currentRepo()?.cloneUrl || currentRepo()?.htmlUrl || '')">
+                <lucide-icon [img]="copiedClone() ? Check : Copy" size="12"></lucide-icon>
+              </button>
+            </div>
+          </div>
+          <p class="card-tip">Execute this command in your terminal to fetch the full repository locally.</p>
+        </div>
+
+        <!-- Repository Details -->
+        <div class="overview-card">
+          <div class="card-heading">
+            <lucide-icon [img]="Info" size="16" class="text-emerald"></lucide-icon>
+            <h3>Repository Metadata</h3>
+          </div>
+          <div class="meta-specs-table">
+            <div class="spec-row">
+              <span class="spec-key">Full Name</span>
+              <span class="spec-val">{{ currentRepo()?.fullName }}</span>
+            </div>
+            <div class="spec-row">
+              <span class="spec-key">Default Branch</span>
+              <span class="spec-val">{{ currentRepo()?.defaultBranch || 'main' }}</span>
+            </div>
+            <div class="spec-row">
+              <span class="spec-key">Language</span>
+              <span class="spec-val">{{ currentRepo()?.language || 'Markdown' }}</span>
+            </div>
+            <div class="spec-row">
+              <span class="spec-key">License</span>
+              <span class="spec-val">{{ currentRepo()?.license || 'MIT' }}</span>
+            </div>
+            <div class="spec-row">
+              <span class="spec-key">Last Updated</span>
+              <span class="spec-val">{{ currentRepo()?.updatedRelative }}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  }
+
+</div>

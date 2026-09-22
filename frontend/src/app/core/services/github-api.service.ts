@@ -43,6 +43,57 @@ export interface GitHubRepoItem {
   defaultBranch: string;
 }
 
+export interface GitCommitDetail {
+  id: number;
+  sha: string;
+  shortSha: string;
+  message: string;
+  description?: string;
+  authorName: string;
+  authorAvatar?: string;
+  authorLogin?: string;
+  timestamp: string;
+  timeAgo: string;
+  parents: string[];
+  htmlUrl: string;
+  verified?: boolean;
+  lane?: number;
+}
+
+export interface GitPullRequestItem {
+  id: number;
+  number: number;
+  title: string;
+  state: 'open' | 'closed' | 'merged';
+  merged: boolean;
+  authorName: string;
+  authorAvatar?: string;
+  headRef: string;
+  baseRef: string;
+  createdAt: string;
+  updatedAt: string;
+  timeAgo: string;
+  htmlUrl: string;
+  commentsCount: number;
+  body?: string;
+  draft: boolean;
+}
+
+export interface GitBranchItem {
+  name: string;
+  commitSha: string;
+  shortSha: string;
+  isDefault: boolean;
+  protected: boolean;
+}
+
+export interface RepoCommitsResult {
+  commits: GitCommitDetail[];
+  totalCount: number;
+  hasMore: boolean;
+  page: number;
+}
+
 @Injectable({
   providedIn: 'root'
 })
@@ -409,6 +460,8 @@ export class GitHubApiService {
           const data = await res.json();
           if (Array.isArray(data) && data.length > 0) {
             rawCommits = data;
+          } else if (data && Array.isArray(data.commits)) {
+            rawCommits = data.commits;
           }
         }
       } catch (e) {
@@ -418,7 +471,7 @@ export class GitHubApiService {
       // 2. Fallback trực tiếp GitHub API
       if (rawCommits.length === 0) {
         try {
-          const directRes = await fetch(`https://api.github.com/repos/${owner}/${name}/commits?per_page=50`, {
+          const directRes = await fetch(`https://api.github.com/repos/${owner}/${name}/commits?per_page=100`, {
             headers: {
               Accept: 'application/vnd.github.v3+json',
             },
@@ -473,6 +526,231 @@ export class GitHubApiService {
       console.error(`[GitHubApiService] Lỗi lấy commits cho repo ${repoName}:`, err);
     }
     return [];
+  }
+
+  // 7. Lấy danh sách Commits đầy đủ kèm parents cho Git Graph
+  async fetchRepoFullCommits(repoName: string, page = 1, perPage = 100): Promise<RepoCommitsResult> {
+    if (!isPlatformBrowser(this.platformId) || !repoName) {
+      return { commits: [], totalCount: 0, hasMore: false, page: 1 };
+    }
+
+    try {
+      let rawCommits: any[] = [];
+      let totalCount = 0;
+      let hasMore = false;
+      const owner = repoName.includes('/') ? repoName.split('/')[0] : (this.currentUser()?.login || 'developer');
+      const name = repoName.includes('/') ? repoName.split('/')[1] : repoName;
+
+      // Gọi backend API
+      try {
+        const res = await fetch(`${this.baseUrl}/github/commits?repo=${encodeURIComponent(repoName)}&page=${page}&per_page=${perPage}&all=true`, {
+          method: 'GET',
+          credentials: 'include',
+        });
+        if (res.ok) {
+          const data = await res.json();
+          if (Array.isArray(data)) {
+            rawCommits = data;
+            totalCount = data.length;
+          } else if (data && typeof data === 'object') {
+            rawCommits = Array.isArray(data.commits) ? data.commits : [];
+            totalCount = typeof data.totalCount === 'number' ? data.totalCount : rawCommits.length;
+            hasMore = !!data.hasMore;
+          }
+        }
+      } catch (e) {
+        console.warn(`[GitHubApiService] Backend commits fetch failed for ${repoName}`, e);
+      }
+
+      // Fallback trực tiếp GitHub API
+      if (rawCommits.length === 0) {
+        try {
+          const directRes = await fetch(`https://api.github.com/repos/${owner}/${name}/commits?per_page=100&page=${page}`, {
+            headers: { Accept: 'application/vnd.github.v3+json' },
+          });
+          if (directRes.ok) {
+            const data = await directRes.json();
+            if (Array.isArray(data)) rawCommits = data;
+            totalCount = rawCommits.length;
+          }
+        } catch (err) {
+          console.error(`[GitHubApiService] Direct commits fetch failed:`, err);
+        }
+      }
+
+      if (rawCommits.length > 0) {
+        const mappedCommits: GitCommitDetail[] = rawCommits.map((item: any, index: number) => {
+          const sha = item.sha || '';
+          const shortSha = sha.substring(0, 7);
+          const fullMsg = item.commit?.message || 'Commit message';
+          const lines = fullMsg.split('\n');
+          const message = lines[0];
+          const description = lines.slice(1).join('\n').trim();
+          const dateStr = item.commit?.author?.date || item.commit?.committer?.date || new Date().toISOString();
+          const parents = Array.isArray(item.parents) ? item.parents.map((p: any) => p.sha) : [];
+
+          // Tính relative time
+          const diffMs = Date.now() - new Date(dateStr).getTime();
+          const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
+          const diffDays = Math.floor(diffHours / 24);
+          let timeAgo = 'Just now';
+          if (diffDays > 0) timeAgo = `${diffDays}d ago`;
+          else if (diffHours > 0) timeAgo = `${diffHours}h ago`;
+          else {
+            const diffMins = Math.floor(diffMs / (1000 * 60));
+            timeAgo = diffMins > 0 ? `${diffMins}m ago` : 'Just now';
+          }
+
+          return {
+            id: (page - 1) * perPage + index + 1,
+            sha,
+            shortSha,
+            message,
+            description: description || undefined,
+            authorName: item.commit?.author?.name || item.author?.login || 'Developer',
+            authorAvatar: item.author?.avatar_url,
+            authorLogin: item.author?.login,
+            timestamp: dateStr,
+            timeAgo,
+            parents,
+            htmlUrl: item.html_url || `https://github.com/${owner}/${name}/commit/${sha}`,
+            verified: item.commit?.verification?.verified || false
+          };
+        });
+
+        return {
+          commits: mappedCommits,
+          totalCount: Math.max(totalCount, mappedCommits.length),
+          hasMore,
+          page
+        };
+      }
+    } catch (err) {
+      console.error(`[GitHubApiService] Error fetching full commits for ${repoName}:`, err);
+    }
+    return { commits: [], totalCount: 0, hasMore: false, page };
+  }
+
+  // 8. Lấy danh sách Pull Requests
+  async fetchRepoPulls(repoName: string, state = 'all'): Promise<GitPullRequestItem[]> {
+    if (!isPlatformBrowser(this.platformId) || !repoName) return [];
+
+    try {
+      let rawPulls: any[] = [];
+      const owner = repoName.includes('/') ? repoName.split('/')[0] : (this.currentUser()?.login || 'developer');
+      const name = repoName.includes('/') ? repoName.split('/')[1] : repoName;
+
+      try {
+        const res = await fetch(`${this.baseUrl}/github/pulls?repo=${encodeURIComponent(repoName)}&state=${state}&per_page=30`, {
+          method: 'GET',
+          credentials: 'include',
+        });
+        if (res.ok) {
+          const data = await res.json();
+          if (Array.isArray(data)) rawPulls = data;
+        }
+      } catch (e) {
+        console.warn(`[GitHubApiService] Backend pulls fetch failed for ${repoName}`, e);
+      }
+
+      if (rawPulls.length === 0) {
+        try {
+          const directRes = await fetch(`https://api.github.com/repos/${owner}/${name}/pulls?state=${state}&per_page=30`, {
+            headers: { Accept: 'application/vnd.github.v3+json' },
+          });
+          if (directRes.ok) {
+            const data = await directRes.json();
+            if (Array.isArray(data)) rawPulls = data;
+          }
+        } catch (err) {
+          console.error(`[GitHubApiService] Direct pulls fetch failed:`, err);
+        }
+      }
+
+      return rawPulls.map((item: any) => {
+        const isMerged = !!item.merged_at;
+        const prState: 'open' | 'closed' | 'merged' = isMerged ? 'merged' : item.state;
+        const diffMs = Date.now() - new Date(item.updated_at || item.created_at).getTime();
+        const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+        const timeAgo = diffDays > 0 ? `${diffDays}d ago` : 'Today';
+
+        return {
+          id: item.id,
+          number: item.number,
+          title: item.title,
+          state: prState,
+          merged: isMerged,
+          authorName: item.user?.login || 'contributor',
+          authorAvatar: item.user?.avatar_url,
+          headRef: item.head?.ref || 'feature-branch',
+          baseRef: item.base?.ref || 'main',
+          createdAt: item.created_at,
+          updatedAt: item.updated_at,
+          timeAgo,
+          htmlUrl: item.html_url,
+          commentsCount: item.comments || 0,
+          body: item.body || '',
+          draft: !!item.draft
+        };
+      });
+    } catch (err) {
+      console.error(`[GitHubApiService] Error fetching pulls for ${repoName}:`, err);
+      return [];
+    }
+  }
+
+  // 9. Lấy danh sách Branches
+  async fetchRepoBranches(repoName: string): Promise<GitBranchItem[]> {
+    if (!isPlatformBrowser(this.platformId) || !repoName) return [];
+
+    try {
+      let rawBranches: any[] = [];
+      const owner = repoName.includes('/') ? repoName.split('/')[0] : (this.currentUser()?.login || 'developer');
+      const name = repoName.includes('/') ? repoName.split('/')[1] : repoName;
+
+      try {
+        const res = await fetch(`${this.baseUrl}/github/branches?repo=${encodeURIComponent(repoName)}`, {
+          method: 'GET',
+          credentials: 'include',
+        });
+        if (res.ok) {
+          const data = await res.json();
+          if (Array.isArray(data)) rawBranches = data;
+        }
+      } catch (e) {
+        console.warn(`[GitHubApiService] Backend branches fetch failed for ${repoName}`, e);
+      }
+
+      if (rawBranches.length === 0) {
+        try {
+          const directRes = await fetch(`https://api.github.com/repos/${owner}/${name}/branches?per_page=30`, {
+            headers: { Accept: 'application/vnd.github.v3+json' },
+          });
+          if (directRes.ok) {
+            const data = await directRes.json();
+            if (Array.isArray(data)) rawBranches = data;
+          }
+        } catch (err) {
+          console.error(`[GitHubApiService] Direct branches fetch failed:`, err);
+        }
+      }
+
+      const defaultBranch = this.repositories().find(r => r.fullName.toLowerCase() === repoName.toLowerCase())?.defaultBranch || 'main';
+
+      return rawBranches.map((b: any) => {
+        const commitSha = b.commit?.sha || '';
+        return {
+          name: b.name,
+          commitSha,
+          shortSha: commitSha.substring(0, 7),
+          isDefault: b.name === defaultBranch,
+          protected: !!b.protected
+        };
+      });
+    } catch (err) {
+      console.error(`[GitHubApiService] Error fetching branches for ${repoName}:`, err);
+      return [];
+    }
   }
 
   // Hàm tiện ích phân loại mã màu đại diện từng ngôn ngữ

@@ -98,6 +98,43 @@
 - [x] **Hệ thống Modal Glassmorphism Toàn Cục (`styles.css`):**
   - Bộ class tái sử dụng (`modal-backdrop`, `modal-card`, `modal-header`, `modal-body`, `modal-footer`, `form-input`, `form-select`, `form-textarea`,...) đồng bộ 100% phong cách thiết kế Obsidian dark/light trên toàn bộ ứng dụng.
 
+### E. Không Gian Làm Việc Kho Mã Nguồn & Git Graph (Repository Workspace Hub)
+- [x] **Trang Không Gian Làm Việc Kho Mã Nguồn (`/app/projects/workspace`):**
+  - **Bộ chọn Repository thông minh (Repo Selector Dropdown):** Tìm kiếm và chọn tức thì giữa các repository người dùng; tự động đồng bộ qua URL query parameter `?repo=owner/name`.
+  - **Dải chỉ số 4 thông số (Repository Metrics Ribbon):** Hiển thị trực quan Stars, Forks, Open PRs, Total Commits theo repository được chọn.
+  - **Trình trực quan hóa Git Graph tương tác (Interactive SVG Git Graph Visualizer):**
+    - Phân làn nhánh tự động (branch lanes algorithm), node commit phát sáng dạ quang neon theo màu lane.
+    - Vẽ đường cong mượt mà (Bezier curves: `M x1 y1 C ... x2 y2`) thể hiện phân nhánh và hợp nhất (merge branches).
+    - Phân biệt commit thông thường và merge commit (vòng đôi đan xen).
+    - Tương tác click chọn node commit để xem chi tiết ngay lập tức.
+  - **Dòng thời gian Commits (Git Commit History Stream):**
+    - **Khắc phục triệt để giới hạn 50 commits:** Sử dụng kỹ thuật đọc `Link` header từ request `HEAD` (`per_page=1`) để lấy chính xác 100% tổng số commit (ví dụ: **121 commits** thay vì bị gán ngầm 50 của 1 trang đơn).
+    - **Tự động tải đa trang (Auto-fetch multi-page):** Đối với các repo quy mô vừa (<= 300 commits), tự động kéo tất cả các trang tiếp theo để hiển thị đầy đủ 100% commit lên Git Graph và Commit Stream.
+    - **Nút "Load More Commits" & Phân trang thông minh:** Hỗ trợ tải thêm từng đợt 100 commits đối với các repository lớn.
+    - Danh sách đầy đủ các commit thật từ GitHub với SHA 7 ký tự (1-click copy).
+    - Hiển thị commit message, tác giả kèm avatar GitHub thật, huy hiệu Verified GPG, thời gian tương đối (`2h ago`, `Yesterday`,...).
+    - Thanh tìm kiếm commit theo nội dung, author hoặc commit SHA.
+    - Bộ lọc tác giả (Author Filter) và nút tải thêm commit (Load More).
+  - **Bảng kiểm tra chi tiết Commit (Commit Inspector Panel):**
+    - Xem SHA đầy đủ, liên kết trực tiếp tới GitHub commit, thông tin author & committer, commit parents SHA, và cây file thay đổi (file tree).
+  - **Khám phá Pull Requests (Pull Requests Explorer):**
+    - Danh sách PR với bộ lọc trạng thái (`All`, `Open`, `Merged`, `Closed`).
+    - Huy hiệu luồng nhánh nguồn ➔ đích (`headRef` ➔ `baseRef`), số lượng bình luận, trạng thái review, liên kết mở PR trên GitHub.
+  - **Khám phá Branches & Tags (Branches & Tags Explorer):**
+    - Danh sách các nhánh của repository, nhãn `default`, commit SHA mới nhất, thời gian cập nhật.
+    - Nút 1-Click sao chép lệnh `git checkout <branch>` vào clipboard.
+  - **Tổng quan Kho mã nguồn & Lệnh Clone (Repository Overview & Quick Clone):**
+    - Thẻ thông tin repo: giấy phép (License), nhánh mặc định, ngày cập nhật, trạng thái Public/Private.
+    - Hộp lệnh 1-Click sao chép lệnh clone HTTPS (`git clone https://...`) và SSH (`git clone git@...`).
+- [x] **Mở rộng API Backend NestJS (`backend/src/github/`):**
+  - Endpoint `GET /api/github/pulls?repo=owner/repo&state=all`: Truy xuất danh sách PR thật từ GitHub REST API kèm dữ liệu fallback an toàn.
+  - Endpoint `GET /api/github/branches?repo=owner/repo`: Truy xuất danh sách branches thật từ GitHub REST API kèm dữ liệu fallback an toàn.
+  - Tối ưu `GET /api/github/commits?repo=owner/repo`: Trả về danh sách full commit kèm `parents` SHA phục vụ dựng biểu đồ Git Graph.
+- [x] **Tích hợp Điều hướng & Menu toàn hệ thống:**
+  - Bổ sung menu **Repo Workspace** trong Sidebar (phân vùng Repositories).
+  - Nút **Workspace** nhanh trên từng thẻ repository ở trang `All Projects` (`/app/projects/all-projects`).
+  - Lệnh truy cập nhanh `Repo Workspace` trong Spotlight Command Palette (`⌘K`).
+
 ---
 
 ## 2. ⚡ NHỮNG VIỆC ĐANG LÀM (IN PROGRESS)
