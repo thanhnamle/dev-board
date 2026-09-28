@@ -1,11 +1,179 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, OnModuleInit, OnModuleDestroy } from '@nestjs/common';
 import { TelemetryGateway, TelemetryPayload } from './telemetry.gateway';
+import * as fs from 'fs';
+import * as path from 'path';
+import { execSync } from 'child_process';
 
 @Injectable()
-export class TelemetryService {
+export class TelemetryService implements OnModuleInit, OnModuleDestroy {
   private readonly logger = new Logger('TelemetryService');
 
+  // Timers for automated radar
+  private localGitTimer: NodeJS.Timeout | null = null;
+  private githubApiTimer: NodeJS.Timeout | null = null;
+
+  // Trackers
+  private lastSeenCommitSha: string | null = null;
+  private lastSeenGitHubEventId: string | null = null;
+  private readonly gitDir = path.resolve(process.cwd(), '../.git');
+
   constructor(private readonly gateway: TelemetryGateway) {}
+
+  onModuleInit() {
+    this.logger.log('🚀 DevBoard Real-Time Telemetry Radar starting...');
+    
+    // 1. Initialize local git tracker
+    this.initLocalGitTracker();
+
+    // 2. Start local git watcher (checks every 2.5s for commits/pushes from VS Code or terminal)
+    this.localGitTimer = setInterval(() => this.checkLocalGit(), 2500);
+
+    // 3. Start cloud GitHub events poller (checks every 15s)
+    this.githubApiTimer = setInterval(() => this.pollGitHubEvents(), 15000);
+    // Initial fetch after 3 seconds
+    setTimeout(() => this.pollGitHubEvents(), 3000);
+  }
+
+  onModuleDestroy() {
+    if (this.localGitTimer) clearInterval(this.localGitTimer);
+    if (this.githubApiTimer) clearInterval(this.githubApiTimer);
+  }
+
+  /**
+   * Snapshot current commit so we don't spam toasts on server startup
+   */
+  private initLocalGitTracker() {
+    try {
+      const headRefPath = path.join(this.gitDir, 'refs', 'heads', 'main');
+      if (fs.existsSync(headRefPath)) {
+        this.lastSeenCommitSha = fs.readFileSync(headRefPath, 'utf-8').trim();
+        this.logger.log(`📌 Telemetry tracking local Git main branch at commit: ${this.lastSeenCommitSha.substring(0, 7)}`);
+      }
+    } catch (e: any) {
+      this.logger.warn(`Could not read local git head: ${e.message}`);
+    }
+  }
+
+  /**
+   * Monitor local Git repository for new commits & pushes
+   */
+  private checkLocalGit() {
+    try {
+      const headRefPath = path.join(this.gitDir, 'refs', 'heads', 'main');
+      if (!fs.existsSync(headRefPath)) return;
+
+      const currentSha = fs.readFileSync(headRefPath, 'utf-8').trim();
+      if (!currentSha) return;
+
+      if (!this.lastSeenCommitSha) {
+        this.lastSeenCommitSha = currentSha;
+        return;
+      }
+
+      if (currentSha !== this.lastSeenCommitSha) {
+        this.logger.log(`⚡ Detected new local Git commit: ${currentSha.substring(0, 7)}`);
+        this.lastSeenCommitSha = currentSha;
+
+        let commitMsg = 'Pushed updates to repository';
+        let author = 'thanhnamle';
+        let shortSha = currentSha.substring(0, 7);
+
+        try {
+          const workspaceRoot = path.resolve(process.cwd(), '..');
+          const gitOutput = execSync(`git log -1 --pretty=format:"%s||%an||%h" ${currentSha}`, {
+            cwd: workspaceRoot,
+            timeout: 3000,
+          }).toString().trim();
+
+          const parts = gitOutput.split('||');
+          if (parts[0]) commitMsg = parts[0];
+          if (parts[1]) author = parts[1];
+          if (parts[2]) shortSha = parts[2];
+        } catch (execErr: any) {
+          this.logger.warn(`Could not extract git details via CLI: ${execErr.message}`);
+        }
+
+        const payload: TelemetryPayload = {
+          id: `git_${currentSha.substring(0, 10)}`,
+          type: 'push',
+          repo: 'thanhnamle/dev-board',
+          sender: {
+            login: author,
+            avatarUrl: `https://github.com/${author}.png`,
+          },
+          message: commitMsg,
+          details: {
+            branch: 'main',
+            commitsCount: 1,
+            headCommitSha: shortSha,
+            url: `https://github.com/thanhnamle/dev-board/commit/${currentSha}`,
+          },
+          timestamp: new Date().toISOString(),
+        };
+
+        this.gateway.broadcast('git.event', payload);
+      }
+    } catch (err: any) {
+      // Non-critical, avoid log noise
+    }
+  }
+
+  /**
+   * Poll GitHub Events API for remote activities (e.g., PRs, stars, remote merges)
+   */
+  private async pollGitHubEvents() {
+    try {
+      let token: string | undefined;
+      const sessionFile = path.join(process.cwd(), '.sessions.json');
+      if (fs.existsSync(sessionFile)) {
+        const raw = JSON.parse(fs.readFileSync(sessionFile, 'utf-8'));
+        const users = Object.values(raw) as any[];
+        if (users.length > 0) {
+          token = users[0]?.accessToken;
+        }
+      }
+
+      const headers: Record<string, string> = {
+        'User-Agent': 'DevBoard-Backend',
+        Accept: 'application/vnd.github.v3+json',
+      };
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+      }
+
+      const res = await fetch('https://api.github.com/users/thanhnamle/events?per_page=5', {
+        headers,
+      });
+
+      if (!res.ok) return;
+
+      const events: any[] = await res.json();
+      if (!Array.isArray(events) || events.length === 0) return;
+
+      if (!this.lastSeenGitHubEventId) {
+        this.lastSeenGitHubEventId = String(events[0].id);
+        return;
+      }
+
+      // Check if new events arrived
+      const newEvents: any[] = [];
+      for (const ev of events) {
+        if (String(ev.id) === this.lastSeenGitHubEventId) break;
+        newEvents.push(ev);
+      }
+
+      if (newEvents.length > 0) {
+        this.lastSeenGitHubEventId = String(events[0].id);
+        this.logger.log(`📡 [GitHubRadar] Detected ${newEvents.length} new event(s) from GitHub API!`);
+        for (const ev of newEvents.reverse()) {
+          const eventType = ev.type.replace('Event', '').toLowerCase();
+          this.processWebhook({ 'x-github-event': eventType }, ev);
+        }
+      }
+    } catch (e: any) {
+      // Ignore network failures
+    }
+  }
 
   /**
    * Process incoming GitHub Webhook events and broadcast live to UI
@@ -19,16 +187,16 @@ export class TelemetryService {
     let payload: TelemetryPayload | null = null;
     const repoName = body?.repository?.full_name || body?.repository?.name || 'thanhnamle/dev-board';
     const sender = {
-      login: body?.sender?.login || 'github-user',
-      avatarUrl: body?.sender?.avatar_url || 'https://github.com/identicons/github.png',
+      login: body?.sender?.login || body?.actor?.login || 'github-user',
+      avatarUrl: body?.sender?.avatar_url || body?.actor?.avatar_url || 'https://github.com/identicons/github.png',
     };
 
     switch (eventType) {
       case 'push': {
-        const branch = (body?.ref || '').replace('refs/heads/', '') || 'main';
-        const commits = body?.commits || [];
-        const commitCount = commits.length || 1;
-        const headCommit = commits[commits.length - 1] || body?.head_commit;
+        const branch = (body?.ref || body?.payload?.ref || '').replace('refs/heads/', '') || 'main';
+        const commits = body?.commits || body?.payload?.commits || [];
+        const commitCount = commits.length || body?.payload?.size || 1;
+        const headCommit = commits[commits.length - 1] || body?.head_commit || body?.payload?.commits?.[0];
         const commitMsg = headCommit?.message || `Pushed ${commitCount} commit(s) to ${branch}`;
 
         payload = {
@@ -40,7 +208,7 @@ export class TelemetryService {
           details: {
             branch,
             commitsCount: commitCount,
-            headCommitSha: headCommit?.id?.substring(0, 7) || 'git-push',
+            headCommitSha: (headCommit?.id || headCommit?.sha || 'git-push').substring(0, 7),
             url: body?.compare || headCommit?.url,
           },
           timestamp: new Date().toISOString(),
@@ -49,8 +217,8 @@ export class TelemetryService {
       }
 
       case 'pull_request': {
-        const action = body?.action || 'opened';
-        const pr = body?.pull_request;
+        const action = body?.action || body?.payload?.action || 'opened';
+        const pr = body?.pull_request || body?.payload?.pull_request;
         const prNumber = pr?.number || body?.number || 1;
         const prTitle = pr?.title || 'Pull Request Update';
 
@@ -88,7 +256,7 @@ export class TelemetryService {
       }
 
       case 'issues': {
-        const issue = body?.issue;
+        const issue = body?.issue || body?.payload?.issue;
         payload = {
           id: deliveryId,
           type: 'issue',
@@ -203,6 +371,7 @@ export class TelemetryService {
     return {
       status: 'online',
       activeClients: this.gateway.getClientCount(),
+      lastSeenCommitSha: this.lastSeenCommitSha?.substring(0, 7),
       uptimeSeconds: Math.floor(process.uptime()),
       timestamp: new Date().toISOString(),
     };
