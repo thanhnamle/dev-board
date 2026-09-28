@@ -27,7 +27,8 @@ import {
   ExternalLink,
   Bookmark,
   Radio,
-  Zap
+  Zap,
+  Bell
 } from 'lucide-angular';
 import { UserService } from '../../core/services/user.service';
 import { MessagesService } from '../../core/services/messages.service';
@@ -35,6 +36,7 @@ import { CommandPaletteService } from '../../core/services/command-palette.servi
 import { WorkspaceDataService } from '../../core/services/workspace-data.service';
 import { GitHubApiService } from '../../core/services/github-api.service';
 import { TelemetryService } from '../../core/services/telemetry.service';
+import { NotificationService } from '../../core/services/notification.service';
 
 export interface UserProfile {
   name: string;
@@ -91,12 +93,14 @@ export class SidebarComponent {
   readonly Bookmark = Bookmark;
   readonly Radio = Radio;
   readonly Zap = Zap;
+  readonly Bell = Bell;
   readonly userService = inject(UserService);
   readonly messagesService = inject(MessagesService);
   readonly commandPalette = inject(CommandPaletteService);
   readonly gitHubApiService = inject(GitHubApiService);
   readonly workspace = inject(WorkspaceDataService);
   readonly telemetry = inject(TelemetryService);
+  readonly notificationService = inject(NotificationService);
 
   readonly bookmarkedProjects = computed(() =>
     this.workspace.projects().filter(p => p.isBookmarked).slice(0, 4)

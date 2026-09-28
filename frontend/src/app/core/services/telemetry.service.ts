@@ -2,6 +2,7 @@ import { Injectable, signal, inject, PLATFORM_ID } from '@angular/core';
 import { isPlatformBrowser } from '@angular/common';
 import { io, Socket } from 'socket.io-client';
 import { GitHubApiService } from './github-api.service';
+import { NotificationService } from './notification.service';
 
 export interface LiveToastItem {
   id: string;
@@ -21,6 +22,7 @@ export interface LiveToastItem {
 export class TelemetryService {
   private readonly platformId = inject(PLATFORM_ID);
   private readonly gitHubApi = inject(GitHubApiService);
+  readonly notificationService = inject(NotificationService);
 
   private socket: Socket | null = null;
   private readonly serverUrl = 'http://localhost:3000';
@@ -108,6 +110,21 @@ export class TelemetryService {
       message: toastItem.message,
       details: toastItem.details,
       timestamp: toastItem.timestamp,
+    });
+
+    // Store in Notification Center (automatically kept for 3 days)
+    this.notificationService.addNotification({
+      id: toastItem.id,
+      type: toastItem.type,
+      title: toastItem.title,
+      message: toastItem.message,
+      repo: toastItem.repo,
+      senderLogin: toastItem.senderLogin,
+      senderAvatar: toastItem.senderAvatar,
+      branch: toastItem.details?.branch,
+      sha: toastItem.details?.headCommitSha,
+      timestamp: toastItem.timestamp,
+      url: toastItem.details?.url,
     });
 
     // Auto dismiss after 7.5 seconds

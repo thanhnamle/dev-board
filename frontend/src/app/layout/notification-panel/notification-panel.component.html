@@ -1,0 +1,207 @@
+<!-- Backdrop Overlay -->
+<div
+  class="notif-backdrop"
+  *ngIf="notifService.isOpen()"
+  (click)="close()"
+></div>
+
+<!-- Notification Slide-Over Drawer -->
+<div
+  class="notif-drawer"
+  [class.open]="notifService.isOpen()"
+  [class.dark-theme]="themeService.isDarkMode()"
+>
+  <!-- 1. Header -->
+  <div class="drawer-header">
+    <div class="header-title-box">
+      <div class="title-with-badge">
+        <div class="bell-icon-wrapper">
+          <lucide-icon [img]="Bell" size="18" class="header-bell"></lucide-icon>
+        </div>
+        <h3 class="drawer-title">Notifications</h3>
+        <span
+          class="unread-pill"
+          *ngIf="notifService.unreadCount() > 0"
+        >
+          {{ notifService.unreadCount() }} New
+        </span>
+      </div>
+      <p class="drawer-subtitle">
+        Real-time telemetry, commits, and engineering alerts
+      </p>
+    </div>
+
+    <div class="header-tools">
+      <button
+        type="button"
+        class="tool-btn"
+        *ngIf="notifService.unreadCount() > 0"
+        (click)="markAllAsRead()"
+        title="Mark all as read"
+      >
+        <lucide-icon [img]="CheckCheck" size="16"></lucide-icon>
+      </button>
+
+      <button
+        type="button"
+        class="tool-btn close-drawer-btn"
+        (click)="close()"
+        title="Close (Esc)"
+      >
+        <lucide-icon [img]="X" size="18"></lucide-icon>
+      </button>
+    </div>
+  </div>
+
+  <!-- 2. 3-Day Retention Notice Bar -->
+  <div class="retention-banner">
+    <lucide-icon [img]="Clock" size="13" class="retention-icon"></lucide-icon>
+    <span>Lưu trữ 3 ngày • Hệ thống tự động xóa thông báo sau 3 ngày</span>
+  </div>
+
+  <!-- 3. Filter Tabs (All / Unread) -->
+  <div class="filter-bar">
+    <div class="filter-tabs">
+      <button
+        type="button"
+        class="filter-tab-btn"
+        [class.active]="notifService.filter() === 'all'"
+        (click)="setFilter('all')"
+      >
+        All ({{ notifService.notifications().length }})
+      </button>
+      <button
+        type="button"
+        class="filter-tab-btn"
+        [class.active]="notifService.filter() === 'unread'"
+        (click)="setFilter('unread')"
+      >
+        Unread ({{ notifService.unreadCount() }})
+      </button>
+    </div>
+
+    <button
+      type="button"
+      class="clear-all-btn"
+      *ngIf="notifService.notifications().length > 0"
+      (click)="clearAll()"
+      title="Clear all notifications"
+    >
+      <lucide-icon [img]="Trash2" size="12"></lucide-icon>
+      <span>Clear</span>
+    </button>
+  </div>
+
+  <!-- 4. Notification List -->
+  <div class="drawer-content">
+    <div
+      class="notif-list"
+      *ngIf="notifService.filteredNotifications().length > 0; else emptyState"
+    >
+      <div
+        class="notif-item"
+        *ngFor="let item of notifService.filteredNotifications()"
+        [class.unread]="!item.read"
+        [attr.data-type]="item.type"
+        (click)="onItemClick(item)"
+      >
+        <!-- Unread glowing dot -->
+        <span class="unread-dot" *ngIf="!item.read"></span>
+
+        <!-- Left Type Icon -->
+        <div class="notif-icon-box" [attr.data-type]="item.type">
+          <lucide-icon
+            *ngIf="item.type === 'push'"
+            [img]="GitCommit"
+            size="15"
+          ></lucide-icon>
+          <lucide-icon
+            *ngIf="item.type === 'pull_request'"
+            [img]="GitPullRequest"
+            size="15"
+          ></lucide-icon>
+          <lucide-icon
+            *ngIf="item.type === 'star'"
+            [img]="Star"
+            size="15"
+          ></lucide-icon>
+          <lucide-icon
+            *ngIf="item.type !== 'push' && item.type !== 'pull_request' && item.type !== 'star'"
+            [img]="Sparkles"
+            size="15"
+          ></lucide-icon>
+        </div>
+
+        <!-- Body -->
+        <div class="notif-body">
+          <div class="notif-top-row">
+            <span class="notif-type-tag" [attr.data-type]="item.type">
+              {{ item.type | uppercase }}
+            </span>
+            <span class="notif-repo" [title]="item.repo">
+              {{ item.repo }}
+            </span>
+            <span class="notif-time">{{ formatTimeAgo(item.timestamp) }}</span>
+          </div>
+
+          <h4 class="notif-item-title">{{ item.title }}</h4>
+          <p class="notif-message">{{ item.message }}</p>
+
+          <div class="notif-meta" *ngIf="item.branch || item.sha || item.senderLogin">
+            <span class="meta-tag" *ngIf="item.branch">{{ item.branch }}</span>
+            <span class="meta-tag sha-tag" *ngIf="item.sha">{{ item.sha }}</span>
+            <span class="meta-author" *ngIf="item.senderLogin">by &#64;{{ item.senderLogin }}</span>
+          </div>
+        </div>
+
+        <!-- Right Quick Actions -->
+        <div class="notif-actions">
+          <button
+            type="button"
+            class="action-icon-btn workspace-btn"
+            (click)="viewWorkspace($event, item)"
+            title="View in Workspace"
+          >
+            <lucide-icon [img]="ExternalLink" size="13"></lucide-icon>
+          </button>
+          <button
+            type="button"
+            class="action-icon-btn delete-btn"
+            (click)="onItemDelete($event, item.id)"
+            title="Delete notification"
+          >
+            <lucide-icon [img]="X" size="13"></lucide-icon>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Empty State -->
+    <ng-template #emptyState>
+      <div class="empty-notif-box">
+        <div class="empty-icon-circle">
+          <lucide-icon [img]="BellOff" size="28" class="empty-icon"></lucide-icon>
+        </div>
+        <h4 class="empty-title">All Caught Up!</h4>
+        <p class="empty-desc">
+          No notifications found in the last 3 days.<br />
+          New git pushes, PRs, and events will appear here in real-time.
+        </p>
+      </div>
+    </ng-template>
+  </div>
+
+  <!-- 5. Footer -->
+  <div class="drawer-footer">
+    <span class="footer-info">
+      Auto-cleared after 72 hours (3 days)
+    </span>
+    <button
+      type="button"
+      class="footer-close-btn"
+      (click)="close()"
+    >
+      Close
+    </button>
+  </div>
+</div>

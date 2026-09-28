@@ -41,6 +41,22 @@
         </div>
       }
     </div>
+
+    <!-- Notification Bell Button -->
+    <button
+      type="button"
+      class="sidebar-bell-btn"
+      (click)="notificationService.toggleOpen()"
+      [title]="'Notifications (' + notificationService.unreadCount() + ' unread)'"
+      [class.has-unread]="notificationService.unreadCount() > 0"
+    >
+      <lucide-icon [img]="Bell" size="16" class="bell-icon"></lucide-icon>
+      @if (notificationService.unreadCount() > 0) {
+        <span class="bell-badge">
+          {{ notificationService.unreadCount() > 99 ? '99+' : notificationService.unreadCount() }}
+        </span>
+      }
+    </button>
   </div>
 
   <!-- =====================================================

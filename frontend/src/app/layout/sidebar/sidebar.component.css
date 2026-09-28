@@ -141,6 +141,103 @@
   color: #64748b;
 }
 
+/* =========================================================
+   NOTIFICATION BELL BUTTON
+========================================================= */
+.sidebar-bell-btn {
+  position: relative;
+  width: 32px;
+  height: 32px;
+  margin-right: 20px; /* Khoảng cách rộng rãi, thoáng đãng với nút Toggle Collapse ở mép */
+  border-radius: 9px;
+  background: #f1f5f9;
+  border: 1px solid #e2e8f0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #64748b;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  flex-shrink: 0;
+}
+
+.sidebar-bell-btn:hover {
+  background: #e2e8f0;
+  color: #0f172a;
+  transform: translateY(-1px);
+}
+
+.sidebar.dark-theme .sidebar-bell-btn {
+  background: rgba(30, 41, 59, 0.6);
+  border-color: rgba(255, 255, 255, 0.1);
+  color: #94a3b8;
+}
+
+.sidebar.dark-theme .sidebar-bell-btn:hover {
+  background: rgba(51, 65, 85, 0.8);
+  border-color: rgba(255, 255, 255, 0.2);
+  color: #f8fafc;
+}
+
+.sidebar-bell-btn.has-unread {
+  color: #3b82f6;
+}
+
+.sidebar.dark-theme .sidebar-bell-btn.has-unread {
+  color: #60a5fa;
+}
+
+.sidebar-bell-btn.has-unread .bell-icon {
+  animation: bellWiggle 2.5s infinite ease-in-out;
+}
+
+@keyframes bellWiggle {
+  0%, 85%, 100% { transform: rotate(0); }
+  88% { transform: rotate(14deg); }
+  92% { transform: rotate(-14deg); }
+  96% { transform: rotate(8deg); }
+}
+
+.bell-badge {
+  position: absolute;
+  top: -4px;
+  right: -4px;
+  min-width: 17px;
+  height: 17px;
+  padding: 0 4px;
+  border-radius: 999px;
+  background: #ef4444;
+  color: #ffffff;
+  font-size: 10px;
+  font-weight: 800;
+  line-height: 17px;
+  text-align: center;
+  box-shadow: 0 2px 6px rgba(239, 68, 68, 0.45);
+  border: 2px solid #ffffff;
+  animation: pulseBadge 2s infinite ease-in-out;
+}
+
+.sidebar.dark-theme .bell-badge {
+  border-color: #0f172a;
+  box-shadow: 0 0 10px rgba(239, 68, 68, 0.6);
+}
+
+@keyframes pulseBadge {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.1); }
+}
+
+.sidebar.collapsed .sidebar-header {
+  flex-direction: column;
+  gap: 10px;
+  align-items: center;
+}
+
+.sidebar.collapsed .sidebar-bell-btn {
+  margin-right: 0;
+  margin-top: 4px;
+}
+
 .brand-line {
   font-size: 17px;
   font-weight: 900;
