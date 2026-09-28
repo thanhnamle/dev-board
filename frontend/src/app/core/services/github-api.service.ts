@@ -145,11 +145,12 @@ export class GitHubApiService {
       const data = await res.json();
       if (data.authenticated && data.user) {
         this.isAuthenticated.set(true);
-        // Khi đã đăng nhập, tải luôn Profile đầy đủ và Repositories thật
+        // Khi đã đăng nhập, tải luôn Profile đầy đủ, Repositories, Activities và Contributions thật
         await Promise.all([
           this.fetchProfile(),
           this.fetchRepositories(),
-          this.fetchActivities()
+          this.fetchActivities(),
+          this.fetchContributions()
         ]);
         return true;
       } else {
@@ -753,8 +754,68 @@ export class GitHubApiService {
     }
   }
 
+  /**
+   * Cập nhật tức thì các reactive signal khi có sự kiện Git thời gian thực từ WebSocket
+   */
+  handleRealtimeGitEvent(event: {
+    type: 'push' | 'pull_request' | 'star' | 'release' | 'issue' | 'ping';
+    repo: string;
+    sender: { login: string; avatarUrl: string };
+    message: string;
+    details?: any;
+    timestamp: string;
+  }) {
+    // 1. Ánh xạ thành ActivityEvent
+    const actType: ActivityType =
+      event.type === 'push' ? 'commit' :
+      event.type === 'pull_request' ? 'pr' :
+      event.type === 'star' ? 'release' : 'commit';
+
+    const newActivity: ActivityEvent = {
+      id: Date.now(),
+      type: actType,
+      repoName: event.repo,
+      repoUrl: `https://github.com/${event.repo}`,
+      title: event.message,
+      branch: event.details?.branch || 'main',
+      commitHash: event.details?.headCommitSha || '',
+      prNumber: event.details?.prNumber,
+      timeAgo: 'Just now',
+      timestamp: event.timestamp || new Date().toISOString(),
+      author: event.sender?.login || 'developer',
+    };
+
+    // Prepend vào danh sách activities để UI Overview/Activities cập nhật ngay lập tức
+    this.activities.update(current => [newActivity, ...current]);
+
+    // Xoá cache commits của repo này nếu có để lần sau mở sẽ fetch lại dữ liệu mới nhất
+    const cacheKey = event.repo.toLowerCase();
+    this.repoCommitsCache.delete(cacheKey);
+
+    // 2. Nếu là Push event, cộng thêm đóng góp vào contributions signal
+    if (event.type === 'push') {
+      const contrib = this.contributions();
+      if (contrib) {
+        this.contributions.set({
+          ...contrib,
+          totalContributions: (contrib.totalContributions || 0) + (event.details?.commitsCount || 1)
+        });
+      }
+    }
+
+    // 3. Nếu là Star event, tăng count sao của repo tương ứng
+    if (event.type === 'star') {
+      this.repositories.update(repos =>
+        repos.map(r => r.fullName.toLowerCase() === event.repo.toLowerCase()
+          ? { ...r, starsCount: r.starsCount + 1 }
+          : r
+        )
+      );
+    }
+  }
+
   // Hàm tiện ích phân loại mã màu đại diện từng ngôn ngữ
-  private getLanguageColor(lang: string | null): string {
+  getLanguageColor(lang: string | null): string {
     const map: Record<string, string> = {
       TypeScript: '#3178c6',
       JavaScript: '#f1e05a',

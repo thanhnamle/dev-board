@@ -31,6 +31,17 @@
         <span>{{ isSyncing() ? 'Syncing...' : 'Sync GitHub' }}</span>
       </button>
 
+      <!-- Nút Mô phỏng Real-Time Event -->
+      <button 
+        type="button" 
+        class="action-btn btn-secondary" 
+        (click)="telemetry.simulateEvent('push')" 
+        [disabled]="telemetry.isSimulating()"
+        title="Simulate Real-Time Git Push Event">
+        <lucide-icon [img]="Zap" class="btn-icon text-amber"></lucide-icon>
+        <span>{{ telemetry.isSimulating() ? 'Pushing...' : '⚡ Simulate Push' }}</span>
+      </button>
+
       <!-- Nút tạo Note mới -->
       <button 
         type="button" 
@@ -247,9 +258,9 @@
             </div>
           </div>
 
-          <div class="live-status-pill">
-            <span class="live-dot"></span>
-            <span>Real-time Sync</span>
+          <div class="live-status-pill" [class.connected]="telemetry.isConnected()">
+            <span class="live-dot" [class.pulsing]="telemetry.isConnected()"></span>
+            <span>{{ telemetry.isConnected() ? 'Live Stream Active' : 'Connecting...' }}</span>
           </div>
         </div>
 

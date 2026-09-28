@@ -1,0 +1,101 @@
+<div
+  class="live-toast-container"
+  [class.dark-theme]="themeService.isDarkMode()"
+  *ngIf="telemetry.activeToasts().length > 0"
+>
+  <div
+    class="live-toast-card"
+    *ngFor="let toast of telemetry.activeToasts()"
+    [attr.data-type]="toast.type"
+  >
+    <!-- Accent glow line -->
+    <div class="toast-glow-bar" [attr.data-type]="toast.type"></div>
+
+    <!-- Header line -->
+    <div class="toast-header">
+      <div class="badge-group">
+        <!-- Event badge -->
+        <span class="event-badge" [attr.data-type]="toast.type">
+          <lucide-icon
+            *ngIf="toast.type === 'push'"
+            [img]="GitCommit"
+            size="13"
+            class="badge-icon"
+          ></lucide-icon>
+          <lucide-icon
+            *ngIf="toast.type === 'pull_request'"
+            [img]="GitPullRequest"
+            size="13"
+            class="badge-icon"
+          ></lucide-icon>
+          <lucide-icon
+            *ngIf="toast.type === 'star'"
+            [img]="Star"
+            size="13"
+            class="badge-icon"
+          ></lucide-icon>
+          <lucide-icon
+            *ngIf="toast.type !== 'push' && toast.type !== 'pull_request' && toast.type !== 'star'"
+            [img]="Sparkles"
+            size="13"
+            class="badge-icon"
+          ></lucide-icon>
+          <span class="badge-text">{{ toast.type | uppercase }}</span>
+        </span>
+
+        <!-- Repo Pill -->
+        <span class="repo-pill" [title]="toast.repo">
+          {{ toast.repo }}
+        </span>
+      </div>
+
+      <div class="toast-actions">
+        <span class="time-tag">Just now</span>
+        <button
+          type="button"
+          class="close-btn"
+          (click)="dismiss(toast.id)"
+          title="Dismiss notification"
+        >
+          <lucide-icon [img]="X" size="14"></lucide-icon>
+        </button>
+      </div>
+    </div>
+
+    <!-- Message Body -->
+    <div class="toast-body">
+      <p class="toast-message">{{ toast.message }}</p>
+      
+      <!-- Branch / details tag if available -->
+      <div class="toast-tags" *ngIf="toast.details?.branch || toast.details?.headCommitSha">
+        <span class="tag-branch" *ngIf="toast.details?.branch">
+          {{ toast.details.branch }}
+        </span>
+        <span class="tag-sha" *ngIf="toast.details?.headCommitSha">
+          {{ toast.details.headCommitSha }}
+        </span>
+      </div>
+    </div>
+
+    <!-- Footer with Author & Action -->
+    <div class="toast-footer">
+      <div class="author-info">
+        <img
+          [src]="toast.senderAvatar"
+          [alt]="toast.senderLogin"
+          class="author-avatar"
+        />
+        <span class="author-login">{{ toast.senderLogin }}</span>
+      </div>
+
+      <button
+        type="button"
+        class="action-btn"
+        (click)="viewWorkspace(toast)"
+      >
+        <span>View in Workspace</span>
+        <lucide-icon [img]="ExternalLink" size="12"></lucide-icon>
+      </button>
+    </div>
+  </div>
+</div>

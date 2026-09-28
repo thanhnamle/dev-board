@@ -967,6 +967,146 @@
 }
 
 /* =========================================================
+   LIVE RADAR WIDGET (OBSIDIAN & LIGHT GLASSMORPHISM)
+========================================================= */
+.live-radar-box {
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: rgba(248, 250, 252, 0.8);
+  border: 1px solid #e2e8f0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  transition: all 0.2s ease;
+}
+
+.sidebar.dark-theme .live-radar-box {
+  background: rgba(15, 23, 42, 0.6);
+  border-color: rgba(255, 255, 255, 0.08);
+}
+
+.radar-status {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.radar-title {
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  color: #475569;
+}
+
+.sidebar.dark-theme .radar-title {
+  color: #cbd5e1;
+}
+
+.radar-badge {
+  font-size: 9.5px;
+  font-weight: 700;
+  padding: 1px 5px;
+  border-radius: 4px;
+  background: #f1f5f9;
+  color: #64748b;
+  letter-spacing: 0.05em;
+}
+
+.radar-badge.connected {
+  background: rgba(16, 185, 129, 0.15);
+  color: #10b981;
+}
+
+.sidebar.dark-theme .radar-badge.connected {
+  background: rgba(16, 185, 129, 0.2);
+  color: #34d399;
+}
+
+.radar-ping {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #94a3b8;
+  position: relative;
+  display: inline-block;
+}
+
+.radar-ping.connected {
+  background: #10b981;
+  box-shadow: 0 0 8px #10b981;
+}
+
+.radar-ping.connected::after {
+  content: '';
+  position: absolute;
+  top: -2px;
+  left: -2px;
+  right: -2px;
+  bottom: -2px;
+  border-radius: 50%;
+  border: 1.5px solid #10b981;
+  animation: radarPulse 1.8s infinite cubic-bezier(0.24, 0, 0.38, 1);
+}
+
+@keyframes radarPulse {
+  0% {
+    transform: scale(0.9);
+    opacity: 0.9;
+  }
+  100% {
+    transform: scale(2.4);
+    opacity: 0;
+  }
+}
+
+.radar-simulate-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  padding: 6px 10px;
+  border-radius: 7px;
+  background: #f8fafc;
+  border: 1px solid #cbd5e1;
+  font-size: 11px;
+  font-weight: 600;
+  color: #0f172a;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  width: 100%;
+}
+
+.radar-simulate-btn:hover:not(:disabled) {
+  background: #f1f5f9;
+  border-color: #94a3b8;
+  transform: translateY(-1px);
+}
+
+.sidebar.dark-theme .radar-simulate-btn {
+  background: rgba(30, 41, 59, 0.7);
+  border-color: rgba(255, 255, 255, 0.12);
+  color: #f8fafc;
+}
+
+.sidebar.dark-theme .radar-simulate-btn:hover:not(:disabled) {
+  background: rgba(51, 65, 85, 0.8);
+  border-color: rgba(255, 255, 255, 0.22);
+}
+
+.radar-simulate-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.live-radar-collapsed {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8px 0;
+  cursor: pointer;
+}
+
+/* =========================================================
    6. FOOTER: THEME SWITCHER & USER PROFILE
 ========================================================= */
 .sidebar-footer {

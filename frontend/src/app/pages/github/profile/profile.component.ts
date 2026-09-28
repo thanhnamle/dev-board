@@ -25,6 +25,7 @@ import {
   Lock
 } from 'lucide-angular';
 import { GitHubApiService, GitHubRepoItem } from '../../../core/services/github-api.service';
+import { UserService } from '../../../core/services/user.service';
 
 // 1. Định nghĩa Interface cho dữ liệu GitHub Profile
 export interface GitHubProfile {
@@ -105,6 +106,15 @@ export class ProfileComponent implements OnInit {
   readonly Lock = Lock;
 
   readonly gitHubApiService = inject(GitHubApiService);
+  readonly userService = inject(UserService);
+
+  // Role thực tế của người dùng
+  readonly userRole = computed(() => this.userService.currentUser()?.role || 'Software Engineer');
+
+  // Tổng số Repositories thực tế được đồng bộ
+  readonly totalReposCount = computed<number>(() => {
+    return this.allRepos().length || this.gitHubApiService.repositories().length || this.profile().public_repos || 0;
+  });
 
   // State Signals quản lý giao diện
   readonly loading = signal<boolean>(false);
@@ -268,11 +278,10 @@ export class ProfileComponent implements OnInit {
     let totalWithLanguage = 0;
 
     for (const repo of repos) {
-      const lang = repo.language?.trim();
-      if (lang && lang !== 'Markdown') {
-        counts[lang] = (counts[lang] || 0) + 1;
-        totalWithLanguage++;
-      }
+      const rawLang = repo.language?.trim();
+      const lang = rawLang && rawLang !== '' ? rawLang : 'Other';
+      counts[lang] = (counts[lang] || 0) + 1;
+      totalWithLanguage++;
     }
 
     if (totalWithLanguage === 0) return [];
@@ -285,7 +294,7 @@ export class ProfileComponent implements OnInit {
     const result: LanguageStat[] = top4.map(([name, count]) => ({
       name,
       count,
-      percentage: Math.round((count / totalWithLanguage) * 100),
+      percentage: Math.max(1, Math.round((count / totalWithLanguage) * 100)),
       color: this.getLangColor(name)
     }));
 
@@ -293,8 +302,8 @@ export class ProfileComponent implements OnInit {
       result.push({
         name: 'Other',
         count: otherCount,
-        percentage: Math.round((otherCount / totalWithLanguage) * 100),
-        color: '#8b949e'
+        percentage: Math.max(1, Math.round((otherCount / totalWithLanguage) * 100)),
+        color: '#64748b'
       });
     }
 
@@ -473,6 +482,7 @@ export class ProfileComponent implements OnInit {
       Shell: '#89e051',
       Dart: '#00B4AB',
       Vue: '#41b883',
+      Markdown: '#083fa1',
       Dockerfile: '#384d54'
     };
     return colors[lang] || '#64748b';

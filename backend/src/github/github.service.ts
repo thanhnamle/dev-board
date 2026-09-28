@@ -64,10 +64,12 @@ export class GitHubService {
 
   // 5. Lấy toàn bộ Contribution Calendar trong 1 năm qua GitHub GraphQL API
   async getContributions(user: AuthUser, year?: number) {
-    const currentYear = new Date().getFullYear();
+    const now = new Date();
+    const currentYear = now.getFullYear();
     const targetYear = year || currentYear;
     const from = `${targetYear}-01-01T00:00:00Z`;
-    const to = `${targetYear}-12-31T23:59:59Z`;
+    // Với năm hiện tại, chỉ truy vấn đến thời điểm hiện tại để tránh sinh các ngày tương lai rỗng
+    const to = targetYear === currentYear ? now.toISOString() : `${targetYear}-12-31T23:59:59Z`;
 
     const makeQuery = (fromDate: string, toDate?: string) => ({
       query: `

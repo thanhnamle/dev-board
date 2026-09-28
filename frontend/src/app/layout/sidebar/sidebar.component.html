@@ -282,8 +282,8 @@
           </div>
           <div class="telemetry-divider"></div>
           <div class="telemetry-stat">
-            <span class="telemetry-num">{{ gitHubApiService.contributions()?.totalContributions ?? 0 }}</span>
-            <span class="telemetry-label">Commits</span>
+            <span class="telemetry-num">{{ totalContributions() }}</span>
+            <span class="telemetry-label">Contribs</span>
           </div>
         </div>
       </div>
@@ -295,6 +295,33 @@
   ====================================================== -->
 
   <div class="sidebar-footer">
+    <!-- Live Git Radar Banner -->
+    @if (!collapsed()) {
+      <div class="live-radar-box">
+        <div class="radar-status">
+          <span class="radar-ping" [class.connected]="telemetry.isConnected()"></span>
+          <span class="radar-title">LIVE RADAR</span>
+          <span class="radar-badge" [class.connected]="telemetry.isConnected()">
+            {{ telemetry.isConnected() ? 'ONLINE' : 'OFFLINE' }}
+          </span>
+        </div>
+        <button
+          type="button"
+          class="radar-simulate-btn"
+          [disabled]="telemetry.isSimulating()"
+          (click)="telemetry.simulateEvent('push')"
+          title="Simulate Real-Time Git Push"
+        >
+          <lucide-icon [img]="Zap" size="12"></lucide-icon>
+          <span>{{ telemetry.isSimulating() ? 'Pushing...' : '⚡ Simulate Push' }}</span>
+        </button>
+      </div>
+    } @else {
+      <div class="live-radar-collapsed" (click)="telemetry.simulateEvent('push')" title="Live Radar (Click to simulate push)">
+        <span class="radar-ping" [class.connected]="telemetry.isConnected()"></span>
+      </div>
+    }
+
     <!-- Switcher Theme -->
     <div class="theme-switcher-container">
       @if (!collapsed()) {
@@ -400,7 +427,7 @@
             (click)="logout()"
           >
             <lucide-icon [img]="LogOut" size="14"></lucide-icon>
-            <span>Log out</span>
+            <span>Log Out</span>
           </button>
         </div>
       }

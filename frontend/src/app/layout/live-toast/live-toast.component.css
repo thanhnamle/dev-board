@@ -1,0 +1,341 @@
+/* ==========================================================================
+   LIVE TOAST CONTAINER & CARDS (Obsidian & Linear Dual-Theme Glassmorphism)
+   ========================================================================== */
+
+.live-toast-container {
+  position: fixed;
+  top: 24px;
+  right: 24px;
+  z-index: 99999;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  max-width: 380px;
+  width: calc(100vw - 48px);
+  pointer-events: none; /* Let background clicks pass through */
+}
+
+.live-toast-card {
+  pointer-events: auto; /* Enable interactive clicks on toasts */
+  position: relative;
+  overflow: hidden;
+  border-radius: 14px;
+  padding: 14px 16px 14px 18px;
+  
+  /* Light Theme Glassmorphism */
+  background: rgba(255, 255, 255, 0.94);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(226, 232, 240, 0.85);
+  box-shadow: 
+    0 10px 25px -5px rgba(0, 0, 0, 0.08),
+    0 8px 10px -6px rgba(0, 0, 0, 0.04),
+    0 0 0 1px rgba(0, 0, 0, 0.02);
+
+  animation: slideInToast 0.38s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  transition: transform 0.2s ease, opacity 0.2s ease, box-shadow 0.2s ease;
+}
+
+.live-toast-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 
+    0 16px 32px -8px rgba(0, 0, 0, 0.12),
+    0 10px 16px -6px rgba(0, 0, 0, 0.06);
+}
+
+/* ==========================================================================
+   DARK THEME (OBSIDIAN)
+   ========================================================================== */
+.live-toast-container.dark-theme .live-toast-card {
+  background: rgba(15, 23, 42, 0.92);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 
+    0 20px 35px -10px rgba(0, 0, 0, 0.6),
+    0 0 0 1px rgba(255, 255, 255, 0.05),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1);
+}
+
+.live-toast-container.dark-theme .live-toast-card:hover {
+  border-color: rgba(255, 255, 255, 0.18);
+  box-shadow: 
+    0 24px 45px -12px rgba(0, 0, 0, 0.75),
+    0 0 20px rgba(56, 189, 248, 0.1);
+}
+
+/* Left Accent Glow Line */
+.toast-glow-bar {
+  position: absolute;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  width: 4px;
+  border-radius: 4px 0 0 4px;
+}
+
+.toast-glow-bar[data-type="push"] {
+  background: linear-gradient(180deg, #10b981 0%, #059669 100%);
+  box-shadow: 0 0 12px rgba(16, 185, 129, 0.5);
+}
+
+.toast-glow-bar[data-type="pull_request"] {
+  background: linear-gradient(180deg, #a855f7 0%, #7c3aed 100%);
+  box-shadow: 0 0 12px rgba(168, 85, 247, 0.5);
+}
+
+.toast-glow-bar[data-type="star"] {
+  background: linear-gradient(180deg, #f59e0b 0%, #d97706 100%);
+  box-shadow: 0 0 12px rgba(245, 158, 11, 0.5);
+}
+
+.toast-glow-bar[data-type="issue"] {
+  background: linear-gradient(180deg, #06b6d4 0%, #0284c7 100%);
+  box-shadow: 0 0 12px rgba(6, 182, 212, 0.5);
+}
+
+/* ==========================================================================
+   HEADER
+   ========================================================================== */
+.toast-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+
+.badge-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.event-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 7px;
+  border-radius: 6px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.event-badge[data-type="push"] {
+  background: rgba(16, 185, 129, 0.12);
+  color: #059669;
+  border: 1px solid rgba(16, 185, 129, 0.25);
+}
+
+.live-toast-container.dark-theme .event-badge[data-type="push"] {
+  background: rgba(16, 185, 129, 0.18);
+  color: #34d399;
+  border-color: rgba(52, 211, 153, 0.35);
+}
+
+.event-badge[data-type="pull_request"] {
+  background: rgba(168, 85, 247, 0.12);
+  color: #7c3aed;
+  border: 1px solid rgba(168, 85, 247, 0.25);
+}
+
+.live-toast-container.dark-theme .event-badge[data-type="pull_request"] {
+  background: rgba(168, 85, 247, 0.2);
+  color: #c084fc;
+  border-color: rgba(192, 132, 252, 0.35);
+}
+
+.event-badge[data-type="star"] {
+  background: rgba(245, 158, 11, 0.12);
+  color: #d97706;
+  border: 1px solid rgba(245, 158, 11, 0.25);
+}
+
+.live-toast-container.dark-theme .event-badge[data-type="star"] {
+  background: rgba(245, 158, 11, 0.2);
+  color: #fbbf24;
+  border-color: rgba(251, 191, 36, 0.35);
+}
+
+.repo-pill {
+  font-size: 11px;
+  font-weight: 600;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  color: #64748b;
+  max-width: 140px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.live-toast-container.dark-theme .repo-pill {
+  color: #94a3b8;
+}
+
+.toast-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.time-tag {
+  font-size: 11px;
+  color: #94a3b8;
+}
+
+.live-toast-container.dark-theme .time-tag {
+  color: #64748b;
+}
+
+.close-btn {
+  background: none;
+  border: none;
+  padding: 2px;
+  cursor: pointer;
+  color: #94a3b8;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s ease;
+}
+
+.close-btn:hover {
+  background: rgba(0, 0, 0, 0.05);
+  color: #334155;
+}
+
+.live-toast-container.dark-theme .close-btn:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: #f1f5f9;
+}
+
+/* ==========================================================================
+   BODY
+   ========================================================================== */
+.toast-body {
+  margin-bottom: 10px;
+}
+
+.toast-message {
+  font-size: 12.5px;
+  font-weight: 500;
+  line-height: 1.45;
+  color: #1e293b;
+  margin: 0 0 6px 0;
+  word-break: break-word;
+}
+
+.live-toast-container.dark-theme .toast-message {
+  color: #e2e8f0;
+}
+
+.toast-tags {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 4px;
+}
+
+.tag-branch, .tag-sha {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 10.5px;
+  padding: 1px 6px;
+  border-radius: 4px;
+  background: rgba(0, 0, 0, 0.04);
+  color: #475569;
+  border: 1px solid rgba(0, 0, 0, 0.06);
+}
+
+.live-toast-container.dark-theme .tag-branch,
+.live-toast-container.dark-theme .tag-sha {
+  background: rgba(255, 255, 255, 0.06);
+  color: #cbd5e1;
+  border-color: rgba(255, 255, 255, 0.08);
+}
+
+/* ==========================================================================
+   FOOTER
+   ========================================================================== */
+.toast-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-top: 8px;
+  border-top: 1px solid rgba(226, 232, 240, 0.7);
+}
+
+.live-toast-container.dark-theme .toast-footer {
+  border-top-color: rgba(255, 255, 255, 0.08);
+}
+
+.author-info {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.author-avatar {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+.author-login {
+  font-size: 11px;
+  font-weight: 500;
+  color: #64748b;
+}
+
+.live-toast-container.dark-theme .author-login {
+  color: #94a3b8;
+}
+
+.action-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: none;
+  border: none;
+  padding: 3px 6px;
+  font-size: 11px;
+  font-weight: 600;
+  color: #3b82f6;
+  cursor: pointer;
+  border-radius: 4px;
+  transition: all 0.15s ease;
+}
+
+.action-btn:hover {
+  background: rgba(59, 130, 246, 0.08);
+  color: #2563eb;
+}
+
+.live-toast-container.dark-theme .action-btn {
+  color: #60a5fa;
+}
+
+.live-toast-container.dark-theme .action-btn:hover {
+  background: rgba(96, 165, 250, 0.12);
+  color: #93c5fd;
+}
+
+/* ==========================================================================
+   KEYFRAME ANIMATIONS
+   ========================================================================== */
+@keyframes slideInToast {
+  0% {
+    transform: translateX(110%) scale(0.95);
+    opacity: 0;
+  }
+  70% {
+    transform: translateX(-4px) scale(1.01);
+    opacity: 1;
+  }
+  100% {
+    transform: translateX(0) scale(1);
+    opacity: 1;
+  }
+}

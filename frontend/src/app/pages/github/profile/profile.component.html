@@ -69,7 +69,7 @@
         <div class="name-row">
           <h2 class="user-name">{{ profile().name }}</h2>
           <span class="username-handle">{{ '@' + profile().login }}</span>
-          <span class="badge-role">Core Architect</span>
+          <span class="badge-role">{{ userRole() }}</span>
         </div>
 
         <p class="user-bio">{{ profile().bio }}</p>
@@ -135,12 +135,12 @@
         </div>
       </div>
       <div class="metric-value-row">
-        <span class="metric-value">{{ profile().public_repos }}</span>
-        <span class="metric-pill pill-purple">Public</span>
+        <span class="metric-value">{{ totalReposCount() }}</span>
+        <span class="metric-pill pill-purple">{{ profile().public_repos }} Public</span>
       </div>
       <div class="metric-footer">
         <span class="metric-trend text-purple">100% Synced</span>
-        <span class="metric-sub">with remote</span>
+        <span class="metric-sub">across all repositories</span>
       </div>
     </div>
 
@@ -178,7 +178,7 @@
         <span class="metric-trend text-amber">
           {{ totalStars() > 0 ? (totalStars() + ' Stars') : (totalForks() + ' Forks') }}
         </span>
-        <span class="metric-sub">across {{ allRepos().length || profile().public_repos }} repos</span>
+        <span class="metric-sub">across {{ totalReposCount() }} repos</span>
       </div>
     </div>
 
@@ -228,7 +228,7 @@
                     {{ repo.name }}
                   </a>
                 </div>
-                <span class="repo-visibility-pill">Public</span>
+                <span class="repo-visibility-pill" [class.pill-private]="repo.isPrivate">{{ repo.isPrivate ? 'Private' : 'Public' }}</span>
               </div>
 
               <p class="repo-desc">{{ repo.description }}</p>

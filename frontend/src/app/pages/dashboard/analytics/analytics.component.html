@@ -189,8 +189,8 @@
             <lucide-icon [img]="BarChart3" class="section-icon"></lucide-icon>
           </div>
           <div>
-            <h2 class="section-title">Weekly Commit Velocity & Breakdown</h2>
-            <p class="section-desc">Daily commit throughput categorized by commit type</p>
+            <h2 class="section-title">{{ chartTitle() }}</h2>
+            <p class="section-desc">{{ chartDesc() }}</p>
           </div>
         </div>
 
@@ -214,29 +214,33 @@
       <!-- Khung biểu đồ thanh (Pure CSS / SVG Stacked Bar Chart) -->
       <div class="bar-chart-container">
         <div class="bars-track">
-          @for (item of velocityDays(); track item.day) {
+          @for (item of velocityDays(); track item.date) {
             <div 
               class="bar-column-wrap"
               (mouseenter)="hoveredDay.set(item)"
               (mouseleave)="hoveredDay.set(null)">
               
               <!-- Cột phân tầng Stacked Bar -->
-              <div class="bar-stacked-pillar">
-                <div 
-                  class="segment seg-feat" 
-                  [style.height.px]="calculateHeight(item.feat)"
-                  [title]="'Feature: ' + item.feat + ' commits'">
-                </div>
-                <div 
-                  class="segment seg-fix" 
-                  [style.height.px]="calculateHeight(item.fix)"
-                  [title]="'Bugfix: ' + item.fix + ' commits'">
-                </div>
-                <div 
-                  class="segment seg-refactor" 
-                  [style.height.px]="calculateHeight(item.refactor)"
-                  [title]="'Refactor: ' + item.refactor + ' commits'">
-                </div>
+              <div class="bar-stacked-pillar" [class.has-activity]="item.total > 0">
+                @if (item.total > 0) {
+                  <div 
+                    class="segment seg-feat" 
+                    [style.height.px]="calculateHeight(item.feat)"
+                    [title]="'Feature: ' + item.feat + ' commits'">
+                  </div>
+                  <div 
+                    class="segment seg-fix" 
+                    [style.height.px]="calculateHeight(item.fix)"
+                    [title]="'Bugfix: ' + item.fix + ' commits'">
+                  </div>
+                  <div 
+                    class="segment seg-refactor" 
+                    [style.height.px]="calculateHeight(item.refactor)"
+                    [title]="'Refactor: ' + item.refactor + ' commits'">
+                  </div>
+                } @else {
+                  <div class="segment seg-empty" [title]="item.day + ': 0 commits'"></div>
+                }
               </div>
 
               <!-- Nhãn ngày ở dưới cột -->
@@ -253,14 +257,18 @@
           @if (hoveredDay(); as d) {
             <div class="active-tooltip">
               <span class="tooltip-title">{{ d.day }} ({{ d.date }}) • Total {{ d.total }} Commits</span>
-              <div class="tooltip-breakdown">
-                <span class="text-emerald">✨ {{ d.feat }} features</span>
-                <span class="text-rose">🐛 {{ d.fix }} fixes</span>
-                <span class="text-purple">⚡ {{ d.refactor }} refactor</span>
-              </div>
+              @if (d.total > 0) {
+                <div class="tooltip-breakdown">
+                  <span class="text-emerald">✨ {{ d.feat }} features</span>
+                  <span class="text-rose">🐛 {{ d.fix }} fixes</span>
+                  <span class="text-purple">⚡ {{ d.refactor }} refactor</span>
+                </div>
+              } @else {
+                <span class="tooltip-zero text-muted">No commits recorded for this period</span>
+              }
             </div>
           } @else {
-            <span class="tooltip-idle">Hover over any bar to inspect daily breakdown</span>
+            <span class="tooltip-idle">Hover over any bar to inspect velocity breakdown</span>
           }
         </div>
       </div>
@@ -306,7 +314,10 @@
             <span class="lang-percent">{{ lang.percent }}%</span>
           </div>
         } @empty {
-          <div class="empty-list-state">No repository languages detected yet</div>
+          <div class="empty-list-state">
+            <lucide-icon [img]="Code2" class="empty-state-icon"></lucide-icon>
+            <span>No repository languages detected yet</span>
+          </div>
         }
       </div>
     </section>

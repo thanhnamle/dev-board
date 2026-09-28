@@ -30,6 +30,7 @@ import {
 import { GitHubApiService } from '../../../core/services/github-api.service';
 import { WorkspaceDataService } from '../../../core/services/workspace-data.service';
 import { UserService } from '../../../core/services/user.service';
+import { TelemetryService } from '../../../core/services/telemetry.service';
 
 interface DailyTask {
   id: number;
@@ -97,6 +98,7 @@ export class OverviewComponent implements OnInit {
   readonly gitHubApiService = inject(GitHubApiService);
   readonly workSpaceDataService = inject(WorkspaceDataService);
   readonly userService = inject(UserService);
+  readonly telemetry = inject(TelemetryService);
 
   // Trạng thái đồng bộ GitHub
   readonly isSyncing = signal<boolean>(false);

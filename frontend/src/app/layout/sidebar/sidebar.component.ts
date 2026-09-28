@@ -25,13 +25,16 @@ import {
   User,
   Settings,
   ExternalLink,
-  Bookmark
+  Bookmark,
+  Radio,
+  Zap
 } from 'lucide-angular';
 import { UserService } from '../../core/services/user.service';
 import { MessagesService } from '../../core/services/messages.service';
 import { CommandPaletteService } from '../../core/services/command-palette.service';
 import { WorkspaceDataService } from '../../core/services/workspace-data.service';
 import { GitHubApiService } from '../../core/services/github-api.service';
+import { TelemetryService } from '../../core/services/telemetry.service';
 
 export interface UserProfile {
   name: string;
@@ -86,15 +89,23 @@ export class SidebarComponent {
   readonly ExternalLink = ExternalLink;
   readonly FolderGit2 = FolderGit2;
   readonly Bookmark = Bookmark;
+  readonly Radio = Radio;
+  readonly Zap = Zap;
   readonly userService = inject(UserService);
   readonly messagesService = inject(MessagesService);
   readonly commandPalette = inject(CommandPaletteService);
   readonly gitHubApiService = inject(GitHubApiService);
   readonly workspace = inject(WorkspaceDataService);
+  readonly telemetry = inject(TelemetryService);
 
   readonly bookmarkedProjects = computed(() =>
     this.workspace.projects().filter(p => p.isBookmarked).slice(0, 4)
   );
+
+  readonly totalContributions = computed<number>(() => {
+    const c = this.gitHubApiService.contributions();
+    return c?.totalAnnualContributions ?? c?.contributionCalendar?.totalContributions ?? c?.totalCommitContributions ?? 0;
+  });
 
   // Signal quản lý trạng thái thu gọn sidebar
   collapsed = signal(false);
