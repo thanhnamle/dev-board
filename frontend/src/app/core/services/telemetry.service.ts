@@ -6,7 +6,7 @@ import { NotificationService } from './notification.service';
 
 export interface LiveToastItem {
   id: string;
-  type: 'push' | 'pull_request' | 'star' | 'release' | 'issue' | 'ping';
+  type: 'push' | 'commit' | 'pull_request' | 'star' | 'release' | 'issue' | 'ping';
   repo: string;
   title: string;
   message: string;
@@ -139,8 +139,10 @@ export class TelemetryService {
 
   private formatEventTitle(event: any): string {
     switch (event.type) {
+      case 'commit':
+        return `New Commit on ${event.details?.branch || 'main'}`;
       case 'push':
-        return `New Push on ${event.details?.branch || 'main'}`;
+        return `Pushed to ${event.details?.branch || 'main'}`;
       case 'pull_request':
         return `Pull Request #${event.details?.prNumber || ''}`;
       case 'star':

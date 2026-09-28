@@ -111,7 +111,7 @@
         <!-- Left Type Icon -->
         <div class="notif-icon-box" [attr.data-type]="item.type">
           <lucide-icon
-            *ngIf="item.type === 'push'"
+            *ngIf="item.type === 'push' || item.type === 'commit'"
             [img]="GitCommit"
             size="15"
           ></lucide-icon>
@@ -126,7 +126,7 @@
             size="15"
           ></lucide-icon>
           <lucide-icon
-            *ngIf="item.type !== 'push' && item.type !== 'pull_request' && item.type !== 'star'"
+            *ngIf="item.type !== 'push' && item.type !== 'commit' && item.type !== 'pull_request' && item.type !== 'star'"
             [img]="Sparkles"
             size="15"
           ></lucide-icon>

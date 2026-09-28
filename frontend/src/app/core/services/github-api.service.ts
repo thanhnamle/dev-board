@@ -758,7 +758,7 @@ export class GitHubApiService {
    * Cập nhật tức thì các reactive signal khi có sự kiện Git thời gian thực từ WebSocket
    */
   handleRealtimeGitEvent(event: {
-    type: 'push' | 'pull_request' | 'star' | 'release' | 'issue' | 'ping';
+    type: 'push' | 'commit' | 'pull_request' | 'star' | 'release' | 'issue' | 'ping';
     repo: string;
     sender: { login: string; avatarUrl: string };
     message: string;

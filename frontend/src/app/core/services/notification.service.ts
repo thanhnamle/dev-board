@@ -3,7 +3,7 @@ import { isPlatformBrowser } from '@angular/common';
 
 export interface AppNotification {
   id: string;
-  type: 'push' | 'pull_request' | 'star' | 'release' | 'issue' | 'ping' | 'system';
+  type: 'push' | 'commit' | 'pull_request' | 'star' | 'release' | 'issue' | 'ping' | 'system';
   title: string;
   message: string;
   repo?: string;

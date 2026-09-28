@@ -13,8 +13,10 @@ export class TelemetryService implements OnModuleInit, OnModuleDestroy {
   private githubApiTimer: NodeJS.Timeout | null = null;
 
   // Trackers
-  private lastSeenCommitSha: string | null = null;
+  private lastSeenLocalSha: string | null = null;
+  private lastSeenRemoteSha: string | null = null;
   private lastSeenGitHubEventId: string | null = null;
+  private readonly recentlyEmitted = new Map<string, number>();
   private readonly gitDir = path.resolve(process.cwd(), '../.git');
 
   constructor(private readonly gateway: TelemetryGateway) {}
@@ -40,82 +42,130 @@ export class TelemetryService implements OnModuleInit, OnModuleDestroy {
   }
 
   /**
+   * Check if an event was recently broadcasted within 60s to prevent duplicates
+   */
+  private shouldEmit(key: string): boolean {
+    const now = Date.now();
+    for (const [k, time] of this.recentlyEmitted.entries()) {
+      if (now - time > 60000) {
+        this.recentlyEmitted.delete(k);
+      }
+    }
+    if (this.recentlyEmitted.has(key)) {
+      return false;
+    }
+    this.recentlyEmitted.set(key, now);
+    return true;
+  }
+
+  /**
    * Snapshot current commit so we don't spam toasts on server startup
    */
   private initLocalGitTracker() {
     try {
       const headRefPath = path.join(this.gitDir, 'refs', 'heads', 'main');
+      const remoteRefPath = path.join(this.gitDir, 'refs', 'remotes', 'origin', 'main');
       if (fs.existsSync(headRefPath)) {
-        this.lastSeenCommitSha = fs.readFileSync(headRefPath, 'utf-8').trim();
-        this.logger.log(`📌 Telemetry tracking local Git main branch at commit: ${this.lastSeenCommitSha.substring(0, 7)}`);
+        this.lastSeenLocalSha = fs.readFileSync(headRefPath, 'utf-8').trim();
       }
+      if (fs.existsSync(remoteRefPath)) {
+        this.lastSeenRemoteSha = fs.readFileSync(remoteRefPath, 'utf-8').trim();
+      }
+      this.logger.log(
+        `📌 Telemetry tracking local Git: main@${this.lastSeenLocalSha?.substring(0, 7)} (origin/main@${this.lastSeenRemoteSha?.substring(0, 7)})`,
+      );
     } catch (e: any) {
       this.logger.warn(`Could not read local git head: ${e.message}`);
     }
   }
 
   /**
-   * Monitor local Git repository for new commits & pushes
+   * Monitor local Git repository: distinguishes local COMMIT vs remote PUSH
    */
   private checkLocalGit() {
     try {
       const headRefPath = path.join(this.gitDir, 'refs', 'heads', 'main');
-      if (!fs.existsSync(headRefPath)) return;
+      const remoteRefPath = path.join(this.gitDir, 'refs', 'remotes', 'origin', 'main');
 
-      const currentSha = fs.readFileSync(headRefPath, 'utf-8').trim();
-      if (!currentSha) return;
+      const currentRemoteSha = fs.existsSync(remoteRefPath)
+        ? fs.readFileSync(remoteRefPath, 'utf-8').trim()
+        : '';
 
-      if (!this.lastSeenCommitSha) {
-        this.lastSeenCommitSha = currentSha;
-        return;
+      // 1. Check local branch HEAD (heads/main)
+      if (fs.existsSync(headRefPath)) {
+        const currentLocalSha = fs.readFileSync(headRefPath, 'utf-8').trim();
+        if (currentLocalSha && !this.lastSeenLocalSha) {
+          this.lastSeenLocalSha = currentLocalSha;
+        } else if (currentLocalSha && currentLocalSha !== this.lastSeenLocalSha) {
+          this.lastSeenLocalSha = currentLocalSha;
+
+          // If local sha equals remote sha, it is already pushed. Otherwise it is a local commit!
+          const isPush = currentRemoteSha === currentLocalSha;
+          const eventType: 'commit' | 'push' = isPush ? 'push' : 'commit';
+          this.broadcastLocalGitEvent(currentLocalSha, eventType, 'main');
+        }
       }
 
-      if (currentSha !== this.lastSeenCommitSha) {
-        this.logger.log(`⚡ Detected new local Git commit: ${currentSha.substring(0, 7)}`);
-        this.lastSeenCommitSha = currentSha;
-
-        let commitMsg = 'Pushed updates to repository';
-        let author = 'thanhnamle';
-        let shortSha = currentSha.substring(0, 7);
-
-        try {
-          const workspaceRoot = path.resolve(process.cwd(), '..');
-          const gitOutput = execSync(`git log -1 --pretty=format:"%s||%an||%h" ${currentSha}`, {
-            cwd: workspaceRoot,
-            timeout: 3000,
-          }).toString().trim();
-
-          const parts = gitOutput.split('||');
-          if (parts[0]) commitMsg = parts[0];
-          if (parts[1]) author = parts[1];
-          if (parts[2]) shortSha = parts[2];
-        } catch (execErr: any) {
-          this.logger.warn(`Could not extract git details via CLI: ${execErr.message}`);
+      // 2. Check remote tracking branch (remotes/origin/main)
+      if (currentRemoteSha) {
+        if (!this.lastSeenRemoteSha) {
+          this.lastSeenRemoteSha = currentRemoteSha;
+        } else if (currentRemoteSha !== this.lastSeenRemoteSha) {
+          this.lastSeenRemoteSha = currentRemoteSha;
+          // Remote updated! This is an actual PUSH to origin/main!
+          this.broadcastLocalGitEvent(currentRemoteSha, 'push', 'main');
         }
-
-        const payload: TelemetryPayload = {
-          id: `git_${currentSha.substring(0, 10)}`,
-          type: 'push',
-          repo: 'thanhnamle/dev-board',
-          sender: {
-            login: author,
-            avatarUrl: `https://github.com/${author}.png`,
-          },
-          message: commitMsg,
-          details: {
-            branch: 'main',
-            commitsCount: 1,
-            headCommitSha: shortSha,
-            url: `https://github.com/thanhnamle/dev-board/commit/${currentSha}`,
-          },
-          timestamp: new Date().toISOString(),
-        };
-
-        this.gateway.broadcast('git.event', payload);
       }
     } catch (err: any) {
       // Non-critical, avoid log noise
     }
+  }
+
+  private broadcastLocalGitEvent(sha: string, type: 'commit' | 'push', branch: string = 'main') {
+    const shortSha = sha.substring(0, 7);
+    const dedupKey = `${shortSha}_${type}`;
+    if (!this.shouldEmit(dedupKey)) {
+      return;
+    }
+
+    let commitMsg = type === 'push' ? 'Pushed updates to repository' : 'Committed changes locally';
+    let author = 'thanhnamle';
+
+    try {
+      const workspaceRoot = path.resolve(process.cwd(), '..');
+      const gitOutput = execSync(`git log -1 --pretty=format:"%s||%an||%h" ${sha}`, {
+        cwd: workspaceRoot,
+        timeout: 3000,
+      }).toString().trim();
+
+      const parts = gitOutput.split('||');
+      if (parts[0]) commitMsg = parts[0];
+      if (parts[1]) author = parts[1];
+    } catch (execErr: any) {
+      this.logger.warn(`Could not extract git details via CLI: ${execErr.message}`);
+    }
+
+    this.logger.log(`⚡ Broadcasting ${type.toUpperCase()}: [${shortSha}] ${commitMsg}`);
+
+    const payload: TelemetryPayload = {
+      id: `git_${sha.substring(0, 10)}_${type}`,
+      type,
+      repo: 'thanhnamle/dev-board',
+      sender: {
+        login: author,
+        avatarUrl: `https://github.com/${author}.png`,
+      },
+      message: commitMsg,
+      details: {
+        branch,
+        commitsCount: 1,
+        headCommitSha: shortSha,
+        url: `https://github.com/thanhnamle/dev-board/commit/${sha}`,
+      },
+      timestamp: new Date().toISOString(),
+    };
+
+    this.gateway.broadcast('git.event', payload);
   }
 
   /**
@@ -308,23 +358,45 @@ export class TelemetryService implements OnModuleInit, OnModuleDestroy {
    * Simulate a realistic Git event for local testing & live demonstrations
    */
   simulate(options?: {
-    type?: 'push' | 'pull_request' | 'star';
+    type?: 'push' | 'commit' | 'pull_request' | 'star';
     repo?: string;
     message?: string;
     branch?: string;
     senderLogin?: string;
+    sha?: string;
   }): TelemetryPayload {
-    const type = options?.type || (Math.random() > 0.3 ? 'push' : 'pull_request');
+    const type = options?.type || (Math.random() > 0.3 ? 'push' : 'commit');
+    const randomSha = options?.sha || Math.random().toString(36).substring(2, 9);
+    const shortSha = randomSha.substring(0, 7);
+
+    // Deduplication check: ignore if recently emitted within 60s
+    const dedupKey = `${shortSha}_${type}`;
+    if (!this.shouldEmit(dedupKey)) {
+      this.logger.log(`⏭️ Ignored duplicate simulate/hook event for ${dedupKey}`);
+      return {
+        id: `sim_skipped_${dedupKey}`,
+        type,
+        repo: options?.repo || 'thanhnamle/dev-board',
+        sender: { login: options?.senderLogin || 'thanhnamle', avatarUrl: '' },
+        message: options?.message || 'Duplicate skipped',
+        timestamp: new Date().toISOString(),
+      };
+    }
+
     const repo = options?.repo || 'thanhnamle/dev-board';
     const senderLogin = options?.senderLogin || 'thanhnamle';
     const avatarUrl = `https://github.com/${senderLogin}.png`;
-    const randomSha = Math.random().toString(36).substring(2, 9);
 
-    const mockMessages = {
+    const mockMessages: Record<string, string[]> = {
+      commit: [
+        `feat(core): implement granular telemetry signal bindings`,
+        `fix(chart): handle missing timestamps gracefully`,
+        `refactor(state): streamline signals and reduce reactive overhead`,
+        `perf(cache): debounce repository search signals for instant responsiveness`,
+      ],
       push: [
         `feat(telemetry): integrate real-time WebSocket radar and live telemetry`,
         `fix(analytics): dynamic date window calculations for weekly velocity`,
-        `perf(cache): debounce repository search signals for instant responsiveness`,
         `style(obsidian): fine-tune glassmorphism gradients and borders`,
         `refactor(gateway): optimize event broadcasting channel`,
       ],
@@ -340,12 +412,12 @@ export class TelemetryService implements OnModuleInit, OnModuleDestroy {
 
     let message = options?.message;
     if (!message) {
-      const msgs = mockMessages[type] || mockMessages.push;
+      const msgs = mockMessages[type] || mockMessages.commit;
       message = msgs[Math.floor(Math.random() * msgs.length)];
     }
 
     const payload: TelemetryPayload = {
-      id: `sim_${Date.now()}_${randomSha}`,
+      id: `sim_${Date.now()}_${shortSha}`,
       type,
       repo,
       sender: {
@@ -354,9 +426,9 @@ export class TelemetryService implements OnModuleInit, OnModuleDestroy {
       },
       message,
       details: {
-        branch: options?.branch || (type === 'push' ? 'main' : 'feature/live-radar'),
+        branch: options?.branch || (type === 'pull_request' ? 'feature/live-radar' : 'main'),
         commitsCount: 1,
-        headCommitSha: randomSha,
+        headCommitSha: shortSha,
         prNumber: type === 'pull_request' ? Math.floor(Math.random() * 40) + 1 : undefined,
         prAction: type === 'pull_request' ? 'opened' : undefined,
       },
@@ -371,7 +443,8 @@ export class TelemetryService implements OnModuleInit, OnModuleDestroy {
     return {
       status: 'online',
       activeClients: this.gateway.getClientCount(),
-      lastSeenCommitSha: this.lastSeenCommitSha?.substring(0, 7),
+      lastSeenLocalSha: this.lastSeenLocalSha?.substring(0, 7),
+      lastSeenRemoteSha: this.lastSeenRemoteSha?.substring(0, 7),
       uptimeSeconds: Math.floor(process.uptime()),
       timestamp: new Date().toISOString(),
     };

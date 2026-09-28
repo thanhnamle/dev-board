@@ -11,7 +11,7 @@ import { Server, Socket } from 'socket.io';
 
 export interface TelemetryPayload {
   id: string;
-  type: 'push' | 'pull_request' | 'star' | 'release' | 'issue' | 'ping';
+  type: 'push' | 'commit' | 'pull_request' | 'star' | 'release' | 'issue' | 'ping';
   repo: string;
   sender: {
     login: string;

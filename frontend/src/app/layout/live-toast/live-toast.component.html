@@ -17,7 +17,7 @@
         <!-- Event badge -->
         <span class="event-badge" [attr.data-type]="toast.type">
           <lucide-icon
-            *ngIf="toast.type === 'push'"
+            *ngIf="toast.type === 'push' || toast.type === 'commit'"
             [img]="GitCommit"
             size="13"
             class="badge-icon"
